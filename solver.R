@@ -5,15 +5,15 @@ diff_eq <- function(x, parms) {
 
     parms[names(x)] <- as.list(x)
 
-
     # output <- with(as.list(parms),
     #                     c(sN = - mN*N_t - ((aNP*N_t*P_t)/(1+bP*P_t)) + aND*D_t*V_t + G,
-    #                       sD = mV*V_t + mP*P_t + mH*H_t + mR*R_t - aND*D_t*V_t - aVD*V_t*D_t, # + f*M,
+    #                       sD = mV*V_t + mP*P_t + mH*H_t + mR*R_t - aND*D_t*V_t - aVD*V_t*D_t + f*M,
     #                       sV = - mV*V_t -((aVR*V_t*R_t)/(1 + bR*R_t)) + aVD*V_t*D_t,
     #                       sP = - mP*P_t + ((aNP*N_t*P_t)/(1 + bP*P_t)) - aPH*P_t*H_t,
     #                       sH = - mH*H_t - ((aHR*H_t*R_t)/(1 + bR*R_t)) + aPH*P_t*H_t,
     #                       sR = - mR*R_t + ((aHR*H_t*R_t)/(1 + bR*R_t)) +
-    #                           ((aVR*V_t*R_t)/(1 + bR*R_t)) )#+ (1 - f)*M)
+    #                           ((aVR*V_t*R_t)/(1 + bR*R_t)) + (1 - f)*M)
+    # )
     output <- with(as.list(parms),
                         c(sN = - mN*N_t - ((aNP*N_t*P_t)/(1+bP*P_t)) + aND*D_t*V_t + G,
                           sD = mV*V_t + mP*P_t + mH*H_t + mR*R_t - aND*D_t*V_t - aVD*V_t*D_t, # + f*M,
