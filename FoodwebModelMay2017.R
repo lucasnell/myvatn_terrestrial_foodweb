@@ -94,11 +94,11 @@ b[3] <- 100
 b[4] <- 0
 
 start=c(1/(x[2]*x[3]), a[3,3]/x[2], 1/x[1], 1/x[4], 1/x[3], 1/x[5])
-
 pmatrix <- cbind(a,x,b)
+tosolvevector(start, pmatrix)
 z <- multiroot(f=tosolvevector, start=start, parms = pmatrix, maxiter = 100, rtol = 1e-6, atol = 1e-8, ctol = 1e-8, useFortran = TRUE, positive = T,jacfunc = NULL, jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1)
 
-
+tosolvevector(start, pmatrix)
 # This contains all of the parameters 
 pfitted <- pmatrix
 pfitted[is.na(pmatrix)] <- z$root

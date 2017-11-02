@@ -143,8 +143,7 @@ diff_eq <- function(t, y, parms) {
             V_t = - mV*V_t -((aVR*D_t*R_t)/(1 + bR*R_t)) + aVD*V_t*D_t,
             P_t = - mP*P_t + ((aNP*N_t*P_t)/(1 + bP*P_t)) - aPH*P_t*H_t,
             H_t = - mH*H_t - ((aHR*H_t*R_t)/(1 + bR*R_t)) + aPH*P_t*H_t,
-            R_t = - mR*R_t + ((aHR*H_t*R_t)/(1 + bR*R_t)) + ((aVR*D_t*R_t)/(1 + bR*R_t)) +
-                (1 - f)*M)
+            R_t = - mR*R_t + ((aHR*H_t*R_t)/(1 + bR*R_t)) + ((aVR*D_t*R_t)/(1 + bR*R_t)) + (1 - f)*M)
         }
         )
     )
