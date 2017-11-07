@@ -3,8 +3,8 @@
 ########################################
 
 library(tidyverse)
-source('Define_Model_A_7Nov17.R')
-#source('Define_Model_B_7Nov17.R')
+source('Define_Model_A.R')
+#source('Define_Model_B.R')
 
 #The source files specify functions to implement two different versions of the model (A and B). The objects defined in the source files have the same names, so only one can be loaded at a time.
 
