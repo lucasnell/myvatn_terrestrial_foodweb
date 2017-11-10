@@ -1,28 +1,19 @@
-########################################
-#Load Packages
-########################################
 
-library(rootSolve)
-library(tidyverse)
-library(deSolve)
+# ======================================
+# Solve for unknown parameters
+# ======================================
+# Use estimated equilibrium biomass and selected values for certain parameters to solve 
+# for unknown values
+# "Known" parameters must be selected with care, to ensure that an equilibrium solution 
+# can actually be reached
 
-
-
-
-
-########################################
-#Solve for unknown parameters
-########################################
-#Use estimated equilibrium biomass and selected values for certain parameters to solve for unknown values
-#"Known" parameters must be selected with care, to ensure that an equilibrium solution can actually be reached
-
-#Define function for steady states to solve
+# Define function for steady states to solve
 equil_solve = function(start, all_params){
   
-  #Set starting values
+  # Set starting values
   all_params[names(start)] = as.list(start)
   
-  #Pass parameters to dynamic equations
+  # Pass parameters to dynamic equations
   output = as.list(all_params) %>% with(
     c(sN = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D,
       sD = (1-lP)*mP*P + (1-lV)*mV*V + (1-lH)*mH*H + (1-lR)*mR*R - 
@@ -38,44 +29,44 @@ equil_solve = function(start, all_params){
 }
 
 
-#Define equilibrium states
-#Define known and unknown parameters
-#Merge
+# Define equilibrium states
+# Define known and unknown parameters
+# Merge
 equil_states = list(N = 343000, D = 114000, P = 4300, V = 81, H = 24,  R = 13)
 
 params <- list(
-  #Inputs 
+  # Inputs 
   iN = 10, 
-  #Loss rates from systems
+  # Loss rates from systems
   lD = 0.1, lP = 0.1, lV = 0.1, lH = 0.1, lR = 0.1,
-  #Loss rates from pool (returned to either N or D)
+  # Loss rates from pool (returned to either N or D)
   mP=NA, mD=NA, mV=0.1, mH=0.1, mR=0.1,
-  #Carying Capacities
+  # Carying Capacities
   kP=8000, 
-  #Handling Times
+  # Handling Times
   hP = 1, hD = 1, hR = 1,
-  #Uptake rates
+  # Uptake rates
   aNP=NA, aDV=NA, aPH=NA, aR=NA)
 
 all_params = c(equil_states,params)
 
-#Initial values for unknown rates
+# Initial values for unknown rates
 start = rep(0.01,6)
 names(start) = c("mD","mP","aNP","aDV","aPH","aR")
 
-#Test to make sure function returns values when provided all_params
+# Test to make sure function returns values when provided all_params
 equil_solve(start, all_params)
 
-#Solve for unknown parameters
+# Solve for unknown parameters
 z = multiroot(f = equil_solve, start = start, parms = all_params, maxiter = 100, 
               rtol = 1e-6, atol = 1e-8, ctol = 1e-8, useFortran = TRUE, 
               positive = T, jacfunc = NULL,jactype = "fullint", 
               verbose = FALSE, bandup = 1, banddown = 1)
 
-#Examine solution
+# Examine solution
 round(z$root,10)
 
-#Add solved values to final parameter set
+# Add solved values to final parameter set
 params_solve = params
 params_solve[names(z$root)] = as.list(z$root)
 
@@ -83,16 +74,16 @@ params_solve[names(z$root)] = as.list(z$root)
 
 
 
-########################################
-#Define Functions to Run Model
-########################################
+# ======================================
+# Define Functions to Run Model
+# ======================================
 
-#Create function for time-varying midge pulse
+# Create function for time-varying midge pulse
 iM_func = function(t,pulse,pulse_tmin,pulse_tmax) 
 {ifelse(t>pulse_tmin&t<pulse_tmax,pulse,0)}
 params_solve$iM_func = iM_func
 
-#Define differential equations
+# Define differential equations
 diff_eq = function(t, y, parms) {
   
   iM = parms %>% with(parms[["iM_func"]](t,pulse,pulse_tmin,pulse_tmax))
@@ -113,7 +104,7 @@ diff_eq = function(t, y, parms) {
   return(list(output))
 }
 
-#Function to Solve ODE
+# Function to Solve ODE
 ode_solve = 
   function(tmin,tmax,tstep,pulse,pulse_tmin,pulse_tmax,parms,init){
     parms$pulse = pulse
