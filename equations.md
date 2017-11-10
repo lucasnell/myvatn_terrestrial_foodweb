@@ -17,58 +17,63 @@ Solving unknown parameters
 --------------------------
 
 $$
-s\_N = i\_N - a\_{NP} N\_{eq} P\_{eq} (1-P\_{eq}/k\_P) + (1-l\_D) m\_D D\_{eq} \\\\
-s\_D = (1-l\_P) m\_P P\_{eq} + (1-l\_V) m\_V V\_{eq} + (1-l\_H) m\_H H\_{eq} + 
-    (1-l\_R) m\_R R\_{eq} - a\_{DV} D\_{eq} V\_{eq} (1-V\_{eq}/k\_V) - m\_D D\_{eq} \\\\
-s\_P = a\_{NP} N\_{eq} P\_{eq} (1-P\_{eq}/k\_P) -  a\_{PH} P\_{eq} H\_{eq} (1-H\_{eq}/k\_H) - m\_P P\_{eq} \\\\
-s\_V = a\_{DV} D\_{eq} V\_{eq} (1-V\_{eq}/k\_V) - (a\_R V\_{eq} R\_{eq}) (1-R\_{eq}/k\_R) - m\_V V\_{eq} \\\\
-s\_H = a\_{PH} P\_{eq} H\_{eq} (1-H\_{eq}/k\_H) - (a\_R H\_{eq} R\_{eq}) (1-R\_{eq}/k\_R) - m\_H H\_{eq} \\\\
-s\_R = (a\_R V\_{eq} R\_{eq} + a\_R H\_{eq} R\_{eq}) (1-R\_{eq}/k\_R) - m\_R R\_{eq} \\\\
+s_N = i_N - a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) + (1-l_D) m_D D_{eq} \\
+s_D = (1-l_P) m_P P_{eq} + (1-l_V) m_V V_{eq} + (1-l_H) m_H H_{eq} + 
+    (1-l_R) m_R R_{eq} - a_{DV} D_{eq} V_{eq} (1-V_{eq}/k_V) - m_D D_{eq} \\
+s_P = a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) -  a_{PH} P_{eq} H_{eq} (1-H_{eq}/k_H) - m_P P_{eq} \\
+s_V = a_{DV} D_{eq} V_{eq} (1-V_{eq}/k_V) - (a_R V_{eq} R_{eq}) (1-R_{eq}/k_R) - m_V V_{eq} \\
+s_H = a_{PH} P_{eq} H_{eq} (1-H_{eq}/k_H) - (a_R H_{eq} R_{eq}) (1-R_{eq}/k_R) - m_H H_{eq} \\
+s_R = (a_R V_{eq} R_{eq} + a_R H_{eq} R_{eq}) (1-R_{eq}/k_R) - m_R R_{eq} \\
 $$
+
 
 Differential equations
-----------------------
+--------------------------
 
 $$
-\\begin{aligned}
-N &= i\_N - a\_{NP} N P (1-P/k\_P) + (1-l\_D) m\_D D \\\\
-D &= (1-l\_P) m\_P P + (1-l\_V) m\_V V + (1-l\_H) m\_H H + (1-l\_R) m\_R R + (1 - l\_M) m\_M M - a\_{DV} D V (1-V/k\_V) - m\_D D \\\\
-P &= a\_{NP} N P (1-P/k\_P) - a\_{PH} P H (1-H/k\_H) - m\_P P \\\\
-V &= a\_{DV} D V (1-V/k\_V) - (a\_R V R) (1-R/k\_R) - m\_V V \\\\
-H &= a\_{PH} P H (1-H/k\_H) - (a\_R H R) (1-R/k\_R) - m\_H H \\\\
-R &= (a\_R V R + a\_R H R + \\frac{a\_R M R}{2} ) (1-R/k\_R) - m\_R R \\\\
-M &= i\_M - m\_M M - (\\frac{a\_R M R}{2}) (1-R/k\_R) \\\\
-\\end{aligned}
+\begin{aligned}
+N &= i_N - a_{NP} N P (1-P/k_P) + (1-l_D) m_D D \\
+D &= (1-l_P) m_P P + (1-l_V) m_V V + (1-l_H) m_H H + (1-l_R) m_R R + (1 - l_M) m_M M - a_{DV} D V (1-V/k_V) - m_D D \\
+P &= a_{NP} N P (1-P/k_P) - a_{PH} P H (1-H/k_H) - m_P P \\
+V &= a_{DV} D V (1-V/k_V) - (a_R V R) (1-R/k_R) - m_V V \\
+H &= a_{PH} P H (1-H/k_H) - (a_R H R) (1-R/k_R) - m_H H \\
+R &= (a_R V R + a_R H R + \frac{a_R M R}{2} ) (1-R/k_R) - m_R R \\
+M &= i_M - m_M M - (\frac{a_R M R}{2}) (1-R/k_R) \\
+\end{aligned}
 $$
+
+
 
 Model B
 =======
 
 Solving for unknown parameters
-------------------------------
+--------------------------
+
 
 $$
-\\begin{aligned}
-s\_N &= i\_N - a\_{NP} N\_{eq} P\_{eq} (1-P\_{eq}/k\_P) + (1-l\_D) m\_D D\_{eq} \\\\
-s\_D &= (1-l\_P) m\_P P\_{eq} + (1-l\_V) m\_V V\_{eq} + (1-l\_H) m\_H H\_{eq} + (1-l\_R) m\_R R\_{eq} - a\_{DV} D\_{eq} V\_{eq}/(1+a\_{DV} h\_D D\_{eq}) - m\_D D\_{eq} \\\\
-s\_P &= a\_{NP} N\_{eq} P\_{eq} (1-P\_{eq}/k\_P) - a\_{PH} P\_{eq} H\_{eq}/(1+a\_{PH} h\_P P\_{eq}) - m\_P P\_{eq} \\\\
-s\_V &= a\_{DV} D\_{eq} V\_{eq}/(1+a\_{DV} h\_D D\_{eq}) - (a\_R V\_{eq} R\_{eq})/(1+a\_R h\_R (V\_{eq}+H\_{eq})) - m\_V V\_{eq} \\\\
-s\_H &= a\_{PH} P\_{eq} H\_{eq}/(1+a\_{PH} h\_P P\_{eq}) - (a\_R H\_{eq} R\_{eq})/(1+a\_R h\_R (V\_{eq}+H\_{eq})) - m\_H H\_{eq} \\\\
-s\_R &= (a\_R V\_{eq} R\_{eq} + a\_R H\_{eq} R\_{eq})/(1+a\_R h\_R (V\_{eq}+H\_{eq})) - m\_R R\_{eq} \\\\
-\\end{aligned}
+\begin{aligned}
+s_N &= i_N - a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) + (1-l_D) m_D D_{eq} \\
+s_D &= (1-l_P) m_P P_{eq} + (1-l_V) m_V V_{eq} + (1-l_H) m_H H_{eq} + (1-l_R) m_R R_{eq} - a_{DV} D_{eq} V_{eq}/(1+a_{DV} h_D D_{eq}) - m_D D_{eq} \\
+s_P &= a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) - a_{PH} P_{eq} H_{eq}/(1+a_{PH} h_P P_{eq}) - m_P P_{eq} \\
+s_V &= a_{DV} D_{eq} V_{eq}/(1+a_{DV} h_D D_{eq}) - (a_R V_{eq} R_{eq})/(1+a_R h_R (V_{eq}+H_{eq})) - m_V V_{eq} \\
+s_H &= a_{PH} P_{eq} H_{eq}/(1+a_{PH} h_P P_{eq}) - (a_R H_{eq} R_{eq})/(1+a_R h_R (V_{eq}+H_{eq})) - m_H H_{eq} \\
+s_R &= (a_R V_{eq} R_{eq} + a_R H_{eq} R_{eq})/(1+a_R h_R (V_{eq}+H_{eq})) - m_R R_{eq} \\
+\end{aligned}
 $$
 
 Differential equations
-----------------------
+--------------------------
+
 
 $$
-\\begin{aligned}
-N &= i\_N - a\_{NP} N P (1-P/k\_P) + (1-l\_D) m\_D D \\\\
-D &= (1-l\_P) m\_P P + (1-l\_V) m\_V V + (1-l\_H) m\_H H + (1-l\_R) m\_R R + (1-l\_M) m\_M M - a\_{DV} D V/(1+a\_{DV} h\_D D) - m\_D D \\\\
-P &= a\_{NP} N P (1-P/k\_P) - a\_{PH} P H/(1+a\_{PH} h\_P P) - m\_P P \\\\
-V &= a\_{DV} D V/(1+a\_{DV} h\_D D) - (a\_R V R)/(1+a\_R h\_R (V+H+M)) - m\_V V \\\\
-H &= a\_{PH} P H/(1+a\_{PH} h\_P P) - (a\_R H R)/(1+a\_R h\_R (V+H+M)) - m\_H H \\\\
-R &= (a\_R V R + a\_R H R + a\_R M R)/(1+a\_R hR (V+H+M)) - mR R \\\\
-M &= i\_M - m\_M M - (a\_R M R)/(1+a\_R h\_R (V+H+M)) \\\\
-\\end{aligned}
+\begin{aligned}
+N &= i_N - a_{NP} N P (1-P/k_P) + (1-l_D) m_D D \\
+D &= (1-l_P) m_P P + (1-l_V) m_V V + (1-l_H) m_H H + (1-l_R) m_R R + (1-l_M) m_M M - a_{DV} D V/(1+a_{DV} h_D D) - m_D D \\
+P &= a_{NP} N P (1-P/k_P) - a_{PH} P H/(1+a_{PH} h_P P) - m_P P \\
+V &= a_{DV} D V/(1+a_{DV} h_D D) - (a_R V R)/(1+a_R h_R (V+H+M)) - m_V V \\
+H &= a_{PH} P H/(1+a_{PH} h_P P) - (a_R H R)/(1+a_R h_R (V+H+M)) - m_H H \\
+R &= (a_R V R + a_R H R + a_R M R)/(1+a_R hR (V+H+M)) - mR R \\
+M &= i_M - m_M M - (a_R M R)/(1+a_R h_R (V+H+M)) \\
+\end{aligned}
 $$
