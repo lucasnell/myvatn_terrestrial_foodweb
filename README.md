@@ -32,4 +32,5 @@ Finally, we assume that consumptions by plants and predators follow a
 Holling type II functional response with an attack rate of bP and bR, respectively.
 At each time step, we add nitrogen and midges denoted by G and M, respectively.
 A fraction f of the midge goes to the detritivores whereas the remaining fraction (1-f)
-goes to the plant. Under these assumptions, the "abundances" at time t +1 are
+goes to the plant. Under these assumptions, the "abundances" at time t +1 are...
+[it then gets into the code]
