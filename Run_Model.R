@@ -9,13 +9,24 @@ library(deSolve)
 
 
 source('Define_Model_A.R')
+source('aaa-class.R')
 
 
+foodweb <- web$new()
+foodweb$iM_func <- list(
+    function(t) {
+        pulse=500; pulse_tmin=100; pulse_tmax=150
+        ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0)
+    }
+)
+foodweb$re_solve()
+zz <- foodweb$ode_solve(tmin = 0, tmax = 1000, tstep = 1)
 
 
 
 # source('Define_Model_B.R')
 
+# options("device" = "quartz"); graphics.off()
 
 # The source files specify functions to implement two different versions of the model 
 # (A and B). The objects defined in the source files have the same names, so only one 
