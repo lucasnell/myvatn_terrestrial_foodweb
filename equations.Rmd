@@ -3,7 +3,7 @@ title: "Equations for models"
 author: "Lucas Nell"
 date: "11/10/2017"
 output:
-  github_document:
+  pdf_document:
     toc: true
     toc_depth: 2
 ---
@@ -13,20 +13,25 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+This document outlines the equations for models A and B.
+Simply knit this `.Rmd` document to get a pdf with rendered equations.
+
 # Model A
 
 ## Solving unknown parameters
 
 
-\[
-s_N = i_N - a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) + (1-l_D) m_D D_{eq} \\
-s_D = (1-l_P) m_P P_{eq} + (1-l_V) m_V V_{eq} + (1-l_H) m_H H_{eq} + 
+$$
+\begin{aligned}
+s_N &= i_N - a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) + (1-l_D) m_D D_{eq} \\
+s_D &= (1-l_P) m_P P_{eq} + (1-l_V) m_V V_{eq} + (1-l_H) m_H H_{eq} + 
     (1-l_R) m_R R_{eq} - a_{DV} D_{eq} V_{eq} (1-V_{eq}/k_V) - m_D D_{eq} \\
-s_P = a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) -  a_{PH} P_{eq} H_{eq} (1-H_{eq}/k_H) - m_P P_{eq} \\
-s_V = a_{DV} D_{eq} V_{eq} (1-V_{eq}/k_V) - (a_R V_{eq} R_{eq}) (1-R_{eq}/k_R) - m_V V_{eq} \\
-s_H = a_{PH} P_{eq} H_{eq} (1-H_{eq}/k_H) - (a_R H_{eq} R_{eq}) (1-R_{eq}/k_R) - m_H H_{eq} \\
-s_R = (a_R V_{eq} R_{eq} + a_R H_{eq} R_{eq}) (1-R_{eq}/k_R) - m_R R_{eq} \\
-\]
+s_P &= a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) -  a_{PH} P_{eq} H_{eq} (1-H_{eq}/k_H) - m_P P_{eq} \\
+s_V &= a_{DV} D_{eq} V_{eq} (1-V_{eq}/k_V) - (a_R V_{eq} R_{eq}) (1-R_{eq}/k_R) - m_V V_{eq} \\
+s_H &= a_{PH} P_{eq} H_{eq} (1-H_{eq}/k_H) - (a_R H_{eq} R_{eq}) (1-R_{eq}/k_R) - m_H H_{eq} \\
+s_R &= (a_R V_{eq} R_{eq} + a_R H_{eq} R_{eq}) (1-R_{eq}/k_R) - m_R R_{eq} \\
+\end{aligned}
+$$
 
 
 ## Differential equations
@@ -54,11 +59,15 @@ $$
 $$
 \begin{aligned}
 s_N &= i_N - a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) + (1-l_D) m_D D_{eq} \\
-s_D &= (1-l_P) m_P P_{eq} + (1-l_V) m_V V_{eq} + (1-l_H) m_H H_{eq} + (1-l_R) m_R R_{eq} - a_{DV} D_{eq} V_{eq}/(1+a_{DV} h_D D_{eq}) - m_D D_{eq} \\
-s_P &= a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) - a_{PH} P_{eq} H_{eq}/(1+a_{PH} h_P P_{eq}) - m_P P_{eq} \\
-s_V &= a_{DV} D_{eq} V_{eq}/(1+a_{DV} h_D D_{eq}) - (a_R V_{eq} R_{eq})/(1+a_R h_R (V_{eq}+H_{eq})) - m_V V_{eq} \\
-s_H &= a_{PH} P_{eq} H_{eq}/(1+a_{PH} h_P P_{eq}) - (a_R H_{eq} R_{eq})/(1+a_R h_R (V_{eq}+H_{eq})) - m_H H_{eq} \\
-s_R &= (a_R V_{eq} R_{eq} + a_R H_{eq} R_{eq})/(1+a_R h_R (V_{eq}+H_{eq})) - m_R R_{eq} \\
+s_D &= (1-l_P) m_P P_{eq} + (1-l_V) m_V V_{eq} + (1-l_H) m_H H_{eq} + (1-l_R) m_R R_{eq} 
+    - \frac{a_{DV} D_{eq} V_{eq}}{1+a_{DV} h_D D_{eq}} - m_D D_{eq} \\
+s_P &= a_{NP} N_{eq} P_{eq} (1-P_{eq}/k_P) - \frac{a_{PH} P_{eq} H_{eq}}{1+a_{PH} h_P P_{eq}}
+    - m_P P_{eq} \\
+s_V &= \frac{a_{DV} D_{eq} V_{eq}}{1+a_{DV} h_D D_{eq}} - 
+    \frac{a_R V_{eq} R_{eq}}{1+a_R h_R (V_{eq}+H_{eq})} - m_V V_{eq} \\
+s_H &= \frac{a_{PH} P_{eq} H_{eq}}{1+a_{PH} h_P P_{eq}} - 
+    \frac{a_R H_{eq} R_{eq}}{1+a_R h_R (V_{eq}+H_{eq})} - m_H H_{eq} \\
+s_R &= \frac{a_R V_{eq} R_{eq} + a_R H_{eq} R_{eq}}{1+a_R h_R (V_{eq}+H_{eq})} - m_R R_{eq} \\
 \end{aligned}
 $$
 
@@ -68,11 +77,12 @@ $$
 $$
 \begin{aligned}
 N &= i_N - a_{NP} N P (1-P/k_P) + (1-l_D) m_D D \\
-D &= (1-l_P) m_P P + (1-l_V) m_V V + (1-l_H) m_H H + (1-l_R) m_R R + (1-l_M) m_M M - a_{DV} D V/(1+a_{DV} h_D D) - m_D D \\
-P &= a_{NP} N P (1-P/k_P) - a_{PH} P H/(1+a_{PH} h_P P) - m_P P \\
-V &= a_{DV} D V/(1+a_{DV} h_D D) - (a_R V R)/(1+a_R h_R (V+H+M)) - m_V V \\
-H &= a_{PH} P H/(1+a_{PH} h_P P) - (a_R H R)/(1+a_R h_R (V+H+M)) - m_H H \\
-R &= (a_R V R + a_R H R + a_R M R)/(1+a_R hR (V+H+M)) - mR R \\
-M &= i_M - m_M M - (a_R M R)/(1+a_R h_R (V+H+M)) \\
+D &= (1-l_P) m_P P + (1-l_V) m_V V + (1-l_H) m_H H + (1-l_R) m_R R + (1-l_M) m_M M -
+    \frac{a_{DV} D V}{1+a_{DV} h_D D} - m_D D \\
+P &= a_{NP} N P (1-P/k_P) - \frac{a_{PH} P H}{1+a_{PH} h_P P} - m_P P \\
+V &= \frac{a_{DV} D V}{1+a_{DV} h_D D} - \frac{a_R V R}{1+a_R h_R (V+H+M)} - m_V V \\
+H &= \frac{a_{PH} P H}{1+a_{PH} h_P P} - \frac{a_R H R}{1+a_R h_R (V+H+M)} - m_H H \\
+R &= \frac{a_R V R + a_R H R + a_R M R}{1+a_R hR (V+H+M)} - mR R \\
+M &= i_M - m_M M - \frac{a_R M R}{1+a_R h_R (V+H+M)} \\
 \end{aligned}
 $$
