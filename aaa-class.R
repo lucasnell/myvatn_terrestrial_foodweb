@@ -1,6 +1,4 @@
 
-library(R6)
-
 web <- R6Class(
     
     "web",
@@ -82,6 +80,10 @@ web <- R6Class(
                      "mP, mD, aNP, aDV, aPH, and aR")
             }
             
+            # Use estimated equilibrium biomass and selected values for certain 
+            # parameters to solve for unknown values
+            # "Known" parameters must be selected with care, to ensure that an 
+            # equilibrium solution can actually be reached
             if (do_solve) {
                 
                 start = initial_vals
@@ -133,8 +135,11 @@ web <- R6Class(
         
         
         # Function to Solve ODE
+        # tmin and tmax specify the duration over which to run the model
+        # tstep specifies the step size
         ode_solve = function(tmin, tmax, tstep){
             
+            # parms and init give the parameter values and initial states
             parms = private$par_list()
             
             init = unlist(parms[paste0(private$pool_names(), '0')])
