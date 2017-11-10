@@ -11,8 +11,10 @@ web <- R6Class(
     
     public = list(
         
+        # Desired equilibrium values
+        Neq = 343000, Deq = 114000, Peq = 4300, Veq = 81, Heq = 24, Req = 13, Meq = 0,
         # Initial states
-        N = 343000, D = 114000, P = 4300, V = 81, H = 24,  R = 13, M = 0,
+        N0 = NULL, D0 = NULL, P0 = NULL, V0 = NULL, H0 = NULL, R0 = NULL, M0 = NULL,
         # Inputs
         iN = 1000,
         # Loss rates from systems
@@ -21,13 +23,15 @@ web <- R6Class(
         mP = NA, mD = NA, mV = 0.1, mH = 0.1, mR = 0.1, mM = 0.5,
         # Carying Capacities
         kP = 8000, 
-        kV = 162, kH = 48, kR = 26,  # comment for model B
+        kV = 162, kH = 48, kR = 26,  # only for model A
         # # Handling times
-        # hP = 1, hD = 1, hR = 1,    # uncomment for model B
+        hP = 1, hD = 1, hR = 1,      # only for model B
         # Uptake rates
         aNP = NA, aDV = NA, aPH = NA, aR = NA,
         # Midge function (have to wrap inside a list bc it's unchangeable otherwise)
         iM_func = list(function(t) 0),
+        # Model A or B
+        model = 'A',
         
         initialize = function(..., do_solve = TRUE, initial_vals = rep(0.1, 6)) {
             
@@ -42,6 +46,10 @@ web <- R6Class(
                             stop("parameter iM_func must be a function with the only ",
                                  "argument being 't'")
                         }
+                    } else if (names(pars)[i] == 'model') {
+                        if (! pars[[i]] %in% LETTERS[1:2]) {
+                            stop("model must be 'A' or 'B'")
+                        }
                     } else if (!is.na(pars[[i]]) & !is.numeric(pars[[i]])) {
                         stop("parameter ", names(pars)[i], " is not either NA or numeric, ",
                              "as is required")
@@ -52,6 +60,13 @@ web <- R6Class(
             defaults = private$par_list()
             pars[names(defaults)[!names(defaults) %in% names(pars)]] = 
                 defaults[!names(defaults) %in% names(pars)]
+            # If an initial state is NULL, use that pool's equilibrium value
+            sv = private$pool_names()
+            for (s in sv) {
+                if (is.null(pars[[paste0(s, '0')]])) {
+                    pars[[paste0(s, '0')]] = pars[[paste0(s, 'eq')]]
+                }
+            }
             
             # Checking for too many unknown values
             if (length(pars[is.na(pars)]) != 6 & do_solve) {
@@ -68,6 +83,7 @@ web <- R6Class(
             }
             
             if (do_solve) {
+                
                 start = initial_vals
                 names(start) = names(pars)[is.na(pars)]
                 
@@ -121,19 +137,47 @@ web <- R6Class(
             
             parms = private$par_list()
             
-            init = unlist(parms[c("N", "D", "P", "V", "H", "R", "M")])
+            init = unlist(parms[paste0(private$pool_names(), '0')])
+            names(init) = private$pool_names()
             
             solved_ode = ode(init, seq(tmin,tmax,tstep), private$diff_eq, parms)
             solved_ode = as_tibble(as.data.frame(solved_ode))
             
             return(solved_ode)
             
-        }  #,
+        },
         
         
-        # print = function(...) {
-        #     cat('Yup, foodweb from Myvatn.\n')
-        # }
+        print = function(...) {
+            cat('<< Class web >>\n')
+            cat('< Foodweb model', self$model, '>\n')
+            cat('Nutrient pools: \n')
+            cat('  - N: soil (plant-available) \n')
+            cat('  - D: detritus \n')
+            cat('  - P: plants \n')
+            cat('  - V: detritivores \n')
+            cat('  - H: herbivores \n')
+            cat('  - R: predators \n')
+            cat('  - M: midges \n')
+            
+            cat('\nParameters used in model:\n')
+            cat('  - X0: starting value for pool X\n')
+            cat('  - Xeq: desired equilibrium value for pool X\n')
+            cat('  - iN: input to soil nutrient pool\n')
+            cat('  - lX: loss rates from system from pool X (X: D,P,V,H,R,M)\n')
+            cat('  - mX: loss rates from pool X, returned to either N or D\n',
+                '   (X: D,P,V,H,R,M)\n')
+            if (self$model == 'A') {
+                cat('  - kX: carrying capacities for pool X (X: P,V,H,R)\n')
+            } else {
+                cat('  - kX: carrying capacities for pool X (X: P)\n')
+                cat('  - hX: handling time for pool X (X: P,D,R)\n')
+                
+            }
+            cat('  - aNP: maximum uptake rate from pool X to pool Y (XY: NP, CV, PH)\n')
+            cat('  - aR: maximum uptake rate to predators; same value for V,H,M\n')
+            cat('  - iM_func: function for midge input at time t\n')
+        }
         
     ),
     
@@ -152,22 +196,36 @@ web <- R6Class(
             all_params[names(start)] = as.list(start)
             
             # Pass parameters to dynamic equations
-            output = with(all_params,
-                          c(sN = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D,
-                            sD = (1-lP)*mP*P + (1-lV)*mV*V + (1-lH)*mH*H + (1-lR)*mR*R - 
-                                aDV*D*V*(1-V/kV) - mD*D, 
-                            sP = aNP*N*P*(1-P/kP) - aPH*P*H*(1-H/kH) - mP*P,
-                            sV = aDV*D*V*(1-V/kV) - (aR*V*R)*(1-R/kR) - mV*V,
-                            sH = aPH*P*H*(1-H/kH) - (aR*H*R)*(1-R/kR) - mH*H,
-                            sR = (aR*V*R + aR*H*R)*(1-R/kR) - mR*R
-                          ))
+            if (self$model == 'A') {
+                output = with(all_params,
+                              c(sN = iN - aNP*Neq*Peq*(1-Peq/kP) + (1-lD)*mD*Deq,
+                                sD = (1-lP)*mP*Peq + (1-lV)*mV*Veq + (1-lH)*mH*Heq + 
+                                    (1-lR)*mR*Req - aDV*Deq*Veq*(1-Veq/kV) - mD*Deq, 
+                                sP = aNP*Neq*Peq*(1-Peq/kP) - aPH*Peq*Heq*(1-Heq/kH) - mP*Peq,
+                                sV = aDV*Deq*Veq*(1-Veq/kV) - (aR*Veq*Req)*(1-Req/kR) - mV*Veq,
+                                sH = aPH*Peq*Heq*(1-Heq/kH) - (aR*Heq*Req)*(1-Req/kR) - mH*Heq,
+                                sR = (aR*Veq*Req + aR*Heq*Req)*(1-Req/kR) - mR*Req
+                              ))
+            } else {
+                output = with(all_params,
+                              c(sN = iN - aNP*Neq*Peq*(1-Peq/kP) + (1-lD)*mD*Deq,
+                                sD = (1-lP)*mP*Peq + (1-lV)*mV*Veq + (1-lH)*mH*Heq + 
+                                    (1-lR)*mR*Req - aDV*Deq*Veq/(1+aDV*hD*Deq) - mD*Deq, 
+                                sP = aNP*Neq*Peq*(1-Peq/kP) - aPH*Peq*Heq/(1+aPH*hP*Peq) - mP*Peq,
+                                sV = aDV*Deq*Veq/(1+aDV*hD*Deq) - (aR*Veq*Req)/(1+aR*hR*(Veq+Heq)) - 
+                                    mV*Veq,
+                                sH = aPH*Peq*Heq/(1+aPH*hP*Peq) - (aR*Heq*Req)/(1+aR*hR*(Veq+Heq)) - 
+                                    mH*Heq,
+                                sR = (aR*Veq*Req + aR*Heq*Req)/(1+aR*hR*(Veq+Heq)) - mR*Req
+                              ))
+            }
             
             return(output)
             
         },
         
-        
-        par_names = function() {
+        # State variable parameter names
+        pool_names = function() {
             c(
                 "N",
                 "D",
@@ -175,7 +233,27 @@ web <- R6Class(
                 "V",
                 "H",
                 "R",
-                "M",
+                "M"
+            )
+        },
+        
+        # All variable names
+        par_names = function() {
+            c(
+                "Neq",
+                "Deq",
+                "Peq",
+                "Veq",
+                "Heq",
+                "Req",
+                "Meq",
+                "N0",
+                "D0",
+                "P0",
+                "V0",
+                "H0",
+                "R0",
+                "M0",
                 "iN",
                 "lD",
                 "lP",
@@ -190,17 +268,18 @@ web <- R6Class(
                 "mR",
                 "mM",
                 "kP",
-                "kV",    # comment for model B
-                "kH",    # comment for model B
-                "kR",    # comment for model B
-                # "hP",  # uncomment for model B
-                # "hD",  # uncomment for model B
-                # "hR",  # uncomment for model B
+                "kV",    # only for model A
+                "kH",    # only for model A
+                "kR",    # only for model A
+                "hP",    # only for model B
+                "hD",    # only for model B
+                "hR",    # only for model B
                 "aNP",
                 "aDV",
                 "aPH",
                 "aR",
-                "iM_func"
+                "iM_func",
+                "model"
             )
         },
         
@@ -234,21 +313,42 @@ web <- R6Class(
         # Define differential equations
         diff_eq = function(t, y, parms) {
             
-            iM = with(parms, iM_func(t))
+            iM = parms$iM_func(t)
             
-            output = 
-                with(as.list(parms), 
-                     with(as.list(y), 
-                          {
-                              c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D,
-                                D = (1-lP)*mP*P + (1-lV)*mV*V + (1-lH)*mH*H + (1-lR)*mR*R + 
-                                    (1 - lM)*mM*M - aDV*D*V*(1-V/kV) - mD*D, 
-                                P = aNP*N*P*(1-P/kP) - aPH*P*H*(1-H/kH) - mP*P,
-                                V = aDV*D*V*(1-V/kV) - (aR*V*R)*(1-R/kR) - mV*V,
-                                H = aPH*P*H*(1-H/kH) - (aR*H*R)*(1-R/kR) - mH*H,
-                                R = (aR*V*R + aR*H*R + 0.5*aR*M*R)*(1-R/kR) - mR*R,
-                                M = iM - mM*M - (0.5*aR*M*R)*(1-R/kR))
-                          }))
+            if (self$model == 'A') {
+                output = 
+                    with(as.list(parms), 
+                         with(as.list(y), 
+                              {
+                                  c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D,
+                                    D = (1-lP)*mP*P + (1-lV)*mV*V + (1-lH)*mH*H + 
+                                        (1-lR)*mR*R + (1 - lM)*mM*M - aDV*D*V*(1-V/kV) - 
+                                        mD*D, 
+                                    P = aNP*N*P*(1-P/kP) - aPH*P*H*(1-H/kH) - mP*P,
+                                    V = aDV*D*V*(1-V/kV) - (aR*V*R)*(1-R/kR) - mV*V,
+                                    H = aPH*P*H*(1-H/kH) - (aR*H*R)*(1-R/kR) - mH*H,
+                                    R = (aR*V*R + aR*H*R + 0.5*aR*M*R)*(1-R/kR) - mR*R,
+                                    M = iM - mM*M - (0.5*aR*M*R)*(1-R/kR))
+                              }))
+            } else {
+                output = 
+                    with(as.list(parms),
+                         with(as.list(y),
+                              {
+                                  c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D,
+                                    D = (1-lP)*mP*P + (1-lV)*mV*V + (1-lH)*mH*H + 
+                                        (1-lR)*mR*R + (1-lM)*mM*M - 
+                                        aDV*D*V/(1+aDV*hD*D) - mD*D, 
+                                    P = aNP*N*P*(1-P/kP) - aPH*P*H/(1+aPH*hP*P) - mP*P,
+                                    V = aDV*D*V/(1+aDV*hD*D) - 
+                                        (aR*V*R)/(1+aR*hR*(V+H+M)) - mV*V,
+                                    H = aPH*P*H/(1+aPH*hP*P) - 
+                                        (aR*H*R)/(1+aR*hR*(V+H+M)) - mH*H,
+                                    R = (aR*V*R + aR*H*R + aR*M*R)/(1+aR*hR*(V+H+M)) - 
+                                        mR*R,
+                                    M = iM - mM*M - (aR*M*R)/(1+aR*hR*(V+H+M)))
+                              }))
+            }
             
             return(list(output))
         }

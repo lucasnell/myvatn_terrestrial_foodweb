@@ -8,23 +8,31 @@ library(deSolve)
 
 
 
-source('Define_Model_A.R')
+# source('Define_Model_A.R')
+# source('Define_Model_B.R')
 source('aaa-class.R')
 
+# (Model A is the default)
+foodweb_A = web$new()
+# Viewing class:
+foodweb_A
 
-foodweb <- web$new()
-foodweb$iM_func <- list(
+# How you change midge function (make sure to wrap it in a list):
+foodweb_A$iM_func = list(
     function(t) {
         pulse=500; pulse_tmin=100; pulse_tmax=150
         ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0)
     }
 )
-foodweb$re_solve()
-zz <- foodweb$ode_solve(tmin = 0, tmax = 1000, tstep = 1)
+output_A = foodweb_A$ode_solve(tmin = 0, tmax = 1000, tstep = 1)
 
 
+foodweb_B = foodweb_A$clone()  # use clone to keep from modifying foodweb_A
+foodweb_B$model = 'B'
+foodweb_B$iN = 10  # this parameter was set differently from model A
+foodweb_B$re_solve()  # re-solve for unknown parameters
+output_B = foodweb_B$ode_solve(tmin = 0, tmax = 1000, tstep = 1)
 
-# source('Define_Model_B.R')
 
 # options("device" = "quartz"); graphics.off()
 
@@ -134,3 +142,16 @@ output %>%
   geom_hline(yintercept = 1, color="firebrick4") +
   geom_line(size = 1) +
   theme_classic()
+
+# Comparing results
+output_A %>%
+    gather('pool', 'biomass', -time) %>%
+    filter(pool!="M") %>%
+    group_by(pool) %>%
+    # Scale the biomass relative to the initial state
+    mutate(biomass_scale = biomass/biomass[1]) %>%
+    ggplot(aes(time, biomass_scale)) +
+    facet_wrap(~pool) + 
+    geom_hline(yintercept = 1, color="firebrick4") +
+    geom_line(size = 1, color = 'dodgerblue') +
+    theme_classic()
