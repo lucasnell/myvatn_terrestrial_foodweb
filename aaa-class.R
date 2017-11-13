@@ -18,7 +18,7 @@ web <- R6Class(
         # Loss rates from systems
         lD = 0.1, lP = 0.1, lV = 0.1, lH = 0.1, lR = 0.1, lM = 0.1,
         # Loss rates from pool (returned to either N or D)
-        mP = NA, mD = NA, mV = 0.1, mH = 0.1, mR = 0.1, mM = 0.5,
+        mN = NA, mP = NA, mD = 0.1, mV = 0.1, mH = 0.1, mR = 0.1, mM = 0.5,
         # Carying Capacities
         kP = 8000, 
         kV = 162, kH = 48, kR = 26,  # only for model A
@@ -71,13 +71,13 @@ web <- R6Class(
                 stop("cannot solve for unknown parameters when the number of unknown ",
                      "(i.e., NA) parameters is != 6; ",
                      "by default the following are NA: ",
-                     "mP, mD, aNP, aDV, aPH, and aR")
+                     "mN, mP, aNP, aDV, aPH, and aR")
             }
             if (length(pars[is.na(pars)]) > 0 & !do_solve) {
                 stop("if not solving for unknown parameters, you cannot have any ",
                      "parameters as NA; ",
                      "by default the following are NA: ",
-                     "mP, mD, aNP, aDV, aPH, and aR")
+                     "mN, mP, aNP, aDV, aPH, and aR")
             }
             
             # Use estimated equilibrium biomass and selected values for certain 
@@ -104,7 +104,7 @@ web <- R6Class(
         },
         
         
-        re_solve = function(solve_pars = c("mP", "mD", "aNP", "aDV", "aPH", "aR"),
+        re_solve = function(solve_pars = c("mN", "mP", "aNP", "aDV", "aPH", "aR"),
                             initial_vals = rep(0.1, 6)) {
             
             stopifnot(length(solve_pars) == 6, length(initial_vals) == 6)
@@ -171,7 +171,7 @@ web <- R6Class(
             cat('  - iN: input to soil nutrient pool\n')
             cat('  - lX: loss rates from system from pool X (X: D,P,V,H,R,M)\n')
             cat('  - mX: loss rates from pool X, returned to either N or D\n',
-                '   (X: D,P,V,H,R,M)\n')
+                '   (X: N,D,P,V,H,R,M)\n')
             if (self$model == 'A') {
                 cat('  - kX: carrying capacities for pool X (X: P,V,H,R)\n')
             } else {
@@ -203,7 +203,7 @@ web <- R6Class(
             # Pass parameters to dynamic equations
             if (self$model == 'A') {
                 output = with(all_params,
-                              c(sN = iN - aNP*Neq*Peq*(1-Peq/kP) + (1-lD)*mD*Deq,
+                              c(sN = iN - aNP*Neq*Peq*(1-Peq/kP) + (1-lD)*mD*Deq - mN*Neq,
                                 sD = (1-lP)*mP*Peq + (1-lV)*mV*Veq + (1-lH)*mH*Heq + 
                                     (1-lR)*mR*Req - aDV*Deq*Veq*(1-Veq/kV) - mD*Deq, 
                                 sP = aNP*Neq*Peq*(1-Peq/kP) - aPH*Peq*Heq*(1-Heq/kH) - mP*Peq,
@@ -213,7 +213,7 @@ web <- R6Class(
                               ))
             } else {
                 output = with(all_params,
-                              c(sN = iN - aNP*Neq*Peq*(1-Peq/kP) + (1-lD)*mD*Deq,
+                              c(sN = iN - aNP*Neq*Peq*(1-Peq/kP) + (1-lD)*mD*Deq - mN*Neq,
                                 sD = (1-lP)*mP*Peq + (1-lV)*mV*Veq + (1-lH)*mH*Heq + 
                                     (1-lR)*mR*Req - aDV*Deq*Veq/(1+aDV*hD*Deq) - mD*Deq, 
                                 sP = aNP*Neq*Peq*(1-Peq/kP) - aPH*Peq*Heq/(1+aPH*hP*Peq) - mP*Peq,
@@ -266,6 +266,7 @@ web <- R6Class(
                 "lH",
                 "lR",
                 "lM",
+                "mN",
                 "mP",
                 "mD",
                 "mV",
@@ -325,7 +326,7 @@ web <- R6Class(
                     with(as.list(parms), 
                          with(as.list(y), 
                               {
-                                  c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D,
+                                  c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D - mN*N,
                                     D = (1-lP)*mP*P + (1-lV)*mV*V + (1-lH)*mH*H + 
                                         (1-lR)*mR*R + (1 - lM)*mM*M - aDV*D*V*(1-V/kV) - 
                                         mD*D, 
@@ -340,7 +341,7 @@ web <- R6Class(
                     with(as.list(parms),
                          with(as.list(y),
                               {
-                                  c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D,
+                                  c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D - mN*N,
                                     D = (1-lP)*mP*P + (1-lV)*mV*V + (1-lH)*mH*H + 
                                         (1-lR)*mR*R + (1-lM)*mM*M - 
                                         aDV*D*V/(1+aDV*hD*D) - mD*D, 
@@ -356,6 +357,16 @@ web <- R6Class(
             }
             
             return(list(output))
+        }
+        
+    ),
+    
+    active = list(
+        
+        initial_states = function(){
+            data.frame(pool=c("N","D","V","P","H","R","M"), 
+                       biomass = self %>% with(c(N0,D0,V0,P0,H0,R0,M0))
+                       )
         }
         
     )
