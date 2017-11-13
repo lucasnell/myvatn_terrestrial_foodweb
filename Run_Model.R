@@ -49,66 +49,120 @@ source('aaa-class.R')
 
 
 
-# (Model A is the default)
+# ======================================
+# Model A
+# ======================================
+
+#Initialize model (A is default)
 foodweb_A = web$new()
+
 # Viewing class:
 foodweb_A
 
-# Create function for time-varying midge pulse (make sure to wrap it in a list):
+# Create function for time-varying midge pulse (make sure to wrap it in a list)
+# pulse is the instantaneous rate of midge input over the specified time frame
+# pulse_tmin and pulse_tmax define the duration over which the midge pulse occurs
 foodweb_A$iM_func = list(
     function(t) {
-        # pulse is the instantaneous rate of midge input over the specified time frame
-        # pulse_tmin and pulse_tmax define the duration over which the midge pulse occurs
         pulse=500; pulse_tmin=100; pulse_tmax=150
         ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0)
     }
 )
+
+#Solve ODEs
 output_A = foodweb_A$ode_solve(tmin = 0, tmax = 1000, tstep = 1)
-
-
-foodweb_B = foodweb_A$clone()  # use clone to keep from modifying foodweb_A
-foodweb_B$model = 'B'
-foodweb_B$iN = 10  # this parameter was set differently from model A
-foodweb_B$re_solve()  # re-solve for unknown parameters
-output_B = foodweb_B$ode_solve(tmin = 0, tmax = 1000, tstep = 1)
-
-
-
-
 
 # Plot
 # Absolute biomass
 output_A  %>%
-  gather('pool', 'biomass', -time) %>%
-  group_by(pool) %>%
-  # Define 'minb' to set the minimum value for the y-axis. 
-  # This allows different y-scales for different facets, with the ymin set to 0 
-  mutate(minb = 0) %>%
-  ggplot(aes(time, biomass)) +
-  facet_wrap(~pool, scales="free_y") + 
-  # The horizontal lines show the initial states
-  geom_hline(data = initial_states %>% t %>% tbl_df %>% 
-               gather('pool','biomass'),
-             aes(yintercept=biomass), color="firebrick") +
-  geom_line(size = 1) +
-  geom_point(aes(time, minb), shape="") +
-  theme_classic()
+    gather('pool', 'biomass', -time) %>%
+    group_by(pool) %>%
+    # Define 'minb' to set the minimum value for the y-axis. 
+    # This allows different y-scales for different facets, with the ymin set to 0 
+    mutate(minb = 0) %>%
+    ggplot(aes(time, biomass)) +
+    facet_wrap(~pool, scales="free_y") + 
+    # The horizontal lines show the initial states
+    geom_hline(data = foodweb_A$initial_states, 
+               aes(yintercept=biomass), color="firebrick") +
+    geom_line(size = 1) +
+    geom_point(aes(time, minb), shape="") +
+    theme_classic()
 
 
 
 # Relative to Equilibrium
-# Note that this gives funny results when there is supposed to be no change, due to 
-# tiny fluctuations about equilibrium, presumably due to numerical errors. I bet this 
-# would go away if the step size was diminished, although I don't think its all that 
-# important.
-outpu_A %>%
-  gather('pool', 'biomass', -time) %>%
-  filter(pool!="M") %>%
-  group_by(pool) %>%
-  # Scale the biomass relative to the initial state
-  mutate(biomass_scale = biomass/biomass[1]) %>%
-  ggplot(aes(time, biomass_scale)) +
-  facet_wrap(~pool) + 
-  geom_hline(yintercept = 1, color="firebrick4") +
-  geom_line(size = 1) +
-  theme_classic()
+# Note that this gives weird results when there is no deviation from equilibrium
+# This is probably due to small numerical errors, but is not a big issue
+output_A %>%
+    gather('pool', 'biomass', -time) %>%
+    filter(pool!="M") %>%
+    group_by(pool) %>%
+    # Scale the biomass relative to the initial state
+    mutate(biomass_scale = biomass/biomass[1]) %>%
+    ggplot(aes(time, biomass_scale)) +
+    facet_wrap(~pool) + 
+    geom_hline(yintercept = 1, color="firebrick4") +
+    geom_line(size = 1) +
+    theme_classic()
+
+
+
+
+
+# ======================================
+# Model A
+# ======================================
+
+#Initialize model (specify model B)
+foodweb_B = web$new(model='B')
+
+# Viewing class:
+foodweb_B
+
+# Create function for time-varying midge pulse (make sure to wrap it in a list)
+# Changed midge pulse relative to above to give less volatile dynamics
+foodweb_B$iM_func = list(
+    function(t) {
+        pulse=0.1; pulse_tmin=100; pulse_tmax=150
+        ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0)
+    }
+)
+
+#Solve ODEs
+output_B = foodweb_B$ode_solve(tmin = 0, tmax = 1000, tstep = 1)
+
+# Plot
+# Absolute biomass
+output_B  %>%
+    gather('pool', 'biomass', -time) %>%
+    group_by(pool) %>%
+    # Define 'minb' to set the minimum value for the y-axis. 
+    # This allows different y-scales for different facets, with the ymin set to 0 
+    mutate(minb = 0) %>%
+    ggplot(aes(time, biomass)) +
+    facet_wrap(~pool, scales="free_y") + 
+    # The horizontal lines show the initial states
+    geom_hline(data = foodweb_A$initial_states, 
+               aes(yintercept=biomass), color="firebrick") +
+    geom_line(size = 1) +
+    geom_point(aes(time, minb), shape="") +
+    theme_classic()
+
+
+
+# Relative to Equilibrium
+# Note that this gives weird results when there is no deviation from equilibrium
+# This is probably due to small numerical errors, but is not a big issue
+output_B %>%
+    gather('pool', 'biomass', -time) %>%
+    filter(pool!="M") %>%
+    group_by(pool) %>%
+    # Scale the biomass relative to the initial state
+    mutate(biomass_scale = biomass/biomass[1]) %>%
+    ggplot(aes(time, biomass_scale)) +
+    facet_wrap(~pool) + 
+    geom_hline(yintercept = 1, color="firebrick4") +
+    geom_line(size = 1) +
+    theme_classic()
+
