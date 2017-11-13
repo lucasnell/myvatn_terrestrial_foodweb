@@ -111,7 +111,7 @@ output_A %>%
 
 
 # ======================================
-# Model A
+# Model B
 # ======================================
 
 #Initialize model (specify model B)
