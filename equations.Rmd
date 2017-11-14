@@ -52,7 +52,7 @@ $$
 \frac{dP}{dt} &= a_{NP} N P (1-P/k_P) - \frac{a_{PH} P H}{1+a_{PH} h_P P} - m_P P \\
 \frac{dV}{dt} &= \frac{a_{DV} D V}{1+a_{DV} h_D D} - \frac{a_R V R}{1+a_R h_R (V+H+M)} - m_V V \\
 \frac{dH}{dt} &= \frac{a_{PH} P H}{1+a_{PH} h_P P} - \frac{a_R H R}{1+a_R h_R (V+H+M)} - m_H H \\
-\frac{dR}{dt} &= \frac{a_R V R + a_R H R + a_R M R}{1+a_R hR (V+H+M)} - m_R R \\
+\frac{dR}{dt} &= \frac{a_R V R + a_R H R + a_R M R}{1+a_R h_R (V+H+M)} - m_R R \\
 \frac{dM}{dt} &= i_M - m_M M - \frac{a_R M R}{1+a_R h_R (V+H+M)} \\
 \end{aligned}
 $$
