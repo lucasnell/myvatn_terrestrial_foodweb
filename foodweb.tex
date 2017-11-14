@@ -1,0 +1,81 @@
+\title{Modeling foodweb response to midge input in Mytvan}
+\author{}
+\date{\today}
+
+\documentclass[12pt]{article}
+\usepackage[a4paper, total={6.5in, 8in}]{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{bbm}
+\usepackage[english]{babel}
+\usepackage[para,online,flushleft]{threeparttable}
+\usepackage{booktabs} 
+\usepackage{rotating}
+\usepackage[singlelinecheck=false]{caption}
+
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
+
+\begin{document}
+\maketitle
+
+\section{Model description} % (fold)
+\label{sec:model_description}
+
+% section model_description (end)
+We constructed a simple model to track the change in nitrogen content among six components.
+At time $t$, the nitrogen pool is denoted by $N(t)$.
+The nitrogen content in the detritus, plants, detrivores, herbivores, predators, and midges are denoted by $D(t), P(t), V(t), H(t), R(t)$, and $M(t)$, respectively.
+Hereon, we omit the time notation for simplicity.
+
+For all consumers but the plants, they follow a Holling type II functional response, i.e.,
+\begin{equation}
+  	\label{eq:Holling_II}
+  	f(X) = a_X X \frac{Y}{1 + a_X h_X Y},
+  \end{equation}  
+where $X$ is the density of consumer, $Y$ the density of prey, $a_X$ and $h_X$ the attack rate and handling time of the consumer.
+For the plants, we instead assume a logistic consumption, i.e.,
+\begin{equation}
+	\label{eq:Logistic}
+	f(P) = a_P P N (1 - \frac{P}{K_p}),
+\end{equation}
+where $K_P$ is the carrying capacity of the plants.
+
+We also assume that nitrogen is lost within each component at component-specific rate $m_X$ (replace the $X$ by the actual notation of each component). 
+Only fraction a $1- l_X$ of component returns to the detritus, and thus $l_X$ is lost outside the system. 
+Note that a fraction $1 - l_D$ moves from the detritus to the nitrogen pool.
+Finally, a constant input of nitrogen is added and is denoted by $i_N$ and and a pulse of midge is added at a rate $i_M$.
+Putting all these assumptions, the change in nitrogen content in each pool is 
+
+\begin{eqnarray*}
+	\begin{cases}
+		\displaystyle{\frac{\strut dN}{ \strut dt}}&= i_N  - a_P N P(1- \frac{P}{K_P}) + (1 - l_D) m_D D - m_N N \\ 
+		\displaystyle{\frac{\strut dD}{\strut dt}} &= (1 - l_P) m_P P  + (1 - l_V) m_V V + (1 - l_H) m_H H + (1 - l_R) m_R R + (1 - l_M) m_M M -\\ 
+			&\frac{a_V V D}{1 + aV hV D} - m_D D \\ 
+		\displaystyle{\frac{\strut dP}{\strut dt}} &= a_P N P(1- \frac{P}{K_P}) - \frac{a_H H P}{1 + a_H h_H P} - m_P P \\
+		\displaystyle{\frac{\strut dV}{\strut dt}} &= \frac{a_V V D}{1 + a_V h_V D} - \frac{a_R R V}{1 + a_R h_R (V + H + M)} - m_V V \\
+		\displaystyle{\frac{\strut dH}{\strut dt}} &= \frac{a_H H P}{1 + a_H h_H P} - \frac{a_R R H}{1 + a_R h_R (V + H + M)} - m_H H \\
+		\displaystyle{\frac{\strut dR}{\strut dt}} &= \frac{a_R R (V + H + M)}{1 + a_R h_R (V + H + M)} - m_R R \\
+		\displaystyle{\frac{\strut dM}{\strut dt}} &=  i_M - \frac{a_R R M}{1 + a_R h_R (V + H + M)} - m_M M
+	\end{cases}
+\end{eqnarray*}
+
+\section{Model parameters} % (fold)
+\label{sec:model_parameters}
+\begin{sidewaystable}
+	\centering \ra{1.3}
+	\caption{Parameter values}
+	\begin{tabular}{@{}clllllll@{}}\toprule
+	  & Nitrogen (N) & Detritus(D) &  Plants (P) & Detrivores (V) & Herbivores (H) & Predators (R) & Midge (M)\\ 
+	  \midrule
+	  $t = 0$ &  343000 & 114000 & 4300 & 81 & 24 & 13 & ??\\
+	  $ m_.$ & ?? & ?? & ?? & ?? & ?? & ?? & ??\\
+	  $a_.$ & N.A. & ?? & ?? & ?? & ?? & ?? & N.A. \\
+	  $h_.$ & N.A. & ?? & N.A. & ?? & ?? & ?? & N.A.\\
+	  $i_.$ & ?? & N.A. & N.A. & N.A. & N.A. & N.A. & ??\\
+	  $K_.$ & N.A. & N.A. & ?? & N.A. & N.A. & N.A. & N.A.\\
+	  \bottomrule
+	\end{tabular}
+\end{sidewaystable}
+
+% section model_parameters (end)
+\end{document}
