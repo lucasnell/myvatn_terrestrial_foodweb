@@ -19,42 +19,13 @@ source('aaa-class.R')
 
 
 
-# Both models A and B are very similar to the translations of Tony's discrete time 
-# formulation into ODEs that we worked with last week. The key difference is that 
-# nutrients can be lost from the system directly from each pool, rather than only being 
-# lost from the nutrients. This made the model much more stable, and is more realistic. 
-# It also matches the way in which nutrient-dynamic models have been formulated by others.  
-
-# Version A retains the original structure of direct density dependence for P, V, H, 
-# and R. Version B only includes direct density dependence for P, while V, H, and R 
-# have saturating functional responses. As you'll see, A is very stable, while B is 
-# rather unstable (although better than before). That said, I think B makes more 
-# mechanistic sense (and is more conventional for consumer-resource type models). 
-# Something like A is probably more suitable for our purposes, although there may be 
-# some modifications we can make to B to balance plausibility and stability
-
-# Version A is very nicely behaved. For a variety of pulse values, most pools increase 
-# slightly in response to midge inputs, although R increases a lot. Everything then 
-# returns to equilibrium. One interesting question is whether changing the 'internal' 
-# parameters of the system (e.g. attack rates or loss rates) can shift which trophic 
-# levels respond most strongly.
-
-# Version B is quite unstable, although better behaved than the original model. With 
-# the midge pulse set to 500, R explodes and drives H, V, and eventually itself extinct. 
-# If you set pulse to 1, you get oscillations that appear to expand in amplitude 
-# indefinitely. If you set pulse to 100, then you get something in between and rather 
-# unpredictable.
-
-
-
-
 
 # ======================================
 # Model A
 # ======================================
 
 #Initialize model (A is default)
-foodweb_A = web$new()
+foodweb_A = web$new(model="A")
 
 # Viewing class:
 foodweb_A
@@ -124,7 +95,7 @@ foodweb_B
 # Changed midge pulse relative to above to give less volatile dynamics
 foodweb_B$iM_func = list(
     function(t) {
-        pulse=0.1; pulse_tmin=100; pulse_tmax=150
+        pulse=0.01; pulse_tmin=100; pulse_tmax=150
         ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0)
     }
 )
