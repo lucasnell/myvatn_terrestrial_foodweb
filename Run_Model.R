@@ -17,6 +17,32 @@ library(R6)
 
 source('aaa-class.R')
 
+iM_func = function(t) {
+        pulse=500; pulse_tmin=100; pulse_tmax=150 
+        ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0) 
+    }
+
+many_webs <- multi_web(list(Neq = seq(343000, 343500, 250), 
+                            Deq = seq(114000, 114100, 50), 
+                            iM_func = list(iM_func)), 
+                       expand = TRUE)
+many_outputs <- many_webs %>% 
+    lapply(function(w) w$ode_solve(tmin = 0, tmax = 1000, tstep = 1) %>% 
+               mutate(Neq = w$Neq, Deq = w$Deq)) %>% 
+    bind_rows
+
+many_outputs %>% 
+    gather('pool', 'biomass', -time, -Neq, -Deq) %>%
+    filter(pool != "M") %>%
+    group_by(pool, Neq, Deq) %>%
+    # Scale the biomass relative to the initial state
+    mutate(biomass_scale = biomass/biomass[1]) %>%
+    ungroup %>% 
+    ggplot(aes(time, biomass_scale, color = pool)) +
+    facet_grid(Deq ~ Neq, labeller = label_both) + 
+    geom_hline(yintercept = 1, color="firebrick4") +
+    geom_line(size = 1) +
+    theme_classic()
 
 
 
@@ -35,10 +61,11 @@ foodweb_A
 # pulse_tmin and pulse_tmax define the duration over which the midge pulse occurs
 foodweb_A$iM_func = list(
     function(t) {
-        pulse=500; pulse_tmin=100; pulse_tmax=150
-        ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0)
+        pulse=500; pulse_tmin=100; pulse_tmax=150 
+        ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0) 
     }
 )
+
 
 #Solve ODEs
 output_A = foodweb_A$ode_solve(tmin = 0, tmax = 1000, tstep = 1)

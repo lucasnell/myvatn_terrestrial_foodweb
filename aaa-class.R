@@ -407,3 +407,50 @@ web <- R6Class(
         
     )
 )
+
+
+
+
+multi_web <- function(par_list, expand = FALSE) {
+    
+    if (!expand) {
+        if (diff(range(sapply(par_list, length))) != 0) {
+            stop("input parameter list must have vectors of the same length", 
+                 "if `expand == FALSE`")
+        }
+        web_list <- lapply(1:length(par_list[[1]]), 
+                           function(i) {
+                               input_list <- lapply(par_list, function(x) x[[i]])
+                               new_web <- do.call(web$new, input_list)
+                               return(new_web)
+                           })
+    } else {
+        
+        par_df <- do.call(expand.grid, par_list[names(par_list) != 'iM_func'])
+        if ('iM_func' %in% names(par_list)) {
+            par_df_list <- lapply(1:length(par_list[['iM_func']]), 
+                   function(i) {
+                       par_df %>% 
+                           as_tibble %>% 
+                           mutate(iM_func = par_list[['iM_func']][i])
+                   })
+            par_df <- bind_rows(par_df_list)
+        }
+        
+        
+        web_list <- lapply(
+            1:nrow(par_df), 
+            function(i) {
+                input_list <- as.list(par_df[i,])
+                attr(input_list, 'out.attrs') <- NULL
+                if ('iM_func' %in% names(input_list)) {
+                    input_list[['iM_func']] <- input_list[['iM_func']][[1]]
+                }
+                new_web <- do.call(web$new, input_list)
+                return(new_web)
+            })
+    }
+    
+    return(web_list)
+}
+
