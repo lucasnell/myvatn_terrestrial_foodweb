@@ -36,8 +36,7 @@ web <- R6Class(
         # Model A or B
         model = 'A',
         
-        initialize = function(..., do_solve = TRUE, 
-                              initial_vals = rep(0.1, 6)) {
+        initialize = function(...) {
             
             # Checking types
             pars <- list(...)
@@ -79,53 +78,16 @@ web <- R6Class(
                 }
             }
             
-            # Checking for too many unknown values
-            if (length(pars[is.na(pars)]) != 6 & do_solve) {
-                stop("cannot solve for unknown parameters when the",
-                     "number of unknown ",
-                     "(i.e., NA) parameters is != 6; ",
-                     "by default the following are NA: ",
-                     "mP, mD, aNP, aDV, aPH, and aR")
-            }
-            if (length(pars[is.na(pars)]) > 0 & !do_solve) {
-                stop("if not solving for unknown parameters, you",
-                     "cannot have any ",
-                     "parameters as NA; ",
-                     "by default the following are NA: ",
-                     "mP, mD, aNP, aDV, aPH, and aR")
-            }
-            
-            # Use estimated equilibrium biomass 
-            # and selected values for certain 
-            # parameters to solve for unknown values
-            # "Known" parameters must be selected with care, 
-            # to ensure that an equilibrium solution can 
-            # actually be reached
-            if (do_solve) {
-                
-                start = initial_vals
-                names(start) = names(pars)[is.na(pars)]
-                
-                par_solve = multiroot(f = private$equil_solve, 
-                                      start = start, parms = pars,
-                                      maxiter = 100,
-                                      rtol = 1e-6, atol = 1e-8, 
-                                      ctol = 1e-8,
-                                      useFortran = TRUE, 
-                                      positive = TRUE, 
-                                      jacfunc = NULL,
-                                      jactype = "fullint", 
-                                      verbose = FALSE, bandup = 1,
-                                      banddown = 1)
-                
-                pars[names(par_solve$root)] = as.list(par_solve$root)
-            }
-            
             private$assign_list(pars)
         },
         
-        
-        re_solve = function(solve_pars = c("mP", "mD", "aNP", "aDV",
+        # Use estimated equilibrium biomass 
+        # and selected values for certain 
+        # parameters to solve for unknown values
+        # "Known" parameters must be selected with care, 
+        # to ensure that an equilibrium solution can 
+        # actually be reached
+        eq_solve = function(solve_pars = c("mP", "mD", "aNP", "aDV",
                                            "aPH", "aR"),
                             initial_vals = rep(0.1, 6)) {
             
@@ -136,8 +98,20 @@ web <- R6Class(
                      "present in this class.")
             }
             
+            cat("Solving for the following parameters:", 
+                paste(solve_pars, collapse = ", "), "\n")
+            
             pars = private$par_list()
             pars[solve_pars] = NA
+            
+            # Checking for too many unknown values
+            if (length(pars[is.na(pars)]) != 6) {
+                stop("cannot solve for unknown parameters when the ",
+                     "number of unknown ",
+                     "(i.e., NA) parameters is != 6; ",
+                     "the following are NA: ",
+                     paste(names(pars)[is.na(pars)], collapse = ", "))
+            }
             
             start = initial_vals
             names(start) = solve_pars
@@ -166,21 +140,34 @@ web <- R6Class(
         # tmin and tmax specify the duration over which to 
         # run the model
         # tstep specifies the step size
-        ode_solve = function(tmin, tmax, tstep){
+        ode_solve = function(tmax, tstep = 1){
             
-            # parms and init give the parameter values and 
+            # pars and init give the parameter values and 
             # initial states
-            parms = private$par_list()
+            pars = private$par_list()
             
-            init = unlist(parms[paste0(private$pool_names(), '0')])
+            # Checking for NA values
+            if (length(pars[is.na(pars)]) > 0) {
+                stop(sprintf("You still have the following NA parameters: %s.\n%s",
+                     paste(names(pars)[is.na(pars)], collapse = ", "),
+                     "Please solve for these using web$eq_solve() first."))
+            }
+            
+            init = unlist(pars[paste0(private$pool_names(), '0')])
             names(init) = private$pool_names()
             
-            solved_ode = ode(init, seq(tmin,tmax,tstep), 
-                             private$diff_eq, parms)
+            solved_ode = ode(init, seq(0, tmax, tstep), 
+                             private$diff_eq, pars)
             solved_ode = as_tibble(as.data.frame(solved_ode))
             
             return(solved_ode)
             
+        },
+        
+        
+        values = function() {
+            pn = private$par_list()
+            return(pn)
         },
         
         
@@ -281,6 +268,7 @@ web <- R6Class(
         # All variable names
         par_names = function() {
             c(
+                "model",
                 "Neq",
                 "Deq",
                 "Peq",
@@ -320,8 +308,7 @@ web <- R6Class(
                 "aDV",
                 "aPH",
                 "aR",
-                "iM_func",
-                "model"
+                "iM_func"
             )
         },
         
@@ -353,13 +340,13 @@ web <- R6Class(
         },
         
         # Define differential equations
-        diff_eq = function(t, y, parms) {
+        diff_eq = function(t, y, pars) {
             
-            iM = parms$iM_func(t)
+            iM = pars$iM_func(t)
             
             if (self$model == 'A') {
                 output = 
-                    with(as.list(parms), 
+                    with(as.list(pars), 
                          with(as.list(y), 
                               {
                                   c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D - mN*N,
@@ -374,7 +361,7 @@ web <- R6Class(
                               }))
             } else {
                 output = 
-                    with(as.list(parms),
+                    with(as.list(pars),
                          with(as.list(y),
                               {
                                   c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D - mN*N,
