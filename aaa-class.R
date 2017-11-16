@@ -10,7 +10,7 @@ web <- R6Class(
     public = list(
         
         # Desired equilibrium values
-        Neq = 343000, Deq = 114000, Peq = 4300, 
+        Neq = 34300, Deq = 308700, Peq = 4300, 
         Veq = 81, Heq = 24, Req = 13, Meq = 0,
         # Initial states
         N0 = NULL, D0 = NULL, P0 = NULL, V0 = NULL, 
