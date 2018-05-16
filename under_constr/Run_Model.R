@@ -5,11 +5,11 @@
 library(mtf)
 
 
-# The package has a `web` class that can implement either of two different 
+# The package has a `web` class that can implement either of two different
 # versions of the model (A and B).
-# Upon creating a `web` object, it solves for selected unknown parameters, given 
+# Upon creating a `web` object, it solves for selected unknown parameters, given
 # the 'known' parameters and equilibria.
-# It also includes an internal class function `ode_solve` that solves the ODEs. 
+# It also includes an internal class function `ode_solve` that solves the ODEs.
 
 
 
@@ -29,20 +29,11 @@ foodweb_A
 # Outputting class values:
 foodweb_A$values()
 
-
-# Create function for time-varying midge pulse (make sure to wrap it in a list)
-# pulse is the instantaneous rate of midge input over the specified time frame
-# pulse_tmin and pulse_tmax define the duration over which the midge pulse occurs
-foodweb_A$iM_func = list(
-    function(t) {
-        pulse=500; pulse_tmin=100; pulse_tmax=150 
-        ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0) 
-    }
-)
-
+# Test midge pulse:
+plot(foodweb_A$test_midges(1000, a=1000, b=1, r=1, w=400, d=1), type = 'l', ylab = "iM")
 
 # Solve ODEs
-output_A = foodweb_A$ode_solve(tmax = 1000)  %>%
+output_A = foodweb_A$ode_solve(tmax = 1000, a=1000, b=1, r=1, w=400, d=1)  %>%
     gather('pool', 'biomass', -time)  # %>%
     # mutate(pool = factor(pool, levels = c('D', 'H', 'N', 'P', 'R', 'V', 'M'),
     #                      labels = c('detritus', 'herbivores', 'N pool', 'plants',
@@ -52,13 +43,13 @@ output_A = foodweb_A$ode_solve(tmax = 1000)  %>%
 # Plot absolute biomass
 output_A  %>%
     group_by(pool) %>%
-    # Define 'minb' to set the minimum value for the y-axis. 
-    # This allows different y-scales for different facets, with the ymin set to 0 
+    # Define 'minb' to set the minimum value for the y-axis.
+    # This allows different y-scales for different facets, with the ymin set to 0
     mutate(minb = 0) %>%
     ggplot(aes(time, biomass)) +
-    facet_wrap(~pool, scales="free_y") + 
+    facet_wrap(~pool, scales="free_y") +
     # The horizontal lines show the initial states
-    geom_hline(data = foodweb_A$initial_states, 
+    geom_hline(data = foodweb_A$initial_states,
                aes(yintercept=biomass), color="firebrick") +
     geom_line(size = 1) +
     geom_point(aes(time, minb), shape="") +
@@ -75,7 +66,7 @@ output_A %>%
     # Scale the biomass relative to the initial state
     mutate(biomass_scale = biomass/biomass[1]) %>%
     ggplot(aes(time, biomass_scale)) +
-    facet_wrap(~pool) + 
+    facet_wrap(~pool) +
     geom_hline(yintercept = 1, color="firebrick4") +
     geom_line(size = 1) +
     theme_classic()
@@ -118,13 +109,13 @@ output_B = foodweb_B$ode_solve(tmax = 1000)
 output_B  %>%
     gather('pool', 'biomass', -time) %>%
     group_by(pool) %>%
-    # Define 'minb' to set the minimum value for the y-axis. 
-    # This allows different y-scales for different facets, with the ymin set to 0 
+    # Define 'minb' to set the minimum value for the y-axis.
+    # This allows different y-scales for different facets, with the ymin set to 0
     mutate(minb = 0) %>%
     ggplot(aes(time, biomass)) +
-    facet_wrap(~pool, scales="free_y") + 
+    facet_wrap(~pool, scales="free_y") +
     # The horizontal lines show the initial states
-    geom_hline(data = foodweb_A$initial_states, 
+    geom_hline(data = foodweb_A$initial_states,
                aes(yintercept=biomass), color="firebrick") +
     geom_line(size = 1) +
     geom_point(aes(time, minb), shape="") +
@@ -142,7 +133,7 @@ output_B %>%
     # Scale the biomass relative to the initial state
     mutate(biomass_scale = biomass/biomass[1]) %>%
     ggplot(aes(time, biomass_scale)) +
-    facet_wrap(~pool) + 
+    facet_wrap(~pool) +
     geom_hline(yintercept = 1, color="firebrick4") +
     geom_line(size = 1) +
     theme_classic()
@@ -160,38 +151,38 @@ output_B %>%
 
 # Define midge function
 iM_func = function(t) {
-    pulse=500; pulse_tmin=100; pulse_tmax=150 
-    ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0) 
+    pulse=500; pulse_tmin=100; pulse_tmax=150
+    ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0)
 }
 
 # Input a list containing vectors of values you want to use for webs
 # If `expand = FALSE`, then it provides `n` webs, where `n` is the length of each entry
 # in the input list (all vectors in the list must be the same length)
-# If `expand = TRUE`, then it provides a web for each combination of entries in the 
+# If `expand = TRUE`, then it provides a web for each combination of entries in the
 # parameter list
-many_webs <- multi_web(list(Neq = seq(343e3, 343e3 + 50e3, 25e3), 
-                            Deq = seq(114e3, 114e3 + 10e3, 5e3), 
-                            iM_func = list(iM_func)), 
+many_webs <- multi_web(list(Neq = seq(343e3, 343e3 + 50e3, 25e3),
+                            Deq = seq(114e3, 114e3 + 10e3, 5e3),
+                            iM_func = list(iM_func)),
                        expand = TRUE)
 # Solve for unknown values
 for (w in many_webs) w$eq_solve()
 
 # ODE solve, add columns for the parameters that differ, then combine
-many_outputs <- many_webs %>% 
-    lapply(function(w) w$ode_solve(tmax = 1000) %>% 
-               mutate(Neq = w$Neq, Deq = w$Deq)) %>% 
+many_outputs <- many_webs %>%
+    lapply(function(w) w$ode_solve(tmax = 1000) %>%
+               mutate(Neq = w$Neq, Deq = w$Deq)) %>%
     bind_rows
 
 # Plot
-many_outputs %>% 
+many_outputs %>%
     gather('pool', 'biomass', -time, -Neq, -Deq) %>%
     filter(pool != "M") %>%
     group_by(pool, Neq, Deq) %>%
     # Scale the biomass relative to the initial state
     mutate(biomass_scale = biomass/biomass[1]) %>%
-    ungroup %>% 
+    ungroup %>%
     ggplot(aes(time, biomass_scale, color = pool)) +
-    facet_grid(Deq ~ Neq, labeller = label_both) + 
+    facet_grid(Deq ~ Neq, labeller = label_both) +
     geom_hline(yintercept = 1, color="firebrick4") +
     geom_line(size = 1) +
     theme_classic()
