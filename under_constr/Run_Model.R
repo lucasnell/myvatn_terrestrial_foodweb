@@ -43,14 +43,13 @@ foodweb_A$iM_func = list(
 
 # Solve ODEs
 output_A = foodweb_A$ode_solve(tmax = 1000)  %>%
-    gather('pool', 'biomass', -time) %>%
-    mutate(pool = factor(pool, levels = c('D', 'H', 'N', 'P', 'R', 'V', 'M'),
-                         labels = c('detritus', 'herbivores', 'N pool', 'plants',
-                                    'predators', 'detritivores', 'midges')))
+    gather('pool', 'biomass', -time)  # %>%
+    # mutate(pool = factor(pool, levels = c('D', 'H', 'N', 'P', 'R', 'V', 'M'),
+    #                      labels = c('detritus', 'herbivores', 'N pool', 'plants',
+    #                                 'predators', 'detritivores', 'midges')))
 
 
-# Plot
-# Absolute biomass
+# Plot absolute biomass
 output_A  %>%
     group_by(pool) %>%
     # Define 'minb' to set the minimum value for the y-axis. 
