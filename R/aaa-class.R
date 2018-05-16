@@ -19,7 +19,7 @@
 #'
 #'
 #'
-#' @param ...
+#' @param ... Custom settings for any of the slots. See below for possible arguments.
 #' @param solve_pars A character vector of length 6 of the parameters that need to be
 #'     solved for. Defaults to \code{c("mP", "mD", "aNP", "aDV", "aPH", "aR")}.
 #' @param initial_vals Numeric vector of length 6 representing the initial guesses of

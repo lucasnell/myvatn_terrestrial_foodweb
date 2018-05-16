@@ -17,6 +17,8 @@ print(w)
 }
 }
 \arguments{
+\item{...}{Custom settings for any of the slots. See below for possible arguments.}
+
 \item{solve_pars}{A character vector of length 6 of the parameters that need to be
 solved for. Defaults to \code{c("mP", "mD", "aNP", "aDV", "aPH", "aR")}.}
 
