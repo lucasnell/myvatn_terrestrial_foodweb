@@ -18,10 +18,13 @@ library(mtf)
 # ======================================
 
 # Initialize model (A is default)
-foodweb_A = web$new(model="A")
+foodweb_A = web$new(model = "A")
 
 # Solve for unknown values
 foodweb_A$eq_solve()
+
+foodweb_A$R0 = 0
+foodweb_A$eq_solve(solve_pars = c("N0", "D0", "P0", "V0", "H0", "M0"))
 
 # Viewing class:
 foodweb_A
@@ -29,16 +32,17 @@ foodweb_A
 # Outputting class values:
 foodweb_A$values()
 
+
+
 # Test midge pulse:
-plot(foodweb_A$test_midges(1000, a=1000, b=1, r=1, w=400, d=1), type = 'l', ylab = "iM")
+plot(foodweb_A$test_midges(1000, a=1e9, b=10, r=400, w=40, d=1), type = 'l', ylab = "iM")
 
 # Solve ODEs
-output_A = foodweb_A$ode_solve(tmax = 1000, a=1000, b=1, r=1, w=400, d=1)  %>%
+output_A = foodweb_A$ode_solve(tmax = 1000, a=1e9, b=0, r=400, w=40, d=1)  %>%
     gather('pool', 'biomass', -time)  # %>%
     # mutate(pool = factor(pool, levels = c('D', 'H', 'N', 'P', 'R', 'V', 'M'),
     #                      labels = c('detritus', 'herbivores', 'N pool', 'plants',
     #                                 'predators', 'detritivores', 'midges')))
-
 
 # Plot absolute biomass
 output_A  %>%
@@ -57,6 +61,29 @@ output_A  %>%
 
 
 
+modA_out <- lapply(c(0, 10, 20, 40),
+       function(.b) {
+           foodweb_A$ode_solve(tmax = 1000, a=1e9, b=.b, r=400, w=40, d=1)  %>%
+               gather('pool', 'biomass', -time) %>%
+               mutate(b = .b)
+       }) %>%
+    bind_rows()
+
+modA_out %>%
+    mutate(b = factor(b)) %>%
+    filter(pool!="M") %>%
+    group_by(pool, b) %>%
+    # Scale the biomass relative to the initial state
+    mutate(biomass_scale = biomass/biomass[1]) %>%
+    ggplot(aes(time, biomass_scale, color = b)) +
+    facet_wrap(~pool, scales = 'free_y') +
+    # geom_hline(yintercept = 1, color="firebrick4") +
+    geom_line(size = 1) +
+    theme_classic() +
+    scale_x_continuous(breaks = c(0, 500, 1000))
+
+
+
 # Relative to Equilibrium
 # Note that this gives weird results when there is no deviation from equilibrium
 # This is probably due to small numerical errors, but is not a big issue
@@ -70,6 +97,7 @@ output_A %>%
     geom_hline(yintercept = 1, color="firebrick4") +
     geom_line(size = 1) +
     theme_classic()
+
 
 
 
