@@ -1,0 +1,76 @@
+---
+title: "Smooth Pulse"
+author: "Joe Phillips"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Smooth Pulse}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The pulse function for the ODE should be smooth and differentiable. To accomplish this, we can pass a sine-wave through a inverse logit function, constraining the pulse to be between 0 and 1, multiplied by a scalar to set the maximum of the the pulse. The sine wave can be reparameterized to allow easy control of the width and time between pulses, yielding:
+
+$$
+f(t) =  \beta~\frac{1~+~\text{exp}(-\alpha~+~\text{sin}(2 \pi(\frac{3}{4}-\frac{1}{3\rho})))}
+{1 + \text{exp}({\alpha~(\text{sin}(2\pi\frac{8t~-~8\delta~\omega~+~9\rho~\omega}{12\rho~\omega})-\text{sin}(2 \pi(\frac{3}{4}-\frac{1}{3\rho}))}))}
+$$
+where $t$ is time, $\beta$ is the maximum value of the pulse, $\omega$ is the width of the pulse, $r$ is the period of the pulse expressed in units of $1.5 \times\omega$ (so the pulses don't overlap), and $\delta$ sets the mid point of the first pulse in units of $\omega$. Both $\alpha$ and $r$ control the smoothness of the pulse. However, when $\alpha$ is sufficiently high the pulse will allows be rectangular. 
+
+```{r, message=F, warning=F}
+pulse = function(t, a, b, r, w, d) {
+  max_adj = sin(2*pi*(0.75-1/(3*r)))
+  max = b*(1+exp(-a*(1+max_adj)))
+  sines = sin(2*pi*(8*t - 8*d*w + 9*r*w)/(12*r*w))
+  f = max/(1+exp(a*(sines-max_adj)))
+  return(f)
+}
+
+t = seq(0,20,by=0.001)
+plot(t, pulse(t, a=1000, b=1, r=1, w=4, d=1), 
+     type = "l", xlab = "t", ylab = "f(t)")
+```
+
+Decreasing width $\omega$ increases the frequency...
+
+```{r, message=F, warning=F}
+pulse = function(t, a, b, r, w, d) {
+  max_adj = sin(2*pi*(0.75-1/(3*r)))
+  max = b*(1+exp(-a*(1+max_adj)))
+  sines = sin(2*pi*(8*t - 8*d*w + 9*r*w)/(12*r*w))
+  f = max/(1+exp(a*(sines-max_adj)))
+  return(f)
+}
+
+t = seq(0,20,by=0.001)
+plot(t, pulse(t, a=1000, b=1, r=1, w=2, d=1), 
+     type = "l", xlab = "t", ylab = "f(t)")
+```
+
+...but this can be compensated for by increasing $\rho$:
+
+```{r, message=F, warning=F}
+pulse = function(t, a, b, r, w, d) {
+  max_adj = sin(2*pi*(0.75-1/(3*r)))
+  max = b*(1+exp(-a*(1+max_adj)))
+  sines = sin(2*pi*(8*t - 8*d*w + 9*r*w)/(12*r*w))
+  f = max/(1+exp(a*(sines-max_adj)))
+  return(f)
+}
+
+t = seq(0,20,by=0.001)
+plot(t, pulse(t, a=1000, b=1, r=2, w=2, d=1), 
+     type = "l", xlab = "t", ylab = "f(t)")
+```
+
+
+
+
+
