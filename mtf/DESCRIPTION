@@ -1,0 +1,26 @@
+Package: mtf
+Type: Package
+Title: Myvatn Terrestrial Foodweb
+Version: 0.1.0
+Date: 2018-05-16
+Authors@R: as.person(c(
+    "Lucas A Nell <lucas@lucasnell.com> [aut, cre]",
+    "Michael Bosch <michael.j.bosch.mjb@gmail.com> [aut]",
+    "Matthew McCary <matt.mccary@gmail.com> [aut]", 
+    "Joseph S Phillips <jsphillips2@wisc.edu> [aut]", 
+    "Amanda Rae McCormick <amccormick4@wisc.edu> [aut]"
+  ))
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+    R6,
+    rootSolve,
+    deSolve
+RoxygenNote: 6.0.1
+Suggests:
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+URL: https://github.com/lucasnell/myvatn_terrestrial_foodweb
+BugReports: https://github.com/lucasnell/myvatn_terrestrial_foodweb/issues
