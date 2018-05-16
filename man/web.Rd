@@ -11,7 +11,8 @@
 w$eq_solve(solve_pars = c("mP", "mD", "aNP", "aDV", "aPH", "aR"),
            initial_vals = rep(0.1, 6))
 w$values()
-w$ode_solve(tmax, tstep = 1)
+w$ode_solve(tmax, a, b, r, w, d, tstep = 1)
+w$test_midges(tmax, a, b, r, w, d, tstep = 1)
 print(w)
 }
 }
@@ -23,6 +24,23 @@ solved for. Defaults to \code{c("mP", "mD", "aNP", "aDV", "aPH", "aR")}.}
 the unknown parameters. For more info, see \code{\link[rootSolve]{multiroot}}.}
 
 \item{tmax}{Duration over which to run the model.}
+
+\item{a}{Controls the smoothness of the pulse, along with \code{r}. If \code{a} is
+sufficiently high, the pulse will always be rectangular (for more info,
+see `vignette("smooth_pulse", "mtf")`).}
+
+\item{b}{Maximum value of the midge pulse (for more info, see
+`vignette("smooth_pulse", "mtf")`).}
+
+\item{r}{Period of the pulse expresed in units of \eqn{1.5 \times w} (so the pulses
+don't overlap). Also controls the smoothness, along with \code{a} (for more
+info, see `vignette("smooth_pulse", "mtf")`).}
+
+\item{w}{Width of the midge pulse (for more info, see
+`vignette("smooth_pulse", "mtf")`).}
+
+\item{d}{Mid point of the first pulse in units of \eqn{w} (for more info, see
+`vignette("smooth_pulse", "mtf")`).}
 
 \item{tstep}{Step size in units of time. Defaults to \code{1}.}
 }
@@ -99,15 +117,15 @@ Initially set to \code{0.5}.}
 
 \item{\code{kP}}{Carrying capacity for P. Initially set to \code{8000}.}
 
-\item{\code{kV}}{Carrying capacity for V. Initially set to \code{162}.}
+\item{\code{kV}}{Carrying capacity for V. Only used for model A. Initially set to \code{162}.}
 
-\item{\code{kH}}{Carrying capacity for H. Initially set to \code{48}.}
+\item{\code{kH}}{Carrying capacity for H. Only used for model A. Initially set to \code{48}.}
 
 \item{\code{kR}}{Carrying capacity for R. Only used for model A. Initially set to \code{26}.}
 
-\item{\code{hP}}{Handing time for P. Initially set to \code{1}.}
+\item{\code{hP}}{Handing time for P. Only for model B. Initially set to \code{1}.}
 
-\item{\code{hD}}{Handing time for D. Initially set to \code{1}.}
+\item{\code{hD}}{Handing time for D. Only for model B. Initially set to \code{1}.}
 
 \item{\code{hR}}{Handing time for R. Only for model B. Initially set to \code{1}.}
 
@@ -118,9 +136,6 @@ Initially set to \code{0.5}.}
 \item{\code{aPH}}{Uptake rate for PH. Initially set to \code{NA}.}
 
 \item{\code{aR}}{Uptake rate for R. Initially set to \code{NA}.}
-
-\item{\code{iM_func}}{Midge function. The function is wrapped inside a list to allow it to
-be changed. Initially set to \code{list(function(t) 0)}.}
 
 \item{\code{model}}{Which model to use ("A" or "B"). Initially set to \code{"A"}.}
 }}
@@ -137,8 +152,12 @@ be changed. Initially set to \code{list(function(t) 0)}.}
         parameters to solve for unknown values. "Known" parameters must be selected
         with care, to ensure that an equilibrium solution can actually be reached.
     }
-    \item{\code{$ode_solve(tmax, tstep)}}{
+    \item{\code{$ode_solve(tmax, a, b, r, w, d, tstep)}}{
         Solve the ODE and output timeseries of nitrogen content for each pool.
+    }
+    \item{\code{$test_midges(tmax, a, b, r, w, d, tstep)}}{
+        Test out a particular midge pulse scenario. It returns a vector of
+        inputs of midges (in units of N) to the midge pool through time.
     }
 }
 }
@@ -162,19 +181,13 @@ foodweb_A
 # Outputting class values:
 foodweb_A$values()
 
-# Create function for time-varying midge pulse (make sure to wrap it in a list)
-# pulse is the instantaneous rate of midge input over the specified time frame
-# pulse_tmin and pulse_tmax define the duration over which the midge pulse occurs
-foodweb_A$iM_func = list(
-    function(t) {
-        pulse=500; pulse_tmin=100; pulse_tmax=150
-        ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0)
-    }
-)
+# Test midge pulse:
+plot(foodweb_A$test_midges(1000, a=1000, b=1, r=1, w=400, d=1), type = 'l',
+     ylab = "iM")
 
 
 # Solve ODEs
-output_A = foodweb_A$ode_solve(tmax = 1000)  \%>\%
+output_A = foodweb_A$ode_solve(tmax = 1000, a=1000, b=1, r=1, w=400, d=1)  \%>\%
     gather('pool', 'biomass', -time)
 
 # Plot absolute biomass

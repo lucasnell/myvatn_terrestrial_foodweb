@@ -12,7 +12,8 @@
 #' w$eq_solve(solve_pars = c("mP", "mD", "aNP", "aDV", "aPH", "aR"),
 #'            initial_vals = rep(0.1, 6))
 #' w$values()
-#' w$ode_solve(tmax, tstep = 1)
+#' w$ode_solve(tmax, a, b, r, w, d, tstep = 1)
+#' w$test_midges(tmax, a, b, r, w, d, tstep = 1)
 #' print(w)
 #' }
 #'
@@ -24,6 +25,18 @@
 #' @param initial_vals Numeric vector of length 6 representing the initial guesses of
 #'     the unknown parameters. For more info, see \code{\link[rootSolve]{multiroot}}.
 #' @param tmax Duration over which to run the model.
+#' @param a Controls the smoothness of the pulse, along with \code{r}. If \code{a} is
+#'     sufficiently high, the pulse will always be rectangular (for more info,
+#'     see `vignette("smooth_pulse", "mtf")`).
+#' @param b Maximum value of the midge pulse (for more info, see
+#'     `vignette("smooth_pulse", "mtf")`).
+#' @param r Period of the pulse expresed in units of \eqn{1.5 \times w} (so the pulses
+#'     don't overlap). Also controls the smoothness, along with \code{a} (for more
+#'     info, see `vignette("smooth_pulse", "mtf")`).
+#' @param w Width of the midge pulse (for more info, see
+#'     `vignette("smooth_pulse", "mtf")`).
+#' @param d Mid point of the first pulse in units of \eqn{w} (for more info, see
+#'     `vignette("smooth_pulse", "mtf")`).
 #' @param tstep Step size in units of time. Defaults to \code{1}.
 #'
 #'
@@ -39,8 +52,12 @@
 #'         parameters to solve for unknown values. "Known" parameters must be selected
 #'         with care, to ensure that an equilibrium solution can actually be reached.
 #'     }
-#'     \item{\code{$ode_solve(tmax, tstep)}}{
+#'     \item{\code{$ode_solve(tmax, a, b, r, w, d, tstep)}}{
 #'         Solve the ODE and output timeseries of nitrogen content for each pool.
+#'     }
+#'     \item{\code{$test_midges(tmax, a, b, r, w, d, tstep)}}{
+#'         Test out a particular midge pulse scenario. It returns a vector of
+#'         inputs of midges (in units of N) to the midge pool through time.
 #'     }
 #' }
 #'
@@ -84,18 +101,16 @@
 #' @slot mM Loss rates from pool M (returned to either N or D).
 #'     Initially set to \code{0.5}.
 #' @slot kP Carrying capacity for P. Initially set to \code{8000}.
-#' @slot kV Carrying capacity for V. Initially set to \code{162}.
-#' @slot kH Carrying capacity for H. Initially set to \code{48}.
+#' @slot kV Carrying capacity for V. Only used for model A. Initially set to \code{162}.
+#' @slot kH Carrying capacity for H. Only used for model A. Initially set to \code{48}.
 #' @slot kR Carrying capacity for R. Only used for model A. Initially set to \code{26}.
-#' @slot hP Handing time for P. Initially set to \code{1}.
-#' @slot hD Handing time for D. Initially set to \code{1}.
+#' @slot hP Handing time for P. Only for model B. Initially set to \code{1}.
+#' @slot hD Handing time for D. Only for model B. Initially set to \code{1}.
 #' @slot hR Handing time for R. Only for model B. Initially set to \code{1}.
 #' @slot aNP Uptake rate for NP. Initially set to \code{NA}.
 #' @slot aDV Uptake rate for DV. Initially set to \code{NA}.
 #' @slot aPH Uptake rate for PH. Initially set to \code{NA}.
 #' @slot aR Uptake rate for R. Initially set to \code{NA}.
-#' @slot iM_func Midge function. The function is wrapped inside a list to allow it to
-#'     be changed. Initially set to \code{list(function(t) 0)}.
 #' @slot model Which model to use ("A" or "B"). Initially set to \code{"A"}.
 #'
 #'
@@ -128,19 +143,13 @@
 #' # Outputting class values:
 #' foodweb_A$values()
 #'
-#' # Create function for time-varying midge pulse (make sure to wrap it in a list)
-#' # pulse is the instantaneous rate of midge input over the specified time frame
-#' # pulse_tmin and pulse_tmax define the duration over which the midge pulse occurs
-#' foodweb_A$iM_func = list(
-#'     function(t) {
-#'         pulse=500; pulse_tmin=100; pulse_tmax=150
-#'         ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0)
-#'     }
-#' )
+#' # Test midge pulse:
+#' plot(foodweb_A$test_midges(1000, a=1000, b=1, r=1, w=400, d=1), type = 'l',
+#'      ylab = "iM")
 #'
 #'
 #' # Solve ODEs
-#' output_A = foodweb_A$ode_solve(tmax = 1000)  %>%
+#' output_A = foodweb_A$ode_solve(tmax = 1000, a=1000, b=1, r=1, w=400, d=1)  %>%
 #'     gather('pool', 'biomass', -time)
 #'
 #' # Plot absolute biomass
@@ -207,9 +216,6 @@ web <- R6Class(
         hP = 1, hD = 1, hR = 1,      # only for model B
         # Uptake rates
         aNP = NA, aDV = NA, aPH = NA, aR = NA,
-        # Midge function
-        #(have to wrap inside a list bc it's unchangeable otherwise)
-        iM_func = list(function(t) 0),
         # Model A or B
         model = 'A',
 
@@ -219,17 +225,7 @@ web <- R6Class(
             pars <- list(...)
             if (length(pars) > 0) {
                 for (i in 1:length(pars)) {
-                    if (names(pars)[i] == 'iM_func') {
-                        if (!is.function(pars[[i]])) {
-                            stop("parameter iM_func must be a
-                                 function")
-                        } else if (!identical(formalArgs(pars[[i]]),
-                                              't')) {
-                            stop("parameter iM_func must be a",
-                                 "function with the only ",
-                                 "argument being 't'")
-                        }
-                    } else if (names(pars)[i] == 'model') {
+                    if (names(pars)[i] == 'model') {
                         if (! pars[[i]] %in% LETTERS[1:2]) {
                             stop("model must be 'A' or 'B'")
                         }
@@ -264,8 +260,7 @@ web <- R6Class(
         # "Known" parameters must be selected with care,
         # to ensure that an equilibrium solution can
         # actually be reached
-        eq_solve = function(solve_pars = c("mP", "mD", "aNP", "aDV",
-                                           "aPH", "aR"),
+        eq_solve = function(solve_pars = c("mP", "mD", "aNP", "aDV", "aPH", "aR"),
                             initial_vals = rep(0.1, 6)) {
 
             stopifnot(length(solve_pars) == 6,
@@ -317,11 +312,13 @@ web <- R6Class(
         # tmin and tmax specify the duration over which to
         # run the model
         # tstep specifies the step size
-        ode_solve = function(tmax, tstep = 1){
+        # a, b, r, w, and d define the midge pulse (see `vignette("smooth_pulse", "mtf")`)
+        ode_solve = function(tmax, a, b, r, w, d, tstep = 1){
 
             # pars and init give the parameter values and
             # initial states
-            pars = private$par_list()
+            pars <- private$par_list()
+            pars$midges <- function(t_) private$midge_pulse(t_, a, b, r, w, d)
 
             # Checking for NA values
             if (length(pars[is.na(pars)]) > 0) {
@@ -345,6 +342,11 @@ web <- R6Class(
         values = function() {
             pn = private$par_list()
             return(pn)
+        },
+
+
+        test_midges = function(tmax, a, b, r, w, d, tstep = 1) {
+            return(private$midge_pulse(seq(1, tmax, tstep), a, b, r, w, d))
         },
 
 
@@ -381,7 +383,6 @@ web <- R6Class(
                 (XY: NP, CV, PH)\n')
             cat('  - aR: maximum uptake rate to predators;
                 same value for V,H,M\n')
-            cat('  - iM_func: function for midge input at time t\n')
         }
 
     ),
@@ -484,8 +485,7 @@ web <- R6Class(
                 "aNP",
                 "aDV",
                 "aPH",
-                "aR",
-                "iM_func"
+                "aR"
             )
         },
 
@@ -494,11 +494,7 @@ web <- R6Class(
             L = list()
             pn = private$par_names()
             for (p in pn) {
-                if (p != 'iM_func') {
-                    L[[p]] = self[[p]]
-                } else {
-                    L[[p]] = self[[p]][[1]]
-                }
+                L[[p]] = self[[p]]
             }
             return(L)
         },
@@ -508,18 +504,14 @@ web <- R6Class(
 
             pn = private$par_names()
             for (p in pn) {
-                if (p != 'iM_func') {
-                    self[[p]] = L[[p]]
-                } else {
-                    self[[p]] = list(L[[p]])
-                }
+                self[[p]] = L[[p]]
             }
         },
 
         # Define differential equations
         diff_eq = function(t, y, pars) {
 
-            iM = pars$iM_func(t)
+            iM = pars$midges(t)
 
             if (self$model == 'A') {
                 output =
@@ -557,6 +549,14 @@ web <- R6Class(
             }
 
             return(list(output))
+        },
+
+        midge_pulse = function(t, a, b, r, w, d) {
+            max_adj <- sin(2 * pi * (0.75 - 1 / (3 * r)))
+            max <- b * (1 + exp(-a * (1 + max_adj)))
+            sines <- sin(2 * pi * (8 * t - 8 * d * w + 9 * r * w)/(12 * r * w))
+            f <- max / (1+exp(a * (sines - max_adj)))
+            return(f)
         }
 
     ),
@@ -590,16 +590,7 @@ multi_web <- function(par_list, expand = FALSE) {
                            })
     } else {
 
-        par_df <- do.call(expand.grid, par_list[names(par_list) != 'iM_func'])
-        if ('iM_func' %in% names(par_list)) {
-            par_df_list <- lapply(1:length(par_list[['iM_func']]),
-                   function(i) {
-                       par_df %>%
-                           as_tibble %>%
-                           mutate(iM_func = par_list[['iM_func']][i])
-                   })
-            par_df <- bind_rows(par_df_list)
-        }
+        par_df <- do.call(expand.grid, par_list)
 
 
         web_list <- lapply(
@@ -607,9 +598,6 @@ multi_web <- function(par_list, expand = FALSE) {
             function(i) {
                 input_list <- as.list(par_df[i,])
                 attr(input_list, 'out.attrs') <- NULL
-                if ('iM_func' %in% names(input_list)) {
-                    input_list[['iM_func']] <- input_list[['iM_func']][[1]]
-                }
                 new_web <- do.call(web$new, input_list)
                 return(new_web)
             })
