@@ -13,11 +13,13 @@
 #' @param x A vector of nitrogen content through time.
 #' @param measure Character specifying which summary measure to return.
 #'     Options are as follows:
-#'     * `aamp`: absolute amplitude of the pulse.
-#'     * `ramp`: relative amplitude of the pulse.
-#'     * `peakt`: when the pulse peak occurs.
-#'     * `len`: how long the pulse lasts.
-#'     * `skew`: ratio of time before to after the pulse peak.
+#'     \describe{
+#'         \item{aamp}{absolute amplitude of the pulse.}
+#'         \item{ramp}{relative amplitude of the pulse.}
+#'         \item{peakt}{when the pulse peak occurs.}
+#'         \item{len}{how long the pulse lasts.}
+#'         \item{skew}{ratio of time before to after the pulse peak.}
+#'     }
 #' @param t0 Number of time points to subtract from the time to pulse peak.
 #'     For example, if you want to ignore the first 10 time points, this would be
 #'     set to `10`. This only affects the output if `aamp == "peakt"`.
