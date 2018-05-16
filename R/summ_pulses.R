@@ -18,8 +18,15 @@
 #'     * `peakt`: when the pulse peak occurs.
 #'     * `len`: how long the pulse lasts.
 #'     * `skew`: ratio of time before to after the pulse peak.
-#' @param t0
-#' @param p
+#' @param t0 Number of time points to subtract from the time to pulse peak.
+#'     For example, if you want to ignore the first 10 time points, this would be
+#'     set to `10`. This only affects the output if `aamp == "peakt"`.
+#'     Defaults to `0`.
+#' @param p Proportion of the total amplitude that is required for a time point to be
+#'     considered inside a pulse.
+#'     Only affects output (and is required) if `aamp %in% c("len", "skew")`.
+#'     Defaults to `NULL`, which will return an error if the above condition is 
+#'     `TRUE`.
 #' 
 #' @export
 #' 

@@ -1,4 +1,8 @@
 
+#' Foodweb class. (More documentation forthcoming...)
+#' 
+#' @export
+#' 
 web <- R6::R6Class(
     
     "web",
@@ -116,17 +120,17 @@ web <- R6::R6Class(
             start = initial_vals
             names(start) = solve_pars
             
-            par_solve = multiroot(f = private$equil_solve, 
-                                  start = start, parms = pars,
-                                  maxiter = 100,
-                                  rtol = 1e-6, atol = 1e-8, 
-                                  ctol = 1e-8,
-                                  useFortran = TRUE, 
-                                  positive = TRUE, 
-                                  jacfunc = NULL,
-                                  jactype = "fullint", 
-                                  verbose = FALSE, bandup = 1,
-                                  banddown = 1)
+            par_solve = rootSolve::multiroot(f = private$equil_solve, 
+                                             start = start, parms = pars,
+                                             maxiter = 100,
+                                             rtol = 1e-6, atol = 1e-8, 
+                                             ctol = 1e-8,
+                                             useFortran = TRUE, 
+                                             positive = TRUE, 
+                                             jacfunc = NULL,
+                                             jactype = "fullint", 
+                                             verbose = FALSE, bandup = 1,
+                                             banddown = 1)
             
             pars[names(par_solve$root)] = as.list(par_solve$root)
             
@@ -156,9 +160,9 @@ web <- R6::R6Class(
             init = unlist(pars[paste0(private$pool_names(), '0')])
             names(init) = private$pool_names()
             
-            solved_ode = ode(init, seq(0, tmax, tstep), 
-                             private$diff_eq, pars)
-            solved_ode = as_tibble(as.data.frame(solved_ode))
+            solved_ode = deSolve::ode(init, seq(0, tmax, tstep), 
+                                      private$diff_eq, pars)
+            solved_ode = dplyr::as_tibble(as.data.frame(solved_ode))
             
             return(solved_ode)
             

@@ -1,22 +1,15 @@
 # ======================================
-# Load Packages & Source Files
+# Load Package
 # ======================================
 
-library(rootSolve)
-library(tidyverse)
-library(deSolve)
-if (! 'R6' %in% installed.packages()[,'Package']) install.packages('R6')
-library(R6)
+library(mtf)
 
 
-
-# The sourced file specifies a `web` class that can implement either of two different 
+# The package has a `web` class that can implement either of two different 
 # versions of the model (A and B).
 # Upon creating a `web` object, it solves for selected unknown parameters, given 
 # the 'known' parameters and equilibria.
 # It also includes an internal class function `ode_solve` that solves the ODEs. 
-
-source('aaa-class.R')
 
 
 
@@ -46,18 +39,6 @@ foodweb_A$iM_func = list(
         ifelse(t > pulse_tmin & t < pulse_tmax, pulse, 0) 
     }
 )
-
-pulse_amplitude <- function(x) (max(x) - x[1]) / x[1]
-pulse_start <- function(x) which(x == max(x))
-pulse_length <- function(x, p) {
-    i <- which(x == max(x))
-    within_p <- which(x <= (x[1] * (1 + p)))
-    if (all(within_p < i)) {
-        return(NA)
-    } else {
-        return(within_p[within_p < i])
-    }
-}
 
 
 # Solve ODEs
