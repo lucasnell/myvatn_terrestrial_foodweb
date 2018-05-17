@@ -8,7 +8,8 @@ Authors@R: as.person(c(
     "Michael Bosch <michael.j.bosch.mjb@gmail.com> [aut]",
     "Matthew McCary <matt.mccary@gmail.com> [aut]", 
     "Joseph S Phillips <jsphillips2@wisc.edu> [aut]", 
-    "Amanda Rae McCormick <amccormick4@wisc.edu> [aut]"
+    "Amanda Rae McCormick <amccormick4@wisc.edu> [aut]",
+    "Tanjona Ramiadantsoa <ramiadantsoa@wisc.edu> [aut]"
   ))
 License: MIT + file LICENSE
 Encoding: UTF-8
