@@ -47,9 +47,20 @@ info, see `vignette("smooth_pulse", "mtf")`).}
 \item{tstep}{Step size in units of time. Defaults to \code{1}.}
 }
 \description{
-Upon creating a \code{web} object, it solves for selected unknown parameters, given
-the 'known' parameters and equilibria.
-It also includes an internal class function \code{ode_solve} that solves the ODEs.
+This class stores all the necessary parameters and methods to solve for unknown
+parameters and to solve the ODEs and output a time series of pool nitrogen contents.
+}
+\details{
+\strong{Note:} This class by default does not make a copy of itself.
+In the "Examples" section below, under the heading "Issues with not copying by default",
+it shows how this could create weird problems and how to get it to create a copy.
+Most of the time, it's probably just easiest to re-run the original code if you want
+a new \code{web} object.
+
+After creating a \code{web} object, you need to solve for any unknown parameters,
+given the 'known' parameters and equilibria (using the \code{$eq_solve()} method).
+To output a time series of simulated data, you should use the
+\code{$ode_solve()} method that solves the ODEs.
 }
 \section{Slots}{
 
@@ -150,7 +161,7 @@ Initially set to \code{0.5}.}
         Return a list of all parameter values.
     }
     \item{\code{$eq_solve(solve_pars, initial_vals)}}{
-        Use estimated equilibrium biomass and selected values for certain
+        Use estimated equilibrium N and selected values for certain
         parameters to solve for unknown values. "Known" parameters must be selected
         with care, to ensure that an equilibrium solution can actually be reached.
     }
@@ -169,7 +180,6 @@ Initially set to \code{0.5}.}
 }
 
 \examples{
-library(tidyverse)
 
 # Initialize model (A is default)
 foodweb_A = web$new(model="A")
@@ -180,8 +190,14 @@ foodweb_A$eq_solve()
 # Viewing class:
 foodweb_A
 
-# Outputting class values:
+# Outputting all values as a list:
 foodweb_A$values()
+
+# Outputting a single value
+foodweb_A$D0
+# If you wanted to change this, you'd uncomment the next line
+# foodweb_A$D0 = 40e3L
+
 
 # Test midge pulse:
 plot(foodweb_A$test_midges(1000, a=1000, b=1, r=1, w=400, d=1), type = 'l',
@@ -189,20 +205,19 @@ plot(foodweb_A$test_midges(1000, a=1000, b=1, r=1, w=400, d=1), type = 'l',
 
 
 # Solve ODEs
-output_A = foodweb_A$ode_solve(tmax = 1000, a=1000, b=1, r=1, w=400, d=1)  \%>\%
-    gather('pool', 'biomass', -time)
+output_A = foodweb_A$ode_solve(tmax = 1000, a=1000, b=1, r=1, w=400, d=1)
 
-# Plot absolute biomass
+# Plot absolute N
 output_A  \%>\%
     group_by(pool) \%>\%
     # Define 'minb' to set the minimum value for the y-axis.
     # This allows different y-scales for different facets, with the ymin set to 0
     mutate(minb = 0) \%>\%
-    ggplot(aes(time, biomass)) +
+    ggplot(aes(time, N)) +
     facet_wrap(~pool, scales="free_y") +
     # The horizontal lines show the initial states
     geom_hline(data = foodweb_A$initial_states,
-               aes(yintercept=biomass), color="firebrick") +
+               aes(yintercept=N), color="firebrick") +
     geom_line(size = 1) +
     geom_point(aes(time, minb), shape="") +
     theme_classic()
@@ -211,16 +226,33 @@ output_A  \%>\%
 # Note that this gives weird results when there is no deviation from equilibrium
 # This is probably due to small numerical errors, but is not a big issue
 output_A \%>\%
-    filter(pool!="M") \%>\%
+    filter(pool!="midge") \%>\%
     group_by(pool) \%>\%
-    # Scale the biomass relative to the initial state
-    mutate(biomass_scale = biomass/biomass[1]) \%>\%
-    ggplot(aes(time, biomass_scale)) +
+    # Scale the N relative to the initial state
+    mutate(N_scale = N/N[1]) \%>\%
+    ggplot(aes(time, N_scale)) +
     facet_wrap(~pool) +
     geom_hline(yintercept = 1, color="firebrick4") +
     geom_line(size = 1) +
     theme_classic()
 
+
+
+
+# ----------
+# Issues with not copying by default
+# ----------
+
+# Why not making copies can be a problem:
+foodweb_B = foodweb_A
+foodweb_B$model = "B"
+foodweb_A$model
+foodweb_A$model = "A" # changing back to correct value
+
+# The proper way to make a copy: Use the `$clone()` method
+foodweb_B = foodweb_A$clone()
+foodweb_B$model = "B"
+foodweb_A$model
 
 
 
