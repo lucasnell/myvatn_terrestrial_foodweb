@@ -128,6 +128,11 @@
 #' @importFrom rootSolve multiroot
 #' @importFrom deSolve ode
 #' @importFrom dplyr as_tibble
+#' @importFrom dplyr %>%
+#' @importFrom dplyr rename
+#' @importFrom dplyr mutate
+#' @importFrom dplyr arrange
+#' @importFrom tidyr gather
 #' @export
 #' @keywords data
 #'
@@ -447,9 +452,12 @@ web <- R6Class(
                               c(sN = iN - aNP*Neq*Peq*(1-Peq/kP) + (1-lD)*mD*Deq - mN*Neq,
                                 sD = (1-lP)*mP*Peq + (1-lV)*mV*Veq + (1-lH)*mH*Heq +
                                     (1-lR)*mR*Req - aDV*Deq*Veq*(1-Veq/kV) - mD*Deq,
-                                sP = aNP*Neq*Peq*(1-Peq/kP) - aPH*Peq*Heq*(1-Heq/kH) - mP*Peq,
-                                sV = aDV*Deq*Veq*(1-Veq/kV) - (aR*Veq*Req)*(1-Req/kR) - mV*Veq,
-                                sH = aPH*Peq*Heq*(1-Heq/kH) - (aR*Heq*Req)*(1-Req/kR) - mH*Heq,
+                                sP = aNP*Neq*Peq*(1-Peq/kP) - aPH*Peq*Heq*(1-Heq/kH) -
+                                    mP*Peq,
+                                sV = aDV*Deq*Veq*(1-Veq/kV) - (aR*Veq*Req)*(1-Req/kR) -
+                                    mV*Veq,
+                                sH = aPH*Peq*Heq*(1-Heq/kH) - (aR*Heq*Req)*(1-Req/kR) -
+                                    mH*Heq,
                                 sR = (aR*Veq*Req + aR*Heq*Req)*(1-Req/kR) - mR*Req
                               ))
             } else {
@@ -457,12 +465,14 @@ web <- R6Class(
                               c(sN = iN - aNP*Neq*Peq*(1-Peq/kP) + (1-lD)*mD*Deq - mN*Neq,
                                 sD = (1-lP)*mP*Peq + (1-lV)*mV*Veq + (1-lH)*mH*Heq +
                                     (1-lR)*mR*Req - aDV*Deq*Veq/(1+aDV*hD*Deq) - mD*Deq,
-                                sP = aNP*Neq*Peq*(1-Peq/kP) - aPH*Peq*Heq/(1+aPH*hP*Peq) - mP*Peq,
-                                sV = aDV*Deq*Veq/(1+aDV*hD*Deq) - (aR*Veq*Req)/(1+aR*hR*(Veq+Heq)) -
-                                    mV*Veq,
-                                sH = aPH*Peq*Heq/(1+aPH*hP*Peq) - (aR*Heq*Req)/(1+aR*hR*(Veq+Heq)) -
-                                    mH*Heq,
-                                sR = (aR*Veq*Req + aR*Heq*Req)/(1+aR*hR*(Veq+Heq)) - mR*Req
+                                sP = aNP*Neq*Peq*(1-Peq/kP) - aPH*Peq*Heq/(1+aPH*hP*Peq) -
+                                    mP*Peq,
+                                sV = aDV*Deq*Veq/(1+aDV*hD*Deq) - (aR*Veq*Req)/
+                                    (1+aR*hR*(Veq+Heq)) - mV*Veq,
+                                sH = aPH*Peq*Heq/(1+aPH*hP*Peq) - (aR*Heq*Req)/
+                                    (1+aR*hR*(Veq+Heq)) - mH*Heq,
+                                sR = (aR*Veq*Req + aR*Heq*Req)/(1+aR*hR*(Veq+Heq)) -
+                                    mR*Req
                               ))
             }
 

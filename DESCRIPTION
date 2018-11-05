@@ -14,7 +14,7 @@ Authors@R: as.person(c(
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Depends:
+Imports:
     R6,
     rootSolve,
     deSolve,
