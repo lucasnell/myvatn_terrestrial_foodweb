@@ -45,7 +45,7 @@ output_A
 
 
 # Plot absolute N
-output_A  %>%
+output_A %>%
     group_by(pool) %>%
     # Define 'minb' to set the minimum value for the y-axis.
     # This allows different y-scales for different facets, with the ymin set to 0

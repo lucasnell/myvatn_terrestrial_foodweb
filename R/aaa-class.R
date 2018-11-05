@@ -1,4 +1,4 @@
-
+# doc start ----
 #' Foodweb class that implements either of the two versions of the model (A and B).
 #'
 #' This class stores all the necessary parameters and methods to solve for unknown
@@ -216,13 +216,14 @@
 #'
 #'
 #'
+# doc end ----
 web <- R6Class(
 
     "web",
 
-    # =================================================
+    # =================================================*
     #  Public attributes
-    # =================================================
+    # =================================================*
 
     public = list(
 
@@ -260,8 +261,7 @@ web <- R6Class(
                         if (! pars[[i]] %in% LETTERS[1:2]) {
                             stop("model must be 'A' or 'B'")
                         }
-                    } else if (!is.na(pars[[i]]) & !is.numeric
-                               (pars[[i]])) {
+                    } else if (!is.na(pars[[i]]) & !is.numeric(pars[[i]])) {
                         stop("parameter ", names(pars)[i], " is not",
                              "either NA or numeric, ",
                              "as is required")
@@ -376,7 +376,8 @@ web <- R6Class(
                 gather('pool', 'N', -time) %>%
                 mutate(pool = factor(pool, levels = c("nitrogen", "detritus", "plant",
                                                       "detrivore", "herbivore",
-                                                      "predator", "midge"))) %>%
+                                                      "predator", "midge")),
+                       time = as.integer(time)) %>%
                 arrange(pool, time)
 
             return(solved_ode)
@@ -432,9 +433,9 @@ web <- R6Class(
 
     ),
 
-    # =================================================
+    # =================================================*
     #  Private attributes
-    # =================================================
+    # =================================================*
 
     private = list(
 
