@@ -35,7 +35,7 @@ $$
 \frac{dV}{dt} &= a_{DV} D V (1-V/k_V) - (a_R V R) (1-R/k_R) - m_V V \\
 \frac{dH}{dt} &= a_{PH} P H (1-H/k_H) - (a_R H R) (1-R/k_R) - m_H H \\
 \frac{dR}{dt} &= (a_R V R + a_R H R + a_R M R) (1-R/k_R) - m_R R \\
-\frac{dM}{dt} &= i_M - m_M M - a_R M R) (1-R/k_R) \\
+\frac{dM}{dt} &= i_M - m_M M - a_R M R (1-R/k_R) \\
 \end{aligned}
 $$
 
