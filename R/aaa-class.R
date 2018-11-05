@@ -1,4 +1,4 @@
-# doc start ----
+
 #' Foodweb class that implements either of the two versions of the model (A and B).
 #'
 #' This class stores all the necessary parameters and methods to solve for unknown
@@ -215,14 +215,13 @@
 #'
 #'
 #'
-# doc end ----
 web <- R6Class(
 
     "web",
 
-    # =================================================*
+    # =================================================
     #  Public attributes
-    # =================================================*
+    # =================================================
 
     public = list(
 
@@ -238,8 +237,8 @@ web <- R6Class(
         lD = 0.1, lP = 0.1, lV = 0.1, lH = 0.1,
         lR = 0.1, lM = 0.1,
         # Loss rates from pool (returned to either N or D)
-        mN = 0.002, mP = NA, mD = NA, mV = 1e-5, mH = 1e-5,
-        mR = 1e-5, mM = 1e-5,
+        mN = 0.002, mP = NA, mD = NA, mV = 0.1, mH = 0.1,
+        mR = 0.1, mM = 0.5,
         # Carying Capacities
         kP = 8000,
         kV = 162, kH = 48, kR = 26,  # only for model A
@@ -260,7 +259,8 @@ web <- R6Class(
                         if (! pars[[i]] %in% LETTERS[1:2]) {
                             stop("model must be 'A' or 'B'")
                         }
-                    } else if (!is.na(pars[[i]]) & !is.numeric(pars[[i]])) {
+                    } else if (!is.na(pars[[i]]) & !is.numeric
+                               (pars[[i]])) {
                         stop("parameter ", names(pars)[i], " is not",
                              "either NA or numeric, ",
                              "as is required")
@@ -375,8 +375,7 @@ web <- R6Class(
                 gather('pool', 'N', -time) %>%
                 mutate(pool = factor(pool, levels = c("nitrogen", "detritus", "plant",
                                                       "detrivore", "herbivore",
-                                                      "predator", "midge")),
-                       time = as.integer(time)) %>%
+                                                      "predator", "midge"))) %>%
                 arrange(pool, time)
 
             return(solved_ode)
@@ -432,9 +431,9 @@ web <- R6Class(
 
     ),
 
-    # =================================================*
+    # =================================================
     #  Private attributes
-    # =================================================*
+    # =================================================
 
     private = list(
 
