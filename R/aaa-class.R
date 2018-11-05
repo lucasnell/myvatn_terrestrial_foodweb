@@ -40,12 +40,12 @@
 #'     see `vignette("smooth_pulse", "mtf")`).
 #' @param b Maximum value of the midge pulse (for more info, see
 #'     `vignette("smooth_pulse", "mtf")`).
-#' @param r Period of the pulse expresed in units of \eqn{1.5 \times w} (so the pulses
+#' @param r Period of the pulse expresed in units of \code{1.5 * w} (so the pulses
 #'     don't overlap). Also controls the smoothness, along with \code{a} (for more
 #'     info, see `vignette("smooth_pulse", "mtf")`).
 #' @param w Width of the midge pulse (for more info, see
 #'     `vignette("smooth_pulse", "mtf")`).
-#' @param d Mid point of the first pulse in units of \eqn{w} (for more info, see
+#' @param d Mid point of the first pulse in units of \code{w} (for more info, see
 #'     `vignette("smooth_pulse", "mtf")`).
 #' @param tstep Step size in units of time. Defaults to \code{1}.
 #'
@@ -75,53 +75,47 @@
 #'
 #' @section Slots:
 #'
-#' @slot Neq  Desired equilibrium value for N. Initially set to \code{34300}.
-#' @slot Deq  Desired equilibrium value for D. Initially set to \code{308700}.
-#' @slot Peq  Desired equilibrium value for P. Initially set to \code{4300}.
-#' @slot Veq  Desired equilibrium value for V. Initially set to \code{81}.
-#' @slot Heq  Desired equilibrium value for H. Initially set to \code{24}.
-#' @slot Req  Desired equilibrium value for R. Initially set to \code{13}.
-#' @slot Meq  Desired equilibrium value for M. Initially set to \code{0}.
-#' @slot N0 Initial state for N. Initially set to \code{NULL}.
-#' @slot D0 Initial state for D. Initially set to \code{NULL}.
-#' @slot P0 Initial state for P. Initially set to \code{NULL}.
-#' @slot V0 Initial state for V. Initially set to \code{NULL}.
-#' @slot H0 Initial state for H. Initially set to \code{NULL}.
-#' @slot R0 Initial state for R. Initially set to \code{NULL}.
-#' @slot M0 Initial state for M. Initially set to \code{NULL}.
-#' @slot iN Input to N. Initially set to \code{1000}.
-#' @slot lD Loss rates systems for D. Initially set to \code{0.1}.
-#' @slot lP Loss rates systems for P. Initially set to \code{0.1}.
-#' @slot lV Loss rates systems for V. Initially set to \code{0.1}.
-#' @slot lH Loss rates systems for H. Initially set to \code{0.1}.
-#' @slot lR Loss rates systems for R. Initially set to \code{0.1}.
-#' @slot lM Loss rates systems for M. Initially set to \code{0.1}.
+#'
+#' @slot Neq  Desired equilibrium value for N.
+#' @slot Deq  Desired equilibrium value for D.
+#' @slot Peq  Desired equilibrium value for P.
+#' @slot Veq  Desired equilibrium value for V.
+#' @slot Heq  Desired equilibrium value for H.
+#' @slot Req  Desired equilibrium value for R.
+#' @slot Meq  Desired equilibrium value for M.
+#' @slot N0 Initial state for N.
+#' @slot D0 Initial state for D.
+#' @slot P0 Initial state for P.
+#' @slot V0 Initial state for V.
+#' @slot H0 Initial state for H.
+#' @slot R0 Initial state for R.
+#' @slot M0 Initial state for M.
+#' @slot iN Input to N.
+#' @slot lD Loss rates systems for D.
+#' @slot lP Loss rates systems for P.
+#' @slot lV Loss rates systems for V.
+#' @slot lH Loss rates systems for H.
+#' @slot lR Loss rates systems for R.
+#' @slot lM Loss rates systems for M.
 #' @slot mN Loss rates from pool N (returned to either N or D).
-#'     Initially set to \code{0.002}.
 #' @slot mP Loss rates from pool P (returned to either N or D).
-#'     Initially set to \code{NA}.
 #' @slot mD Loss rates from pool D (returned to either N or D).
-#'     Initially set to \code{NA}.
 #' @slot mV Loss rates from pool V (returned to either N or D).
-#'     Initially set to \code{0.1}.
 #' @slot mH Loss rates from pool H (returned to either N or D).
-#'     Initially set to \code{0.1}.
 #' @slot mR Loss rates from pool R (returned to either N or D).
-#'     Initially set to \code{0.1}.
 #' @slot mM Loss rates from pool M (returned to either N or D).
-#'     Initially set to \code{0.5}.
-#' @slot kP Carrying capacity for P. Initially set to \code{8000}.
-#' @slot kV Carrying capacity for V. Only used for model A. Initially set to \code{162}.
-#' @slot kH Carrying capacity for H. Only used for model A. Initially set to \code{48}.
-#' @slot kR Carrying capacity for R. Only used for model A. Initially set to \code{26}.
-#' @slot hP Handing time for P. Only for model B. Initially set to \code{1}.
-#' @slot hD Handing time for D. Only for model B. Initially set to \code{1}.
-#' @slot hR Handing time for R. Only for model B. Initially set to \code{1}.
-#' @slot aNP Uptake rate for NP. Initially set to \code{NA}.
-#' @slot aDV Uptake rate for DV. Initially set to \code{NA}.
-#' @slot aPH Uptake rate for PH. Initially set to \code{NA}.
-#' @slot aR Uptake rate for R. Initially set to \code{NA}.
-#' @slot model Which model to use ("A" or "B"). Initially set to \code{"A"}.
+#' @slot kP Carrying capacity for P.
+#' @slot kV Carrying capacity for V. Only used for model A.
+#' @slot kH Carrying capacity for H. Only used for model A.
+#' @slot kR Carrying capacity for R. Only used for model A.
+#' @slot hP Handing time for P. Only for model B.
+#' @slot hD Handing time for D. Only for model B.
+#' @slot hR Handing time for R. Only for model B.
+#' @slot aNP Uptake rate for NP.
+#' @slot aDV Uptake rate for DV.
+#' @slot aPH Uptake rate for PH.
+#' @slot aR Uptake rate for R.
+#' @slot model Which model to use ("A" or "B").
 #'
 #'
 #'

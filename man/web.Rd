@@ -34,14 +34,14 @@ see `vignette("smooth_pulse", "mtf")`).}
 \item{b}{Maximum value of the midge pulse (for more info, see
 `vignette("smooth_pulse", "mtf")`).}
 
-\item{r}{Period of the pulse expresed in units of \eqn{1.5 \times w} (so the pulses
+\item{r}{Period of the pulse expresed in units of \code{1.5 * w} (so the pulses
 don't overlap). Also controls the smoothness, along with \code{a} (for more
 info, see `vignette("smooth_pulse", "mtf")`).}
 
 \item{w}{Width of the midge pulse (for more info, see
 `vignette("smooth_pulse", "mtf")`).}
 
-\item{d}{Mid point of the first pulse in units of \eqn{w} (for more info, see
+\item{d}{Mid point of the first pulse in units of \code{w} (for more info, see
 `vignette("smooth_pulse", "mtf")`).}
 
 \item{tstep}{Step size in units of time. Defaults to \code{1}.}
@@ -65,92 +65,85 @@ To output a time series of simulated data, you should use the
 \section{Slots}{
 
 \describe{
-\item{\code{Neq}}{Desired equilibrium value for N. Initially set to \code{34300}.}
+\item{\code{Neq}}{Desired equilibrium value for N.}
 
-\item{\code{Deq}}{Desired equilibrium value for D. Initially set to \code{308700}.}
+\item{\code{Deq}}{Desired equilibrium value for D.}
 
-\item{\code{Peq}}{Desired equilibrium value for P. Initially set to \code{4300}.}
+\item{\code{Peq}}{Desired equilibrium value for P.}
 
-\item{\code{Veq}}{Desired equilibrium value for V. Initially set to \code{81}.}
+\item{\code{Veq}}{Desired equilibrium value for V.}
 
-\item{\code{Heq}}{Desired equilibrium value for H. Initially set to \code{24}.}
+\item{\code{Heq}}{Desired equilibrium value for H.}
 
-\item{\code{Req}}{Desired equilibrium value for R. Initially set to \code{13}.}
+\item{\code{Req}}{Desired equilibrium value for R.}
 
-\item{\code{Meq}}{Desired equilibrium value for M. Initially set to \code{0}.}
+\item{\code{Meq}}{Desired equilibrium value for M.}
 
-\item{\code{N0}}{Initial state for N. Initially set to \code{NULL}.}
+\item{\code{N0}}{Initial state for N.}
 
-\item{\code{D0}}{Initial state for D. Initially set to \code{NULL}.}
+\item{\code{D0}}{Initial state for D.}
 
-\item{\code{P0}}{Initial state for P. Initially set to \code{NULL}.}
+\item{\code{P0}}{Initial state for P.}
 
-\item{\code{V0}}{Initial state for V. Initially set to \code{NULL}.}
+\item{\code{V0}}{Initial state for V.}
 
-\item{\code{H0}}{Initial state for H. Initially set to \code{NULL}.}
+\item{\code{H0}}{Initial state for H.}
 
-\item{\code{R0}}{Initial state for R. Initially set to \code{NULL}.}
+\item{\code{R0}}{Initial state for R.}
 
-\item{\code{M0}}{Initial state for M. Initially set to \code{NULL}.}
+\item{\code{M0}}{Initial state for M.}
 
-\item{\code{iN}}{Input to N. Initially set to \code{1000}.}
+\item{\code{iN}}{Input to N.}
 
-\item{\code{lD}}{Loss rates systems for D. Initially set to \code{0.1}.}
+\item{\code{lD}}{Loss rates systems for D.}
 
-\item{\code{lP}}{Loss rates systems for P. Initially set to \code{0.1}.}
+\item{\code{lP}}{Loss rates systems for P.}
 
-\item{\code{lV}}{Loss rates systems for V. Initially set to \code{0.1}.}
+\item{\code{lV}}{Loss rates systems for V.}
 
-\item{\code{lH}}{Loss rates systems for H. Initially set to \code{0.1}.}
+\item{\code{lH}}{Loss rates systems for H.}
 
-\item{\code{lR}}{Loss rates systems for R. Initially set to \code{0.1}.}
+\item{\code{lR}}{Loss rates systems for R.}
 
-\item{\code{lM}}{Loss rates systems for M. Initially set to \code{0.1}.}
+\item{\code{lM}}{Loss rates systems for M.}
 
-\item{\code{mN}}{Loss rates from pool N (returned to either N or D).
-Initially set to \code{0.002}.}
+\item{\code{mN}}{Loss rates from pool N (returned to either N or D).}
 
-\item{\code{mP}}{Loss rates from pool P (returned to either N or D).
-Initially set to \code{NA}.}
+\item{\code{mP}}{Loss rates from pool P (returned to either N or D).}
 
-\item{\code{mD}}{Loss rates from pool D (returned to either N or D).
-Initially set to \code{NA}.}
+\item{\code{mD}}{Loss rates from pool D (returned to either N or D).}
 
-\item{\code{mV}}{Loss rates from pool V (returned to either N or D).
-Initially set to \code{0.1}.}
+\item{\code{mV}}{Loss rates from pool V (returned to either N or D).}
 
-\item{\code{mH}}{Loss rates from pool H (returned to either N or D).
-Initially set to \code{0.1}.}
+\item{\code{mH}}{Loss rates from pool H (returned to either N or D).}
 
-\item{\code{mR}}{Loss rates from pool R (returned to either N or D).
-Initially set to \code{0.1}.}
+\item{\code{mR}}{Loss rates from pool R (returned to either N or D).}
 
-\item{\code{mM}}{Loss rates from pool M (returned to either N or D).
-Initially set to \code{0.5}.}
+\item{\code{mM}}{Loss rates from pool M (returned to either N or D).}
 
-\item{\code{kP}}{Carrying capacity for P. Initially set to \code{8000}.}
+\item{\code{kP}}{Carrying capacity for P.}
 
-\item{\code{kV}}{Carrying capacity for V. Only used for model A. Initially set to \code{162}.}
+\item{\code{kV}}{Carrying capacity for V. Only used for model A.}
 
-\item{\code{kH}}{Carrying capacity for H. Only used for model A. Initially set to \code{48}.}
+\item{\code{kH}}{Carrying capacity for H. Only used for model A.}
 
-\item{\code{kR}}{Carrying capacity for R. Only used for model A. Initially set to \code{26}.}
+\item{\code{kR}}{Carrying capacity for R. Only used for model A.}
 
-\item{\code{hP}}{Handing time for P. Only for model B. Initially set to \code{1}.}
+\item{\code{hP}}{Handing time for P. Only for model B.}
 
-\item{\code{hD}}{Handing time for D. Only for model B. Initially set to \code{1}.}
+\item{\code{hD}}{Handing time for D. Only for model B.}
 
-\item{\code{hR}}{Handing time for R. Only for model B. Initially set to \code{1}.}
+\item{\code{hR}}{Handing time for R. Only for model B.}
 
-\item{\code{aNP}}{Uptake rate for NP. Initially set to \code{NA}.}
+\item{\code{aNP}}{Uptake rate for NP.}
 
-\item{\code{aDV}}{Uptake rate for DV. Initially set to \code{NA}.}
+\item{\code{aDV}}{Uptake rate for DV.}
 
-\item{\code{aPH}}{Uptake rate for PH. Initially set to \code{NA}.}
+\item{\code{aPH}}{Uptake rate for PH.}
 
-\item{\code{aR}}{Uptake rate for R. Initially set to \code{NA}.}
+\item{\code{aR}}{Uptake rate for R.}
 
-\item{\code{model}}{Which model to use ("A" or "B"). Initially set to \code{"A"}.}
+\item{\code{model}}{Which model to use ("A" or "B").}
 }}
 
 \section{Methods}{
