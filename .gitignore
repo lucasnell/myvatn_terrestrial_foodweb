@@ -9,3 +9,4 @@ doc
 .DS_Store
 inst/doc
 under_constr
+*.nb
