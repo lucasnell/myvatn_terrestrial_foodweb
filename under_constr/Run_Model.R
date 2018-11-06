@@ -23,8 +23,11 @@ foodweb_A = web$new(model = "A")
 # Solve for unknown values
 foodweb_A$eq_solve()
 
+og <- foodweb_A$values()[sprintf("%seq", c("N", "D", "P", "V", "H", "R"))]
 foodweb_A$R0 = 0
-foodweb_A$eq_solve(solve_pars = c("N0", "D0", "P0", "V0", "H0", "M0"))
+foodweb_A$Req = 0
+foodweb_A$eq_solve(solve_pars = sprintf("%seq", c("N", "D", "P", "V", "H", "R")),
+                   initial_vals = c(rep(1e3, 3), c(75, 10, 0)))
 
 # Viewing class:
 foodweb_A
@@ -43,6 +46,7 @@ output_A = foodweb_A$ode_solve(tmax = 1000, a=1e9, b=0, r=400, w=40, d=1)
 output_A
 
 
+library(tidyverse)
 
 # Plot absolute N
 output_A %>%
@@ -70,7 +74,7 @@ modA_out <- lapply(c(0, 10, 20, 40),
 
 modA_out %>%
     mutate(b = factor(b)) %>%
-    filter(pool!="M") %>%
+    filter(pool != "midge") %>%
     group_by(pool, b) %>%
     # Scale the N relative to the initial state
     mutate(N_scale = N/N[1]) %>%
