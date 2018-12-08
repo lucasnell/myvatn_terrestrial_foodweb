@@ -15,12 +15,11 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
-    R6,
-    rootSolve,
     deSolve,
     dplyr,
     tidyr,
-    ggplot2
+    ggplot2,
+    magrittr
 RoxygenNote: 6.1.0
 Suggests:
     knitr,
