@@ -5,8 +5,10 @@
 \alias{test_midges}
 \title{Run a food web.}
 \usage{
-food_web(tmax, a, b, r, w, d, tstep = 1, V = TRUE, R = TRUE,
-  H = TRUE, pool_starts = NULL)
+food_web(tmax, a, b, r, w, d,
+         tstep = 1,
+         V = TRUE, R = TRUE, H = TRUE,
+         pool_starts = NULL)
 
 test_midges(tmax, a, b, r, w, d, tstep = 1)
 }
@@ -18,7 +20,7 @@ sufficiently high, the pulse will always be rectangular.}
 
 \item{b}{Maximum value of the midge pulse.}
 
-\item{r}{Period of the pulse expresed in units of \code{1.5 * w} (so the pulses
+\item{r}{Period of the pulse expressed in units of \code{1.5 * w} (so the pulses
 don't overlap). Also controls the smoothness, along with \code{a}.}
 
 \item{w}{Width of the midge pulse.}
@@ -35,12 +37,16 @@ This pool isn't allowed when no V or H pool are present.}
 \item{H}{Boolean for whether to include the H pool.}
 
 \item{pool_starts}{Named list of initial values for each pool.
-Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0".
+Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
+(for nitrogen, detritus, plant, detrivore, herbivore, predator, and midge
+pools, respectively).
 Any pools not included here will start at their equilibrium value, except
 for midges that start with zero by default.}
 }
 \value{
 A data frame with the following columns: \code{time}, \code{pool}, \code{N}.
+
+A numeric vector
 }
 \description{
 For more info on the midge-pulse parameters (\code{a}, \code{b}, \code{r}, \code{w}, and \code{d}),

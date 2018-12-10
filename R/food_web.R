@@ -36,7 +36,7 @@ diff_eq <- function(t, y, pars) {
 #' @param a Controls the smoothness of the pulse, along with \code{r}. If \code{a} is
 #'     sufficiently high, the pulse will always be rectangular.
 #' @param b Maximum value of the midge pulse.
-#' @param r Period of the pulse expresed in units of \code{1.5 * w} (so the pulses
+#' @param r Period of the pulse expressed in units of \code{1.5 * w} (so the pulses
 #'     don't overlap). Also controls the smoothness, along with \code{a}.
 #' @param w Width of the midge pulse.
 #' @param d Mid point of the first pulse in units of \code{w}.
@@ -46,7 +46,9 @@ diff_eq <- function(t, y, pars) {
 #'     This pool isn't allowed when no V or H pool are present.
 #' @param H Boolean for whether to include the H pool.
 #' @param pool_starts Named list of initial values for each pool.
-#'     Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0".
+#'     Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
+#'     (for nitrogen, detritus, plant, detrivore, herbivore, predator, and midge
+#'     pools, respectively).
 #'     Any pools not included here will start at their equilibrium value, except
 #'     for midges that start with zero by default.
 #'
@@ -62,6 +64,11 @@ diff_eq <- function(t, y, pars) {
 #'
 #' @return A data frame with the following columns: `time`, `pool`, `N`.
 #'
+#'
+#' @usage food_web(tmax, a, b, r, w, d,
+#'          tstep = 1,
+#'          V = TRUE, R = TRUE, H = TRUE,
+#'          pool_starts = NULL)
 #'
 #' @export
 #'
@@ -129,11 +136,13 @@ food_web <- function(tmax, a, b, r, w, d, tstep = 1,
         init[names(pool_starts)] <- unlist(pool_starts)
     }
     names(init) <- c(pool_names[pool_names != "M"], "M")
-    if (!V) init$V0 <- 0
-    if (!R) init$R0 <- 0
-    if (!H) init$H0 <- 0
+    if (!V) init$V <- 0
+    if (!R) init$R <- 0
+    if (!H) init$H <- 0
 
-    solved_ode = ode(init, seq(0, tmax, tstep), diff_eq, pars)
+    time <- seq(0, tmax, tstep)
+    if (time[length(time)] < tmax) time <- c(time, tmax)
+    solved_ode <- ode(init, time, diff_eq, pars)
 
     solved_ode <- solved_ode %>%
         as.data.frame() %>%  # prevents "matrix as column is not supported" error

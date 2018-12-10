@@ -24,11 +24,14 @@ midge_pulse <- function(t, a, b, r, w, d) {
 #'
 #' @inheritParams food_web
 #'
+#' @return A numeric vector
 #'
 #' @export
 #'
 test_midges <- function(tmax, a, b, r, w, d, tstep = 1) {
-    return(midge_pulse(seq(1, tmax, tstep), a, b, r, w, d))
+    time <- seq(0, tmax, tstep)
+    if (time[length(time)] < tmax) time <- c(time, tmax)
+    return(midge_pulse(time, a, b, r, w, d))
 }
 
 
