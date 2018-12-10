@@ -20,10 +20,11 @@ Imports:
     tidyr,
     ggplot2,
     magrittr
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
 URL: https://github.com/lucasnell/myvatn_terrestrial_foodweb
 BugReports: https://github.com/lucasnell/myvatn_terrestrial_foodweb/issues
+Roxygen: list(markdown = TRUE)

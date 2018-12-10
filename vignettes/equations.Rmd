@@ -20,6 +20,10 @@ knitr::opts_chunk$set(
 
 This document outlines the equations for models A and B.
 
+> Update 10 Dec 2018: We're now only using model A because it appears to be
+> more numerically stable via our initial tests.
+
+
 # Model A
 
 ## Differential equations

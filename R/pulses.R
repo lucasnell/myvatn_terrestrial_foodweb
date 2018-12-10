@@ -20,7 +20,7 @@ midge_pulse <- function(t, a, b, r, w, d) {
 }
 
 
-#' Test a midge pulse time series.
+#' @describeIn food_web Test a midge pulse time series.
 #'
 #' @inheritParams food_web
 #'

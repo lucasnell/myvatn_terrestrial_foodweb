@@ -60,11 +60,34 @@ diff_eq <- function(t, y, pars) {
 #' @importFrom dplyr arrange
 #' @importFrom tidyr gather
 #'
+#' @return A data frame with the following columns: `time`, `pool`, `N`.
+#'
 #'
 #' @export
 #'
+#' @examples
+#' # Test a midge pulse:
+#' midges <- test_midges(1000, a = 1e9, b = 10, r = 400, w = 40, d = 1)
+#' plot(midges, type = 'l', ylab = "iM")
 #'
-food_web <- function(tmax, a, b, r, w, d, tstep = 1, V = TRUE, R = TRUE, H = TRUE,
+#' # What happens to the food web bc of this midge pulse?
+#' web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1)
+#' web_output
+#'
+#' # If you want to adjust starting value for predators:
+#' web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
+#'                        pool_starts = list(R0 = 10))
+#' web_output
+#'
+#' # (Below is not yet coded bc we don't have the parameter estimates for anything except
+#' # the full food web)
+#' # # If you want to remove predators from the food web entirely:
+#' # web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
+#'                          R = FALSE)
+#' # web_output
+#'
+food_web <- function(tmax, a, b, r, w, d, tstep = 1,
+                     V = TRUE, R = TRUE, H = TRUE,
                      pool_starts = NULL) {
 
     if (!inherits(V, "logical") || !inherits(R, "logical") || !inherits(H, "logical") ||

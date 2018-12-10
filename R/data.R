@@ -4,8 +4,11 @@
 #' These estimates are computed separately when one or more pool is removed.
 #'
 #'
-#' @format A data frame with 7 rows and 34 variables:
+#' @format A data frame with 7 rows and 31 variables:
 #' \describe{
+#'   \item{V}{ Integer for whether the `V` pool is included (0 = `FALSE`, 1 = `TRUE`). }
+#'   \item{R}{ Integer for whether the `R` pool is included (0 = `FALSE`, 1 = `TRUE`). }
+#'   \item{H}{ Integer for whether the `H` pool is included (0 = `FALSE`, 1 = `TRUE`). }
 #'   \item{Neq}{  Desired equilibrium value for N. }
 #'   \item{Deq}{  Desired equilibrium value for D. }
 #'   \item{Peq}{  Desired equilibrium value for P. }
