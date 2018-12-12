@@ -7,14 +7,8 @@
 #' @format A data frame with 7 rows and 31 variables:
 #' \describe{
 #'   \item{V}{ Integer for whether the `V` pool is included (0 = `FALSE`, 1 = `TRUE`). }
-#'   \item{R}{ Integer for whether the `R` pool is included (0 = `FALSE`, 1 = `TRUE`). }
 #'   \item{H}{ Integer for whether the `H` pool is included (0 = `FALSE`, 1 = `TRUE`). }
-#'   \item{Neq}{  Desired equilibrium value for N. }
-#'   \item{Deq}{  Desired equilibrium value for D. }
-#'   \item{Peq}{  Desired equilibrium value for P. }
-#'   \item{Veq}{  Desired equilibrium value for V. }
-#'   \item{Heq}{  Desired equilibrium value for H. }
-#'   \item{Req}{  Desired equilibrium value for R. }
+#'   \item{R}{ Integer for whether the `R` pool is included (0 = `FALSE`, 1 = `TRUE`). }
 #'   \item{iN}{ Input to N. }
 #'   \item{lD}{ Loss rates systems for D. }
 #'   \item{lP}{ Loss rates systems for P. }
@@ -37,6 +31,12 @@
 #'   \item{aDV}{ Uptake rate for DV. }
 #'   \item{aPH}{ Uptake rate for PH. }
 #'   \item{aR}{ Uptake rate for R. }
+#'   \item{Neq}{  Equilibrium value for N. }
+#'   \item{Deq}{  Equilibrium value for D. }
+#'   \item{Peq}{  Equilibrium value for P. }
+#'   \item{Veq}{  Equilibrium value for V. }
+#'   \item{Heq}{  Equilibrium value for H. }
+#'   \item{Req}{  Equilibrium value for R. }
 #' }
 #'
 "par_estimates"

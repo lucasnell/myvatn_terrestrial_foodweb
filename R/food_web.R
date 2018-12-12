@@ -41,16 +41,17 @@ diff_eq <- function(t, y, pars) {
 #' @param w Width of the midge pulse.
 #' @param d Mid point of the first pulse in units of \code{w}.
 #' @param tstep Step size in units of time. Defaults to \code{1}.
-#' @param V Boolean for whether to include the V pool.
-#' @param R Boolean for whether to include the R pool.
-#'     This pool isn't allowed when no V or H pool are present.
-#' @param H Boolean for whether to include the H pool.
+#' @param .V Boolean for whether to include the V pool. Defaults to `TRUE`.
+#' @param .R Boolean for whether to include the R pool. Defaults to `TRUE`.
+#' @param .H Boolean for whether to include the H pool. Defaults to `TRUE`.
+#' @param .iN Input rate from pool N. Options for this include `600`, `1000`, or `2000`.
+#'     Defaults to `1000`.
 #' @param pool_starts Named list of initial values for each pool.
 #'     Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
 #'     (for nitrogen, detritus, plant, detrivore, herbivore, predator, and midge
 #'     pools, respectively).
 #'     Any pools not included here will start at their equilibrium value, except
-#'     for midges that start with zero by default.
+#'     for midges that start at zero by default.
 #'
 #'
 #' @importFrom deSolve ode
@@ -67,7 +68,8 @@ diff_eq <- function(t, y, pars) {
 #'
 #' @usage food_web(tmax, a, b, r, w, d,
 #'          tstep = 1,
-#'          V = TRUE, R = TRUE, H = TRUE,
+#'          .V = TRUE, .R = TRUE, .H = TRUE,
+#'          .iN = 1000,
 #'          pool_starts = NULL)
 #'
 #' @export
@@ -86,34 +88,34 @@ diff_eq <- function(t, y, pars) {
 #'                        pool_starts = list(R0 = 10))
 #' web_output
 #'
-#' # (Below is not yet coded bc we don't have the parameter estimates for anything except
-#' # the full food web)
-#' # # If you want to remove predators from the food web entirely:
-#' # web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
-#'                          R = FALSE)
-#' # web_output
+#' # If you want to remove predators from the food web entirely:
+#' web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
+#'                        .R = FALSE)
+#' web_output
 #'
 food_web <- function(tmax, a, b, r, w, d, tstep = 1,
-                     V = TRUE, R = TRUE, H = TRUE,
+                     .V = TRUE, .R = TRUE, .H = TRUE,
+                     .iN = 1000,
                      pool_starts = NULL) {
 
-    if (!inherits(V, "logical") || !inherits(R, "logical") || !inherits(H, "logical") ||
-        length(V) != 1 || length(R) != 1 || length(H) != 1) {
-        stop("\nV, R, and H must all be length-1 logicals (TRUE or FALSE).")
+    if (!inherits(.V, "logical") || !inherits(.R, "logical") || !inherits(.H, "logical") ||
+        length(.V) != 1 || length(.R) != 1 || length(.H) != 1) {
+        stop("\n.V, .R, and .H must all be length-1 logicals (TRUE or FALSE).")
     }
-    if (!H && !V && R) {
-        stop("\nYou can't have predators if you have no detritivores or herbivores, ",
-             "you silly goose.")
-    }
-    if (!V || !R || !H) {
-        stop("\nFood webs other than the full one aren't yet programmed. (Blame Joe.)")
+    if (!.iN %in% par_estimates$iN) {
+        stop("\nYour options for .iN are ",
+             paste(unique(par_estimates$iN), collapse = ", "))
     }
 
     pars <- par_estimates %>%
-        filter(V == V, R == R, H == H) %>%
-        dplyr::select(-V, -R, -H) %>%
-        {attr(., "spec") <- NULL; .} %>%
-        as.list()
+        filter(V == ifelse(.V,1,0), R == ifelse(.R,1,0), H == ifelse(.H,1,0),
+               iN == .iN) %>%
+        dplyr::select(-V, -R, -H)
+    if (nrow(pars) == 0) {
+        stop("\nYou're using a combination of .V, .R, .H, and .iN that we don't have ",
+             "parameter values for.")
+    }
+    pars <- as.list(pars)
     pars$midges <- function(t_) midge_pulse(t_, a, b, r, w, d)
 
     pool_names <- c("N", "D", "P", "V", "H", "R", "M")
@@ -136,16 +138,16 @@ food_web <- function(tmax, a, b, r, w, d, tstep = 1,
         init[names(pool_starts)] <- unlist(pool_starts)
     }
     names(init) <- c(pool_names[pool_names != "M"], "M")
-    if (!V) init$V <- 0
-    if (!R) init$R <- 0
-    if (!H) init$H <- 0
+    if (!.V) init[["V"]] <- 0
+    if (!.R) init[["R"]] <- 0
+    if (!.H) init[["H"]] <- 0
 
     time <- seq(0, tmax, tstep)
     if (time[length(time)] < tmax) time <- c(time, tmax)
     solved_ode <- ode(init, time, diff_eq, pars)
 
     solved_ode <- solved_ode %>%
-        as.data.frame() %>%  # prevents "matrix as column is not supported" error
+        as.data.frame() %>%  # <-- prevents "matrix as column is not supported" error
         as_data_frame() %>%
         rename(
             nitrogen = N,

@@ -7,7 +7,8 @@
 \usage{
 food_web(tmax, a, b, r, w, d,
          tstep = 1,
-         V = TRUE, R = TRUE, H = TRUE,
+         .V = TRUE, .R = TRUE, .H = TRUE,
+         .iN = 1000,
          pool_starts = NULL)
 
 test_midges(tmax, a, b, r, w, d, tstep = 1)
@@ -29,19 +30,21 @@ don't overlap). Also controls the smoothness, along with \code{a}.}
 
 \item{tstep}{Step size in units of time. Defaults to \code{1}.}
 
-\item{V}{Boolean for whether to include the V pool.}
+\item{.V}{Boolean for whether to include the V pool. Defaults to \code{TRUE}.}
 
-\item{R}{Boolean for whether to include the R pool.
-This pool isn't allowed when no V or H pool are present.}
+\item{.R}{Boolean for whether to include the R pool. Defaults to \code{TRUE}.}
 
-\item{H}{Boolean for whether to include the H pool.}
+\item{.H}{Boolean for whether to include the H pool. Defaults to \code{TRUE}.}
+
+\item{.iN}{Input rate from pool N. Options for this include \code{600}, \code{1000}, or \code{2000}.
+Defaults to \code{1000}.}
 
 \item{pool_starts}{Named list of initial values for each pool.
 Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
 (for nitrogen, detritus, plant, detrivore, herbivore, predator, and midge
 pools, respectively).
 Any pools not included here will start at their equilibrium value, except
-for midges that start with zero by default.}
+for midges that start at zero by default.}
 }
 \value{
 A data frame with the following columns: \code{time}, \code{pool}, \code{N}.
@@ -71,11 +74,9 @@ web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
                        pool_starts = list(R0 = 10))
 web_output
 
-# (Below is not yet coded bc we don't have the parameter estimates for anything except
-# the full food web)
-# # If you want to remove predators from the food web entirely:
-# web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
-                         R = FALSE)
-# web_output
+# If you want to remove predators from the food web entirely:
+web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
+                       .R = FALSE)
+web_output
 
 }
