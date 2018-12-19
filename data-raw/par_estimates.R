@@ -8,7 +8,7 @@ tibbles <- map(list.files("data-raw/parameters", "*.csv", full.names = TRUE),
 names(tibbles) <- gsub(".csv", "", list.files("data-raw/parameters", "*.csv"))
 
 # Fix mistake in original file
-tibbles$full_pars <- tibbles$full_pars %>% rename(mD = `\n            mD`)
+# tibbles$full_pars <- tibbles$full_pars %>% rename(mD = `\n            mD`)
 
 par_estimates <- full_join(tibbles$full_pars,
                            tibbles$iN_eqs, by = "iN") %>%

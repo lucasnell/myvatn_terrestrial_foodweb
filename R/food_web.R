@@ -11,15 +11,15 @@ diff_eq <- function(t, y, pars) {
         with(as.list(pars),
              with(as.list(y),
                   {
-                      c(N = iN - aNP*N*P*(1-P/kP) + (1-lD)*mD*D - mN*N,
-                        D = (1-lP)*mP*P + (1-lV)*mV*V + (1-lH)*mH*H +
-                            (1-lR)*mR*R + (1 - lM)*mM*M - aDV*D*V*(1-V/kV) -
-                            mD*D,
-                        P = aNP*N*P*(1-P/kP) - aPH*P*H*(1-H/kH) - mP*P,
-                        V = aDV*D*V*(1-V/kV) - (aR*V*R)*(1-R/kR) - mV*V,
-                        H = aPH*P*H*(1-H/kH) - (aR*H*R)*(1-R/kR) - mH*H,
-                        R = (aR*V*R + aR*H*R + aR*M*R)*(1-R/kR) - mR*R,
-                        M = iM - mM*M - (aR*M*R)*(1-R/kR))
+                      c(N = iN - aNP*N*P/(hN + N) + (1 - lD)*mD*D - mN*N,
+                        D = (1 - lP)*(mP0 + mP*P)*P + (1 - lV)*(mV0 + mV*V)*V +
+                            (1 - lH)*(mH0 + mH*H)*H + (1 - lR)*(mR0 + mR*R)*R +
+                            (1 - lM)*mM*M - aDV*D*V/(hD + D) - mD*D,
+                        P = aNP*N*P/(hN + N) - aPH*P*H/(hP + P) - (mP0 + mP*P)*P,
+                        V = aDV*D*V/(hD + D) - (aR*V*R)/(hVHM + V + H + M) - (mV0 + mV*V)*V,
+                        H = aPH*P*H/(hP + P) - (aR*H*R)/(hVHM + V + H + M) - (mH0 + mH*H)*H,
+                        R = (aR*V*R + aR*H*R + aM*M*R)/(hVHM + V + H + M) - (mR0 + mR*R)*R,
+                        M = iM - mM*M - (aM*M*R)/(hVHM + V + H + M))
                   }))
 
     return(list(output))
@@ -44,7 +44,7 @@ diff_eq <- function(t, y, pars) {
 #' @param .V Boolean for whether to include the V pool. Defaults to `TRUE`.
 #' @param .R Boolean for whether to include the R pool. Defaults to `TRUE`.
 #' @param .H Boolean for whether to include the H pool. Defaults to `TRUE`.
-#' @param .iN Input rate from pool N. Options for this include `600`, `1000`, or `2000`.
+#' @param .iN Input rate from pool N. Options for this include `200`, `1000`, or `1800`.
 #'     Defaults to `1000`.
 #' @param pool_starts Named list of initial values for each pool.
 #'     Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
