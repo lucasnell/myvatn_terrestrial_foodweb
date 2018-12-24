@@ -97,6 +97,9 @@ diff_eq <- function(t, y, pars) {
 #'                        .R = FALSE)
 #' web_output
 #'
+#' # Plotting output:
+#' plot_web(web_output)
+#'
 food_web <- function(tmax, a, b, r, w, d, tstep = 1,
                      .V = TRUE, .R = TRUE, .H = TRUE,
                      .iN = 1000,
@@ -183,6 +186,34 @@ food_web <- function(tmax, a, b, r, w, d, tstep = 1,
 
     return(solved_ode)
 
-    ;
+}
 
+
+
+#' Plot output from the `food_web` function.
+#'
+#' @param web_df Dataframe output from the `food_web` function.
+#'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr group_by
+#' @importFrom dplyr mutate
+#' @import ggplot2
+#'
+#' @export
+#'
+#'
+plot_web <- function(web_df) {
+    web_df %>%
+        group_by(pool) %>%
+        # Define 'minb' to set the minimum value for the y-axis.
+        # This allows different y-scales for different facets, with the ymin set to 0
+        mutate(minb = 0) %>%
+        ggplot(aes(time, N)) +
+        facet_wrap(~pool, scales="free_y") +
+        # The horizontal lines show the initial states
+        geom_hline(data = web_output %>% filter(time == min(time)),
+                   aes(yintercept=N), color="firebrick") +
+        geom_line(size = 1) +
+        geom_point(aes(time, minb), shape="") +
+        theme_classic()
 }

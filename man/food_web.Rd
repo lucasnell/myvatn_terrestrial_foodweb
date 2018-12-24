@@ -71,7 +71,7 @@ plot(midges, type = 'l', ylab = "iM")
 
 # What happens to the food web bc of this midge pulse?
 web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1)
-web_output
+plot_web(web_output)
 
 # If you want to adjust starting value for predators:
 web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
