@@ -36,7 +36,7 @@ don't overlap). Also controls the smoothness, along with \code{a}.}
 
 \item{.H}{Boolean for whether to include the H pool. Defaults to \code{TRUE}.}
 
-\item{.iN}{Input rate from pool N. Options for this include \code{600}, \code{1000}, or \code{2000}.
+\item{.iN}{Input rate from pool N. Options for this include \code{200}, \code{1000}, or \code{1800}.
 Defaults to \code{1000}.}
 
 \item{pool_starts}{Named list of initial values for each pool.

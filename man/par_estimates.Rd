@@ -4,7 +4,7 @@
 \name{par_estimates}
 \alias{par_estimates}
 \title{Parameter estimates for the food web model.}
-\format{A data frame with 7 rows and 31 variables:
+\format{A data frame with 8 rows and 37 variables:
 \describe{
 \item{V}{ Integer for whether the \code{V} pool is included (0 = \code{FALSE}, 1 = \code{TRUE}). }
 \item{H}{ Integer for whether the \code{H} pool is included (0 = \code{FALSE}, 1 = \code{TRUE}). }
@@ -17,20 +17,26 @@
 \item{lR}{ Loss rates systems for R. }
 \item{lM}{ Loss rates systems for M. }
 \item{mN}{ Loss rates from pool N (returned to either N or D). }
-\item{mP}{ Loss rates from pool P (returned to either N or D). }
 \item{mD}{ Loss rates from pool D (returned to either N or D). }
-\item{mV}{ Loss rates from pool V (returned to either N or D). }
-\item{mH}{ Loss rates from pool H (returned to either N or D). }
-\item{mR}{ Loss rates from pool R (returned to either N or D). }
+\item{mP0}{ Baseline Loss rates from pool P (returned to either N or D). }
+\item{mD0}{ Baseline Loss rates from pool D (returned to either N or D). }
+\item{mV0}{ Baseline Loss rates from pool V (returned to either N or D). }
+\item{mH0}{ Baseline Loss rates from pool H (returned to either N or D). }
+\item{mR0}{ Baseline Loss rates from pool R (returned to either N or D). }
+\item{mP}{ DD Loss rates from pool P (returned to either N or D). }
+\item{mV}{ DD Loss rates from pool V (returned to either N or D). }
+\item{mH}{ DD Loss rates from pool H (returned to either N or D). }
+\item{mR}{ DD Loss rates from pool R (returned to either N or D). }
 \item{mM}{ Loss rates from pool M (returned to either N or D). }
-\item{kP}{ Carrying capacity for P. }
-\item{kV}{ Carrying capacity for V. }
-\item{kH}{ Carrying capacity for H. }
-\item{kR}{ Carrying capacity for R. }
 \item{aNP}{ Uptake rate for NP. }
 \item{aDV}{ Uptake rate for DV. }
 \item{aPH}{ Uptake rate for PH. }
 \item{aR}{ Uptake rate for R. }
+\item{aM}{ Uptake rate of M for R. }
+\item{hN}{ Half-saturation for uptake of N. }
+\item{hD}{ Half-saturation for uptake of D. }
+\item{hP}{ Half-saturation for uptake of P. }
+\item{hVHM}{ Half-saturation for uptake of V, H, and M. }
 \item{Neq}{  Equilibrium value for N. }
 \item{Deq}{  Equilibrium value for D. }
 \item{Peq}{  Equilibrium value for P. }
