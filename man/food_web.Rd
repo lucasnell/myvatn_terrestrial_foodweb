@@ -45,6 +45,10 @@ Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
 pools, respectively).
 Any pools not included here will start at their equilibrium value, except
 for midges that start at zero by default.}
+
+\item{other_pars}{A named list of other parameter values to use instead of defaults.
+Possible parameter names include all column names in \code{par_estimates}
+except the first three (see \code{?par_estimates} for a description of column names).}
 }
 \value{
 A data frame with the following columns: \code{time}, \code{pool}, \code{N}.

@@ -52,6 +52,10 @@ diff_eq <- function(t, y, pars) {
 #'     pools, respectively).
 #'     Any pools not included here will start at their equilibrium value, except
 #'     for midges that start at zero by default.
+#' @param other_pars A named list of other parameter values to use instead of defaults.
+#'     Possible parameter names include all column names in `par_estimates`
+#'     except the first three (see `?par_estimates` for a description of column names).
+#'
 #'
 #'
 #' @importFrom deSolve ode
@@ -96,7 +100,8 @@ diff_eq <- function(t, y, pars) {
 food_web <- function(tmax, a, b, r, w, d, tstep = 1,
                      .V = TRUE, .R = TRUE, .H = TRUE,
                      .iN = 1000,
-                     pool_starts = NULL) {
+                     pool_starts = NULL,
+                     other_pars = NULL) {
 
     if (!inherits(.V, "logical") || !inherits(.R, "logical") || !inherits(.H, "logical") ||
         length(.V) != 1 || length(.R) != 1 || length(.H) != 1) {
@@ -117,6 +122,19 @@ food_web <- function(tmax, a, b, r, w, d, tstep = 1,
     }
     pars <- as.list(pars)
     pars$midges <- function(t_) midge_pulse(t_, a, b, r, w, d)
+    if (!is.null(other_pars)) {
+        if (!inherits(other_pars, "list") || is.null(names(other_pars))) {
+            stop("other_pars must be NULL or a named list.")
+        }
+        if (!all(names(other_pars) %in% colnames(par_estimates)[-1:-3])) {
+            bad_pars <- names(other_pars)[!names(other_pars) %in%
+                                              colnames(par_estimates)[-1:-3]]
+            stop("The following name(s) in other_pars aren't present in ",
+                 "`colnames(par_estimates)[-1:-3]`: ",
+                 paste(sprintf('"%s"', bad_pars), collapse = ", "), ".")
+        }
+        pars[names(other_pars)] <- other_pars
+    }
 
     pool_names <- c("N", "D", "P", "V", "H", "R", "M")
     # Default values:
@@ -124,16 +142,14 @@ food_web <- function(tmax, a, b, r, w, d, tstep = 1,
     names(init) <- c(paste0(pool_names[pool_names != "M"], "0"), "M0")
     # Replace those that are provided:
     if (!is.null(pool_starts)) {
-        if (!inherits(pool_starts, "list")) {
-            stop("\nIf not NULL, pool_starts must be a list.")
-        }
-        if (is.null(names(pool_starts)) || any(is.na(names(pool_starts)))) {
-            stop("\nIn pool_starts, all items must be named.");
+        if (!inherits(pool_starts, "list") || is.null(names(pool_starts))) {
+            stop("\nIf not NULL, pool_starts must be a named list.")
         }
         if (any(!names(pool_starts) %in% paste0(pool_names, "0"))) {
+            bad_ps <- names(pool_starts)[!names(pool_starts) %in% paste0(pool_names, "0")]
             stop("\nThe following name(s) in pool_starts don't match with a pool ",
                  "starting-value argument name: ",
-                 names(pool_starts)[!names(pool_starts) %in% paste0(pool_names, "0")])
+                 paste(sprintf('"%s"', bad_ps), collapse = ", "))
         }
         init[names(pool_starts)] <- unlist(pool_starts)
     }
