@@ -16,10 +16,13 @@ diff_eq <- function(t, y, pars) {
                             (1 - lH)*(mH0 + mH*H)*H + (1 - lR)*(mR0 + mR*R)*R +
                             (1 - lM)*mM*M - aDV*D*V/(hD + D) - mD*D,
                         P = aNP*N*P/(hN + N) - aPH*P*H/(hP + P) - (mP0 + mP*P)*P,
-                        V = aDV*D*V/(hD + D) - (aR*V*R)/(hVHM + V + H + M) - (mV0 + mV*V)*V,
-                        H = aPH*P*H/(hP + P) - (aR*H*R)/(hVHM + V + H + M) - (mH0 + mH*H)*H,
-                        R = (aR*V*R + aR*H*R + aM*M*R)/(hVHM + V + H + M) - (mR0 + mR*R)*R,
-                        M = iM - mM*M - (aM*M*R)/(hVHM + V + H + M))
+                        V = aDV*D*V/(hD + D) - (aR*V*R)/(hVHM + V + H + (hVHM/aR)*aM*M) -
+                            (mV0 + mV*V)*V,
+                        H = aPH*P*H/(hP + P) - (aR*H*R)/(hVHM + V + H + (hVHM/aR)*aM*M) -
+                            (mH0 + mH*H)*H,
+                        R = (aR*V*R + aR*H*R + hVHM*aM*M*R)/(hVHM + V + H + (hVHM/aR)*aM*M) -
+                            (mR0 + mR*R)*R,
+                        M = iM - mM*M - (hVHM*aM*M*R)/(hVHM + V + H + (hVHM/aR)*aM*M))
                   }))
 
     return(list(output))
@@ -28,24 +31,23 @@ diff_eq <- function(t, y, pars) {
 
 #' Run a food web.
 #'
-#' For more info on the midge-pulse parameters (`a`, `b`, `r`, `w`, and `d`),
+#' For more info on the midge-pulse parameters (`b`, `s`, `w`),
 #' see `vignette("smooth_pulse", "mtf")`.
 #'
 #'
 #' @param tmax Duration over which to run the model.
-#' @param a Controls the smoothness of the pulse, along with \code{r}. If \code{a} is
-#'     sufficiently high, the pulse will always be rectangular.
 #' @param b Maximum value of the midge pulse.
-#' @param r Period of the pulse expressed in units of \code{1.5 * w} (so the pulses
-#'     don't overlap). Also controls the smoothness, along with \code{a}.
+#' @param s Start time for midge pulse
 #' @param w Width of the midge pulse.
-#' @param d Mid point of the first pulse in units of \code{w}.
 #' @param tstep Step size in units of time. Defaults to \code{1}.
 #' @param .V Boolean for whether to include the V pool. Defaults to `TRUE`.
 #' @param .R Boolean for whether to include the R pool. Defaults to `TRUE`.
 #' @param .H Boolean for whether to include the H pool. Defaults to `TRUE`.
-#' @param .iN Input rate from pool N. Options for this include `200`, `1000`, or `1800`.
-#'     Defaults to `1000`.
+#' @param .mM Loss rate of midges. Defaults to 0.01.
+#' @param .lM Loss rate of midges.
+#' @param .aM Attack rate for midges. Defaults to 20.
+#' @param .iN Input rate from pool N. Options for this include `5`, `10`, or `20`.
+#'     Defaults to `10`.
 #' @param pool_starts Named list of initial values for each pool.
 #'     Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
 #'     (for nitrogen, detritus, plant, detrivore, herbivore, predator, and midge
@@ -66,19 +68,15 @@ diff_eq <- function(t, y, pars) {
 #' @return A data frame with the following columns: `time`, `pool`, `N`.
 #'
 #'
-#' @usage food_web(tmax, a, b, r, w, d,
+#' @usage food_web(tmax, b, s, w,
 #'          tstep = 1,
 #'          .V = TRUE, .R = TRUE, .H = TRUE,
-#'          .iN = 1000,
+#'          .mM = 0.5, .aM = 1, .lM = 0.1,
 #'          pool_starts = NULL)
 #'
 #' @export
 #'
 #' @examples
-#' # Test a midge pulse:
-#' midges <- test_midges(1000, a = 1e9, b = 10, r = 400, w = 40, d = 1)
-#' plot(midges, type = 'l', ylab = "iM")
-#'
 #' # What happens to the food web bc of this midge pulse?
 #' web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1)
 #' web_output
@@ -93,9 +91,9 @@ diff_eq <- function(t, y, pars) {
 #'                        .R = FALSE)
 #' web_output
 #'
-food_web <- function(tmax, a, b, r, w, d, tstep = 1,
+food_web <- function(tmax, b, s, w, tstep = 1,
                      .V = TRUE, .R = TRUE, .H = TRUE,
-                     .iN = 1000,
+                     .iN = 10, .mM = 0.5, .aM = 1, .lM = 0.1,
                      pool_starts = NULL) {
 
     if (!inherits(.V, "logical") || !inherits(.R, "logical") || !inherits(.H, "logical") ||
@@ -110,13 +108,16 @@ food_web <- function(tmax, a, b, r, w, d, tstep = 1,
     pars <- par_estimates %>%
         filter(V == ifelse(.V,1,0), R == ifelse(.R,1,0), H == ifelse(.H,1,0),
                iN == .iN) %>%
+        mutate(mM = .mM,
+               aM = .aM,
+               lM = .lM) %>%
         dplyr::select(-V, -R, -H)
     if (nrow(pars) == 0) {
         stop("\nYou're using a combination of .V, .R, .H, and .iN that we don't have ",
              "parameter values for.")
     }
     pars <- as.list(pars)
-    pars$midges <- function(t_) midge_pulse(t_, a, b, r, w, d)
+    pars$midges <- function(t_) midge_pulse(t_, b, s, w)
 
     pool_names <- c("N", "D", "P", "V", "H", "R", "M")
     # Default values:
