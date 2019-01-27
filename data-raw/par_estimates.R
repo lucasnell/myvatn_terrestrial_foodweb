@@ -13,7 +13,7 @@ names(tibbles) <- gsub(".csv", "", list.files("data-raw/parameters", "*.csv"))
 par_estimates <- full_join(tibbles$full_pars,
                            tibbles$iN_eqs, by = "iN") %>%
     mutate(V = 1, H = 1, R = 1) %>%
-    full_join(tibbles$structure_eqs %>% mutate(iN = 1000),
+    full_join(tibbles$structure_eqs %>% mutate(iN = 10),
               by = c("V", "H", "R", "iN",
                      paste0(c("N", "D", "P", "V", "H", "R"), "eq"))) %>%
     select(V, H, R, iN, everything()) %>%
