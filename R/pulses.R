@@ -24,15 +24,6 @@ midge_pulse <- function(t, b, s, w) {
 }
 
 
-#' @describeIn food_web Test a midge pulse time series.
-#'
-#' @inheritParams food_web
-#'
-#' @return A numeric vector
-#'
-#' @export
-#'
-test_midges <- NULL
 
 
 

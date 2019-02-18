@@ -50,7 +50,7 @@ diff_eq <- function(t, y, pars) {
 #'     Defaults to `10`.
 #' @param pool_starts Named list of initial values for each pool.
 #'     Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
-#'     (for nitrogen, detritus, plant, detrivore, herbivore, predator, and midge
+#'     (for nitrogen, detritus, plant, detritivore, herbivore, predator, and midge
 #'     pools, respectively).
 #'     Any pools not included here will start at their equilibrium value, except
 #'     for midges that start at zero by default.
@@ -154,14 +154,14 @@ food_web <- function(tmax, b, s, w, tstep = 1,
             nitrogen = N,
             detritus = D,
             plant = P,
-            detrivore = V,
+            detritivore = V,
             herbivore = H,
             predator = R,
             midge = M
         ) %>%
         gather('pool', 'N', -time) %>%
         mutate(pool = factor(pool, levels = c("nitrogen", "detritus", "plant",
-                                              "detrivore", "herbivore",
+                                              "detritivore", "herbivore",
                                               "predator", "midge")),
                time = as.integer(time)) %>%
         arrange(pool, time)
