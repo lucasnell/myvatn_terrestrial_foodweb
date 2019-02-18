@@ -64,11 +64,14 @@ pulse_pars <- expand.grid(w = seq(10, 30, length.out = 100),
                           aM = c(1e-4, 1e-2, 1)) %>%
     split(row(.)[,1])
 
-library(parallel)
-t0 <- Sys.time()
-pulse_df <- mclapply(pulse_pars, one_combo, mc.cores = 3)
-Sys.time() - t0; rm(t0)
+# library(parallel)
+# # Takes ~45 min w/ 3 cores
+# pulse_df <- mclapply(pulse_pars, one_combo, mc.cores = 3)
+# pulse_df <- bind_rows(pulse_df)
+#
+# write_csv(pulse_df, "data-raw/pulse_data.csv")
 
+pulse_df <- read_csv("data-raw/pulse_data.csv", col_types = "ddddfdddddd")
 
 
 heat_plot <- function(.df, .col, .pool) {
@@ -87,8 +90,10 @@ heat_plot <- function(.df, .col, .pool) {
         scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "firebrick",
                              midpoint = midpt) +
         facet_grid(~ aM) +
+        ggtitle(.pool) +
         coord_cartesian(ylim = c(0, 100), xlim = c(10, 30))
 }
 
-heat_plot(pulse_pars, return_time, "detritivore")
+heat_plot(pulse_df, return_time, "detritivore")
+heat_plot(pulse_df, return_time, "herbivore")
 
