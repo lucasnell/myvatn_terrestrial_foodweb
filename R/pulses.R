@@ -11,28 +11,19 @@
 #'
 #' @noRd
 #'
-midge_pulse <- function(t, a, b, r, w, d) {
-    max_adj <- sin(2 * pi * (0.75 - 1 / (3 * r)))
-    max <- b * (1 + exp(-a * (1 + max_adj)))
-    sines <- sin(2 * pi * (8 * t - 8 * d * w + 9 * r * w)/(12 * r * w))
-    f <- max / (1+exp(a * (sines - max_adj)))
+# midge_pulse <- function(t, a, b, r, w, d) {
+#     max_adj <- sin(2 * pi * (0.75 - 1 / (3 * r)))
+#     max <- b * (1 + exp(-a * (1 + max_adj)))
+#     sines <- sin(2 * pi * (8 * t - 8 * d * w + 9 * r * w)/(12 * r * w))
+#     f <- max / (1+exp(a * (sines - max_adj)))
+#     return(f)
+# }
+midge_pulse <- function(t, b, s, w) {
+    f = ifelse(t > s & t <= s + w, b, 0)
     return(f)
 }
 
 
-#' @describeIn food_web Test a midge pulse time series.
-#'
-#' @inheritParams food_web
-#'
-#' @return A numeric vector
-#'
-#' @export
-#'
-test_midges <- function(tmax, a, b, r, w, d, tstep = 1) {
-    time <- seq(0, tmax, tstep)
-    if (time[length(time)] < tmax) time <- c(time, tmax)
-    return(midge_pulse(time, a, b, r, w, d))
-}
 
 
 
