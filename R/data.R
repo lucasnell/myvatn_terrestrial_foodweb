@@ -33,10 +33,10 @@
 #'   \item{aPH}{ Uptake rate for PH. }
 #'   \item{aR}{ Uptake rate for R. }
 #'   \item{aM}{ Uptake rate of M for R. }
-#'   \item{hN}{ Half-saturation for uptake of N. }
-#'   \item{hD}{ Half-saturation for uptake of D. }
-#'   \item{hP}{ Half-saturation for uptake of P. }
-#'   \item{hVHM}{ Half-saturation for uptake of V, H, and M. }
+#'   \item{hN}{ Handling time for uptake of N. }
+#'   \item{hD}{ Handling time for uptake of D. }
+#'   \item{hP}{ Handling time for uptake of P. }
+#'   \item{hVHM}{ Handling time for uptake of V, H, and M. }
 #'   \item{Neq}{  Equilibrium value for N. }
 #'   \item{Deq}{  Equilibrium value for D. }
 #'   \item{Peq}{  Equilibrium value for P. }
