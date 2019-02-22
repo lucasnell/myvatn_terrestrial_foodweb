@@ -5,95 +5,44 @@
 # load packages
 library(mtf)
 library(tidyverse)
+library(forcats)
 
 
 
+middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20, .lM = 0.1, .aM = 0.01) %>%
+    mutate(pool = fct_recode(pool, soil = "nitrogen"))
 
-# Time to max:
-to_max <- function(x, s, w) {
-    x <- x[s:length(x)]
-    which(x == max(x))[1] - w
-}
-# Time to min:
-to_min <- function(x, s, w) {
-    x <- x[s:length(x)]
-    which(x == min(x))[1] - w
-}
-# Cumulative N:
-cum_N <- function(x) sum(x)
-# Min N below equilibrium
-min_below <- function(x) min(x - x[1])
-# Max N above equilibrium
-max_above <- function(x) max(x - x[1])
-# Return time
-return_time <- function(x, s, w, thresh = 1e-1, ...) {
-    n <- length(x)
-    y <- abs(rev((x[(s+w):n] - x[1]) / x[1]))
-    ind <- tail(which(y <= thresh), 1)
-    if (length(ind) == 0) return(NA_real_)
-    ind <- n - ind + 1
-    return(ind - (s + w))
-}
+# RColorBrewer::brewer.pal(6, "Dark2")
 
 
+middle_sim %>%
+    filter(pool != "midge") %>%
+    mutate(pool = droplevels(pool),
+           level = ifelse(pool %in% c("soil", "plant", "detritus"), 1, 0) %>%
+               factor(levels = 0:1, labels = paste(c("Upper", "Lower"), "trophic levels"))) %>%
+    group_by(pool) %>%
+    mutate(N = (N - N[1]) / sd(N)) %>%
+    ungroup() %>%
+    ggplot(aes(time, N)) +
+    geom_ribbon(data = middle_sim %>%
+                    filter(pool == "midge") %>%
+                    mutate(N = (N - N[1]) / sd(N)),
+                aes(ymin = 0, ymax = N), fill = "gray80", color = NA) +
+    geom_line(aes(color = pool), size = 0.75) +
+    scale_y_continuous("Scaled N") +
+    scale_x_continuous("Time") +
+    facet_wrap(~ level, nrow = 2, scales = "free_x") +
+    scale_color_brewer(palette = "Dark2") +
+    theme(legend.position = "none") +
+    geom_text(data = tibble(
+        pool = sort(unique(middle_sim$pool[middle_sim$pool != "midge"])),
+        time =  c(43,  17, 80,  60,  85,  50),
+        N =     c(2.1, 3.5,  1.8, 1.5, 1.8, 0.8),
+        level = factor(rep(1:0, each = 3), levels = 0:1,
+                       labels = paste(c("Upper", "Lower"), "trophic levels"))),
+        aes(label = pool, color = pool), fontface = "bold") +
+    geom_text(data = tibble(time = 22, N = 0.75),
+              label = "midge", color = "gray40", fontface = "bold")
 
 
-one_combo <- function(row_i) {
-    .w <- row_i$w
-    .b <- row_i$b
-    .aM <- row_i$aM
-    fw <- food_web(tmax = 200, s = 10, b = .b, w = .w, .lM = 0.1, .aM = .aM)
-    fw <- fw %>%
-        filter(pool != "midge") %>%
-        mutate(pool = droplevels(pool)) %>%
-        group_by(pool) %>%
-        summarize(to_max = to_max(N, s = 10, w = .w),
-                  to_min = to_min(N, s = 10, w = .w),
-                  cum_N = cum_N(N),
-                  min_below = min_below(N),
-                  max_above = max_above(N),
-                  return_time = return_time(N, s = 10, w = .w)) %>%
-        ungroup() %>%
-        mutate(w = .w, b = .b, aM = .aM, area = b * w) %>%
-        select(w, b, aM, area, everything())
-    return(fw)
-}
-
-pulse_pars <- expand.grid(w = seq(10, 30, length.out = 100),
-                          b = seq(0.1, 100, length.out = 100),
-                          aM = c(1e-4, 1e-2, 1)) %>%
-    split(row(.)[,1])
-
-# library(parallel)
-# # Takes ~45 min w/ 3 cores
-# pulse_df <- mclapply(pulse_pars, one_combo, mc.cores = 3)
-# pulse_df <- bind_rows(pulse_df)
-#
-# write_csv(pulse_df, "data-raw/pulse_data.csv")
-
-pulse_df <- read_csv("data-raw/pulse_data.csv", col_types = "ddddfdddddd")
-
-
-heat_plot <- function(.df, .col, .pool) {
-    .col <- enquo(.col)
-    .df <- .df %>%
-        filter(pool == .pool) %>%
-        mutate(aM = factor(aM))
-    midpt <- .df %>% select(!!.col) %>% .[[1]] %>% range() %>% median()
-    .df %>%
-        ggplot(aes(w, b)) +
-        geom_tile(aes(fill = !!.col)) +
-        geom_line(data = tibble(w = rep(seq(10, 30, length.out = 100), 5),
-                                a = rep(seq(250, 1250, 250), each = 100),
-                                b = a / w),
-                  aes(group = factor(a)), size = 1) +
-        scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "firebrick",
-                             midpoint = midpt) +
-        facet_grid(~ aM) +
-        ggtitle(.pool) +
-        coord_cartesian(ylim = c(0, 100), xlim = c(10, 30))
-}
-
-heat_plot(pulse_df, return_time, "detritivore")
-heat_plot(pulse_df, return_time, "herbivore")
 
