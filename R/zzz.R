@@ -13,7 +13,7 @@
 #'
 .onLoad <- function(libname, pkgname) {
 
-    theme_set(theme_bw() %+replace%
+    theme_set(theme_classic() %+replace%
                   theme(panel.grid = element_blank(),
                         strip.background = element_blank(),
                         legend.margin = margin(0,0,0,0),
