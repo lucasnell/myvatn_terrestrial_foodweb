@@ -42,6 +42,10 @@ Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
 pools, respectively).
 Any pools not included here will start at their equilibrium value, except
 for midges that start at zero by default.}
+
+\item{other_pars}{A named list of other parameter values to use instead of defaults.
+Possible parameter names include all column names in \code{par_estimates}
+except the first three (see \code{?par_estimates} for a description of column names).}
 }
 \value{
 A data frame with the following columns: \code{time}, \code{pool}, \code{N}.
@@ -53,7 +57,7 @@ see \code{vignette("smooth_pulse", "mtf")}.
 \examples{
 # What happens to the food web bc of this midge pulse?
 web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1)
-web_output
+plot_web(web_output)
 
 # If you want to adjust starting value for predators:
 web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,

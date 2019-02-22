@@ -54,6 +54,10 @@ diff_eq <- function(t, y, pars) {
 #'     pools, respectively).
 #'     Any pools not included here will start at their equilibrium value, except
 #'     for midges that start at zero by default.
+#' @param other_pars A named list of other parameter values to use instead of defaults.
+#'     Possible parameter names include all column names in `par_estimates`
+#'     except the first three (see `?par_estimates` for a description of column names).
+#'
 #'
 #'
 #' @importFrom deSolve ode
@@ -125,16 +129,14 @@ food_web <- function(tmax, b, s, w, tstep = 1,
     names(init) <- c(paste0(pool_names[pool_names != "M"], "0"), "M0")
     # Replace those that are provided:
     if (!is.null(pool_starts)) {
-        if (!inherits(pool_starts, "list")) {
-            stop("\nIf not NULL, pool_starts must be a list.")
-        }
-        if (is.null(names(pool_starts)) || any(is.na(names(pool_starts)))) {
-            stop("\nIn pool_starts, all items must be named.");
+        if (!inherits(pool_starts, "list") || is.null(names(pool_starts))) {
+            stop("\nIf not NULL, pool_starts must be a named list.")
         }
         if (any(!names(pool_starts) %in% paste0(pool_names, "0"))) {
+            bad_ps <- names(pool_starts)[!names(pool_starts) %in% paste0(pool_names, "0")]
             stop("\nThe following name(s) in pool_starts don't match with a pool ",
                  "starting-value argument name: ",
-                 names(pool_starts)[!names(pool_starts) %in% paste0(pool_names, "0")])
+                 paste(sprintf('"%s"', bad_ps), collapse = ", "))
         }
         init[names(pool_starts)] <- unlist(pool_starts)
     }
@@ -168,6 +170,34 @@ food_web <- function(tmax, b, s, w, tstep = 1,
 
     return(solved_ode)
 
-    ;
+}
 
+
+
+#' Plot output from the `food_web` function.
+#'
+#' @param web_df Dataframe output from the `food_web` function.
+#'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr group_by
+#' @importFrom dplyr mutate
+#' @import ggplot2
+#'
+#' @export
+#'
+#'
+plot_web <- function(web_df) {
+    web_df %>%
+        group_by(pool) %>%
+        # Define 'minb' to set the minimum value for the y-axis.
+        # This allows different y-scales for different facets, with the ymin set to 0
+        mutate(minb = 0) %>%
+        ggplot(aes(time, N)) +
+        facet_wrap(~pool, scales="free_y") +
+        # The horizontal lines show the initial states
+        geom_hline(data = web_output %>% filter(time == min(time)),
+                   aes(yintercept=N), color="firebrick") +
+        geom_line(size = 1) +
+        geom_point(aes(time, minb), shape="") +
+        theme_classic()
 }
