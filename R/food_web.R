@@ -21,15 +21,6 @@ diff_eq <- function(t, y, pars) {
                         R = (aR*V*R + aR*H*R + aM*M*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M) - (mR0 + mR*R)*R,
                         M = iM - mM*M - (aM*M*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M))
 
-                      # c(N = iN - aNP*N*P/(hN + N) + (1 - lD)*mD*D - mN*N,
-                      #   D = (1 - lP)*(mP0 + mP*P)*P + (1 - lV)*(mV0 + mV*V)*V +
-                      #       (1 - lH)*(mH0 + mH*H)*H + (1 - lR)*(mR0 + mR*R)*R +
-                      #       (1 - lM)*mM*M - aDV*D*V/(hD + D) - mD*D,
-                      #   P = aNP*N*P/(hN + N) - aPH*P*H/(hP + P) - (mP0 + mP*P)*P,
-                      #   V = aDV*D*V/(hD + D) - (aR*V*R)/(hVHM + V + H + M) - (mV0 + mV*V)*V,
-                      #   H = aPH*P*H/(hP + P) - (aR*H*R)/(hVHM + V + H + M) - (mH0 + mH*H)*H,
-                      #   R = (aR*V*R + aR*H*R + aM*M*R)/(hVHM + V + H + M) - (mR0 + mR*R)*R,
-                      #   M = iM - mM*M - (aM*M*R)/(hVHM + V + H + M))
                   }))
 
     return(list(output))
