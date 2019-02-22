@@ -4,7 +4,7 @@
 #' @noRd
 #'
 #' @importFrom ggplot2 theme_set
-#' @importFrom ggplot2 theme_bw
+#' @importFrom ggplot2 theme_classic
 #' @importFrom ggplot2 %+replace%
 #' @importFrom ggplot2 theme
 #' @importFrom ggplot2 element_blank
