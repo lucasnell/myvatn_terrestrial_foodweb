@@ -11,18 +11,25 @@ diff_eq <- function(t, y, pars) {
         with(as.list(pars),
              with(as.list(y),
                   {
-                      c(N = iN - aNP*N*P/(hN + N) + (1 - lD)*mD*D - mN*N,
+                      c(N = iN - aNP*N*P/(1 + aNP*hN*N) + (1 - lD)*mD*D - mN*N,
                         D = (1 - lP)*(mP0 + mP*P)*P + (1 - lV)*(mV0 + mV*V)*V +
                             (1 - lH)*(mH0 + mH*H)*H + (1 - lR)*(mR0 + mR*R)*R +
-                            (1 - lM)*mM*M - aDV*D*V/(hD + D) - mD*D,
-                        P = aNP*N*P/(hN + N) - aPH*P*H/(hP + P) - (mP0 + mP*P)*P,
-                        V = aDV*D*V/(hD + D) - (aR*V*R)/(hVHM + V + H + (hVHM/aR)*aM*M) -
-                            (mV0 + mV*V)*V,
-                        H = aPH*P*H/(hP + P) - (aR*H*R)/(hVHM + V + H + (hVHM/aR)*aM*M) -
-                            (mH0 + mH*H)*H,
-                        R = (aR*V*R + aR*H*R + hVHM*aM*M*R)/(hVHM + V + H + (hVHM/aR)*aM*M) -
-                            (mR0 + mR*R)*R,
-                        M = iM - mM*M - (hVHM*aM*M*R)/(hVHM + V + H + (hVHM/aR)*aM*M))
+                            (1 - lM)*mM*M - aDV*D*V/(1 + aDV*hD*D) - mD*D,
+                        P = aNP*N*P/(1 + aNP*hN*N) - aPH*P*H/(1 + aPH*hP*P) - (mP0 + mP*P)*P,
+                        V = aDV*D*V/(1 + aDV*hD*D) - (aR*V*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M) - (mV0 + mV*V)*V,
+                        H = aPH*P*H/(1 + aPH*hP*P) - (aR*H*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M) - (mH0 + mH*H)*H,
+                        R = (aR*V*R + aR*H*R + aM*M*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M) - (mR0 + mR*R)*R,
+                        M = iM - mM*M - (aM*M*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M))
+
+                      # c(N = iN - aNP*N*P/(hN + N) + (1 - lD)*mD*D - mN*N,
+                      #   D = (1 - lP)*(mP0 + mP*P)*P + (1 - lV)*(mV0 + mV*V)*V +
+                      #       (1 - lH)*(mH0 + mH*H)*H + (1 - lR)*(mR0 + mR*R)*R +
+                      #       (1 - lM)*mM*M - aDV*D*V/(hD + D) - mD*D,
+                      #   P = aNP*N*P/(hN + N) - aPH*P*H/(hP + P) - (mP0 + mP*P)*P,
+                      #   V = aDV*D*V/(hD + D) - (aR*V*R)/(hVHM + V + H + M) - (mV0 + mV*V)*V,
+                      #   H = aPH*P*H/(hP + P) - (aR*H*R)/(hVHM + V + H + M) - (mH0 + mH*H)*H,
+                      #   R = (aR*V*R + aR*H*R + aM*M*R)/(hVHM + V + H + M) - (mR0 + mR*R)*R,
+                      #   M = iM - mM*M - (aM*M*R)/(hVHM + V + H + M))
                   }))
 
     return(list(output))
