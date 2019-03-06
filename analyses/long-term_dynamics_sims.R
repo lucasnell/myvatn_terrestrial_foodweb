@@ -55,7 +55,8 @@ one_combo <- function(row_i) {
     .w <- row_i$w
     .b <- row_i$b
     .lM <- row_i$lM
-    .mM <- row_i$mM
+    # .mM <- row_i$mM
+    .mM <- 0.5
     .aM <- row_i$aM
     fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, .lM = .lM, .aM = .aM, .mM = .mM)
     fw <- fw %>%
@@ -81,9 +82,9 @@ one_combo <- function(row_i) {
 
 pulse_pars <- expand.grid(w = seq(10, 30, length.out = 100),
                           b = seq(0.1, 100, length.out = 100),
-                          lM = c(0.1, 0.5, 0.9),
-                          mM = c(0.1, 0.5, 2.5),
-                          aM = c(1e-4, 1e-2, 1)) %>%
+                          lM = c(0.1, 0.325, 0.55),
+                          # mM = c(0.1, 0.5, 2.5),
+                          aM = c(1e-3, 5e-3, 1e-2)) %>%
     split(row(.)[,1])
 
 
@@ -92,7 +93,9 @@ pulse_pars <- expand.grid(w = seq(10, 30, length.out = 100),
 # ------------------------
 
 pulse_df <- mclapply(pulse_pars, one_combo, mc.cores = n_cores)
-pulse_df <- bind_rows(pulse_df)
+pulse_df <- bind_rows(pulse_df) %>%
+    select(w, b, lM, mM, aM, pool, everything()) %>%
+    mutate(pool = fct_recode(pool, soil = "nitrogen"))
 
 
 # ------------------------
