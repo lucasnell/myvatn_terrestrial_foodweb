@@ -109,8 +109,8 @@ area_plot <- function(.df, .col, .pool) {
 # Combinations of parameter values
 # ------------------------
 
-pulse_pars <- expand.grid(w = seq(10, 30, length.out = 10),
-                          b = seq(0.1, 100, length.out = 10),
+pulse_pars <- expand.grid(w = seq(10, 30, length.out = 100),
+                          b = seq(0.1, 100, length.out = 100),
                           aM = c(1e-4, 1e-2, 1)) %>%
     split(row(.)[,1])
 
@@ -120,10 +120,9 @@ pulse_pars <- expand.grid(w = seq(10, 30, length.out = 10),
 # ------------------------
 
 # Takes ~45 min w/ 3 cores
-pulse_df <- mclapply(pulse_pars, one_combo, mc.cores = 3)
+pulse_df <- mclapply(pulse_pars, one_combo, mc.cores = 10)
 pulse_df <- bind_rows(pulse_df)
-
-# write_csv(pulse_df, "data-raw/pulse_data.csv")
+write_csv(pulse_df, "data-raw/pulse_data.csv")
 
 # pulse_df <- read_csv("data-raw/pulse_data.csv", col_types = "ddddfdddddd")
 
