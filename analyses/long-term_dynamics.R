@@ -6,58 +6,74 @@
 suppressPackageStartupMessages({
     library(mtf)
     library(tidyverse)
+    library(forcats)
 })
 
-pulse_df <- read_csv("data-raw/pulse_data.csv", col_types = "ddddfdddddd")
-
+pulse_df <- read_csv("data-raw/pulse_data.csv",
+                     col_types = cols(
+                         w = "f",
+                         b = "f",
+                         lM = "f",
+                         pool = "f",
+                         mM = "f",
+                         aM = "f",
+                         .default = "d"))
+pulse_df <- pulse_df %>%
+    select(w, b, lM, mM, aM, pool, everything()) %>%
+    mutate(pool = fct_recode(pool, soil = "nitrogen"))
 
 
 # ------------------------
 # Plotting functions
 # ------------------------
 
-# Construct a heatmap plot
-heat_plot <- function(.df, .col, .pool) {
-    .col <- enquo(.col)
-    .df <- .df %>%
-        filter(pool == .pool) %>%
-        mutate_at(vars(lM, mM), factor)
-    midpt <- .df %>% select(!!.col) %>% .[[1]] %>% range(na.rm = TRUE) %>% median()
-    color_lab_ <- gsub("\\_", " ", gsub("~", "", deparse(.col))) %>%
-        trimws() %>% tools::toTitleCase()
-    .df %>%
-        ggplot(aes(w, b)) +
-        geom_tile(aes(fill = !!.col)) +
-        geom_line(data = tibble(w = rep(seq(10, 30, length.out = 100), 5),
-                                a = rep(seq(250, 1250, 250), each = 100),
-                                b = a / w),
-                  aes(group = factor(a)), size = 1) +
-        scale_fill_gradient2(color_lab_,
-                             low = "dodgerblue", mid = "white", high = "firebrick",
-                             midpoint = midpt) +
-        facet_grid(mM ~ lM, labeller = label_both) +
-        ggtitle(.pool) +
-        coord_cartesian(ylim = c(0, 100), xlim = c(10, 30)) +
-        ylab("Rate of input") +
-        xlab("Duration of input")
-}
+# # Construct a heatmap plot
+# heat_plot <- function(.df, .col, .pool) {
+#     .col <- enquo(.col)
+#     .df <- .df %>%
+#         filter(pool == .pool) %>%
+#         mutate_at(vars(lM, mM), factor)
+#     midpt <- .df %>% select(!!.col) %>% .[[1]] %>% range(na.rm = TRUE) %>% median()
+#     color_lab_ <- gsub("\\_", " ", gsub("~", "", deparse(.col))) %>%
+#         trimws() %>% tools::toTitleCase()
+#     .df %>%
+#         ggplot(aes(w, b)) +
+#         geom_tile(aes(fill = !!.col)) +
+#         geom_line(data = tibble(w = rep(seq(10, 30, length.out = 100), 5),
+#                                 a = rep(seq(250, 1250, 250), each = 100),
+#                                 b = a / w),
+#                   aes(group = factor(a)), size = 1) +
+#         scale_fill_gradient2(color_lab_,
+#                              low = "dodgerblue", mid = "white", high = "firebrick",
+#                              midpoint = midpt) +
+#         facet_grid(mM ~ lM, labeller = label_both) +
+#         ggtitle(.pool) +
+#         coord_cartesian(ylim = c(0, 100), xlim = c(10, 30)) +
+#         ylab("Rate of input") +
+#         xlab("Duration of input")
+# }
 # Plot of area vs another variable
-area_plot <- function(.df, .col, .pool) {
+area_plot <- function(.df, .col, .pools, .ylab = NULL) {
     .col <- enquo(.col)
     .df <- .df %>%
-        filter(pool == .pool) %>%
-        mutate_at(vars(lM, mM), factor)
-    ylab_ <- gsub("\\_", " ", gsub("~", "", deparse(.col))) %>%
-        trimws() %>% tools::toTitleCase()
+        filter(pool %in% .pools, mM == 0.5, lM == 0.5) %>%
+        # filter(pool %in% .pools, mM == 0.5, aM == 1e-2) %>%
+        mutate(w = as.numeric(paste(w)), pool = factor(paste(pool), levels = .pools))
+    if (is.null(.ylab)) {
+        .ylab <- gsub("\\_", " ", gsub("~", "", deparse(.col))) %>%
+            trimws() %>% tools::toTitleCase()
+    }
     .df %>%
-        ggplot(aes(area, !!.col)) +
-        geom_point(aes(color = w), shape = 1, alpha = 0.5) +
+        ggplot(aes(area, return_time)) +
+        geom_hline(yintercept = 75, linetype = 2, color = "gray70") +
+        geom_point(aes(color = w), shape = 1, alpha = 0.5, na.rm = TRUE) +
         scale_color_gradient2("Width",
                               low = "firebrick", mid = "gray80", high = "dodgerblue",
                               midpoint = 20) +
-        facet_grid(mM ~ lM) +
-        ggtitle(.pool) +
-        ylab(ylab_) +
+        # ggtitle(.pool) +
+        facet_grid(pool ~ aM) +
+        # facet_grid(pool ~ lM) +
+        ylab(.ylab) +
         xlab("Area under curve")
 }
 
@@ -66,6 +82,14 @@ area_plot <- function(.df, .col, .pool) {
 # ------------------------
 # Plots
 # ------------------------
+
+
+
+area_plot(pulse_df, return_time, c("detritivore", "herbivore", "predator"))
+area_plot(pulse_df, return_time, c("plant", "soil", "detritus"))
+
+
+
 
 
 heat_plot(pulse_df, to_max, "detritivore")
