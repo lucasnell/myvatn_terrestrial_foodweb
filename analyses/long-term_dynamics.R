@@ -18,9 +18,140 @@ pulse_df <- read_csv("data-raw/pulse_data.csv",
                          mM = "f",
                          aM = "f",
                          .default = "d"))
-pulse_df <- pulse_df %>%
-    select(w, b, lM, mM, aM, pool, everything()) %>%
-    mutate(pool = fct_recode(pool, soil = "nitrogen"))
+
+pulse_df <- pulse_df
+
+
+#'
+#' - Overall label for rows in first two plots?
+#' - Labeling herbivores in herbivore-only plot?
+#'
+#'
+
+
+# pulse_df <- pulse_df %>%
+#     mutate_at(vars(w, b, lM, mM, aM), factor)
+
+
+#'
+#' Plot info:
+#' - return time ~ area
+#' - separated by pool and midge leakage
+#' - colored by width
+#' - upper trophic levels only
+#'
+pulse_df %>%
+    filter(pool %in% c("detritivore", "herbivore", "predator"),
+           mM == 0.5, aM == 5e-3) %>%
+    mutate(w = as.numeric(paste(w)), pool = factor(paste(pool)),
+           lM = fct_recode(lM, low = "0.1", mid = "0.325", high = "0.55") %>%
+               fct_relabel(.fun = function(x) paste(x, ""))) %>%
+    ggplot(aes(area, return_time)) +
+    geom_hline(yintercept = 75, linetype = 2, color = "gray70") +
+    geom_point(aes(color = w), shape = 1, alpha = 0.5, na.rm = TRUE) +
+    scale_color_gradient2("Width",
+                          low = "firebrick", mid = "gray80", high = "dodgerblue",
+                          midpoint = 20) +
+    facet_grid(pool ~ lM) +
+    ylab("Return time (days)") +
+    xlab(expression("Cumulative midge input (g" ~ m^2 * ")")) +
+    labs(subtitle = "Midge loss from system") +
+    theme(plot.subtitle = element_text(face = "bold", size = 12, hjust = 0.5))
+
+
+#'
+#' Plot info:
+#' - return time ~ area
+#' - separated by pool and midge leakage
+#' - colored by width
+#' - lower trophic levels only
+#'
+pulse_df %>%
+    filter(pool %in% c("plant", "soil", "detritus"),
+           mM == 0.5, aM == 5e-3) %>%
+    mutate(w = as.numeric(paste(w)), pool = factor(paste(pool)),
+           lM = fct_recode(lM, low = "0.1", mid = "0.325", high = "0.55") %>%
+               fct_relabel(.fun = function(x) paste(x, ""))) %>%
+    ggplot(aes(area, return_time)) +
+    geom_hline(yintercept = 75, linetype = 2, color = "gray70") +
+    geom_point(aes(color = w), shape = 1, alpha = 0.5, na.rm = TRUE) +
+    scale_color_gradient2("Width",
+                          low = "firebrick", mid = "gray80", high = "dodgerblue",
+                          midpoint = 20) +
+    facet_grid(pool ~ lM) +
+    ylab("Return time (days)") +
+    xlab(expression("Cumulative midge input (g" ~ m^2 * ")")) +
+    labs(subtitle = "Midge loss from system") +
+    theme(plot.subtitle = element_text(face = "bold", size = 12, hjust = 0.5))
+
+
+#'
+#' Plot info:
+#' - return time ~ area
+#' - separated by pool and attack rate
+#' - colored by width
+#' - herbivores only
+#'
+pulse_df %>%
+    filter(pool == "herbivore", mM == 0.5, lM == 0.325) %>%
+    mutate(w = as.numeric(paste(w)), pool = factor(paste(pool)),
+           aM = fct_recode(aM, low = "0.001", mid = "0.005", high = "0.01") %>%
+               fct_relabel(.fun = function(x) paste(x, ""))) %>%
+    ggplot(aes(area, return_time)) +
+    geom_vline(xintercept = c(500, 850, 1200), linetype = 2, color = "gray70") +
+    geom_point(aes(color = w), shape = 1, alpha = 0.5, na.rm = TRUE) +
+    scale_color_gradient2("Width",
+                          low = "firebrick", mid = "gray80", high = "dodgerblue",
+                          midpoint = 20) +
+    facet_grid( ~ aM) +
+    ylab("Return time (days)") +
+    xlab(expression("Cumulative midge input (g" ~ m^2 * ")")) +
+    labs(subtitle = "Attack rate on midges") +
+    theme(plot.subtitle = element_text(face = "bold", size = 12, hjust = 0.5))
+
+
+
+#'
+#' Plot info:
+#' Trying to show time series for right before, during, and after the discontinuity
+#'
+
+timeseries <- expand.grid(area = c(500, 850, 1200),
+                          aM = c(1e-3, 5e-3, 1e-2),
+                          w = c(10, 30)) %>%
+    split(row(.)[,1]) %>%
+    map_dfr(function(.row) {
+        .area <- .row$area
+        .aM <- .row$aM
+        .w <- .row$w
+        .b <- .area / .w
+        fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, .aM = .aM,
+                       .mM = 0.5, .lM = 0.325)
+        fw <- fw %>%
+            filter(pool != "midge") %>%
+            mutate(pool = droplevels(pool),
+                   time = time - (10 + .w)) %>%
+            mutate(w = .w, aM = .aM, area = .area) %>%
+            select(w, aM, area, everything())
+        return(fw)
+    })
+
+
+timeseries %>%
+    filter(pool == "herbivore") %>%
+    mutate_at(vars(w, aM, area), factor) %>%
+    ggplot(aes(time, N)) +
+    geom_line(aes(color = w), size = 0.75) +
+    facet_grid(area ~ aM, label = label_both) +
+    scale_color_manual(values = c("firebrick", "dodgerblue")) +
+    xlab("Time after pulse ends (days)") +
+    ylab("Nitrogen content (g)")
+
+
+
+
+
+
 
 
 # ------------------------
