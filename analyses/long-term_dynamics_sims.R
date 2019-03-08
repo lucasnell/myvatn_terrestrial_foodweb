@@ -36,7 +36,8 @@ max_above <- function(x) max(x - x[1])
 # Return time
 return_time <- function(x, s, w, thresh = 1e-1, ...) {
     n <- length(x)
-    y <- abs(rev((x[(s+w):n] - x[1]) / x[1]))
+    x_dr <- diff(range(x))
+    y <- abs(rev((x[(s+w):n] - x[1]) / x_dr))
     ind <- which(y > thresh)
     if (length(ind) == 0) return(NA_real_)
     if (ind[1] == length(y)) return(NaN)
@@ -106,6 +107,12 @@ pulse_df <- bind_rows(pulse_df) %>%
 pulse_df %>%
     gather("param", "value", to_max:return_time, factor_key = TRUE) %>%
     filter(is.nan(value)) %>%
+    nrow() %>%
+    `==`(0)
+# Verify that there aren't any NA values (i.e., that they all were perturbed enough):
+pulse_df %>%
+    gather("param", "value", to_max:return_time, factor_key = TRUE) %>%
+    filter(is.na(value)) %>%
     nrow() %>%
     `==`(0)
 # If -to_min or -to_max is > w, that means that those functions malfunctioned
