@@ -115,7 +115,13 @@ one_combo <- function(row_i) {
                   max_gain_H = max(Hg - Hg[1]),
                   min_gain_H = min(Hg - Hg[1]),
                   max_loss_H = max(Hl - Hl[1]),
-                  min_loss_H = min(Hl - Hl[1])) %>%
+                  min_loss_H = min(Hl - Hl[1]),
+                  cum_pos_loss_V = sum(Vl[Vl > Vl[1]] - Vl[1]),
+                  cum_neg_loss_V = sum(Vl[Vl < Vl[1]] - Vl[1]),
+                  cum_pos_loss_H = sum(Hl[Hl > Hl[1]] - Hl[1]),
+                  cum_neg_loss_H = sum(Hl[Hl < Hl[1]] - Hl[1]),
+                  cum_gain_V = sum(Vg[Vg > Vg[1]] - Vg[1]),
+                  cum_gain_H = sum(Hg[Hg > Hg[1]] - Hg[1])) %>%
         ungroup() %>%
         # mutate(w = .w, b = .b, lM = .lM, mM = .mM, aM = .aM, area = b * w) %>%
         mutate(w = .w, b = .b, aM = .aM, area = b * w) %>%
