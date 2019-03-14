@@ -155,13 +155,13 @@ pulse_df <- bind_rows(pulse_df)
 
 # Verify that there aren't any NaN values (i.e., that they all returned to equilibrium):
 pulse_df %>%
-    gather("param", "value", to_max:return_time, factor_key = TRUE) %>%
+    gather("param", "value", to_max:cum_gain_H, factor_key = TRUE) %>%
     filter(is.nan(value)) %>%
     nrow() %>%
     `==`(0)
 # Verify that there aren't any NA values (i.e., that they all were perturbed enough):
 pulse_df %>%
-    gather("param", "value", to_max:return_time, factor_key = TRUE) %>%
+    gather("param", "value", to_max:cum_gain_H, factor_key = TRUE) %>%
     filter(is.na(value)) %>%
     nrow() %>%
     `==`(0)
