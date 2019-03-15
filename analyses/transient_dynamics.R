@@ -10,11 +10,12 @@
 #'
 #' * Sort out figure sizes
 #' * Adjust labels for colors once sizes are decided
-#' * Adjust wording of axis labels (especially for the y-axis in the last figure)
 #' * Sizes of axis labels
-#' * Color palette
 #'
 
+# trans_p1
+# trans_p2
+# trans_p3
 
 
 
@@ -31,7 +32,10 @@ library(forcats)
 middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20, .lM = 0.1, .aM = 0.01) %>%
     mutate(pool = fct_recode(pool, soil = "nitrogen"))
 
+# < order of colors: pink, light green, yellow, green, red, purple >
 color_pal <- RColorBrewer::brewer.pal(6, "Dark2")
+# Switching detritus with plant and detritivore with herbivore
+color_pal <- color_pal[c(2, 1, 3, 4, 6, 5)]
 
 
 upper_levels <- c("detritivore", "herbivore", "predator")
@@ -51,8 +55,8 @@ trans_p1 <- middle_sim %>%
                     mutate(N = (N - N[1]) / sd(N)),
                 aes(ymin = 0, ymax = N), fill = "gray80", color = NA) +
     geom_line(aes(color = pool), size = 0.75) +
-    scale_y_continuous("Scaled N") +
-    scale_x_continuous("Time") +
+    scale_y_continuous("Scaled nitrogen") +
+    scale_x_continuous("Time (days)") +
     facet_wrap(~ level, nrow = 2) +
     scale_color_manual(values = color_pal[c(4:6, 1:3)]) +
     theme(legend.position = "none",
@@ -70,7 +74,7 @@ trans_p1 <- middle_sim %>%
 
 
 
-
+# ggsave("~/Desktop/N_timeseries.pdf", trans_p1, width = 5, height = 5)
 
 
 
@@ -97,6 +101,7 @@ trans_p2 <- other_sims %>%
     group_by(pool) %>%
     mutate(N = N / sd(N)) %>%
     ungroup() %>%
+    mutate(aM = factor(aM, levels = c(1e-4, 1), labels = c("low", "high"))) %>%
     ggplot(aes(time, N)) +
     geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
     geom_ribbon(data = other_sims %>%
@@ -104,32 +109,34 @@ trans_p2 <- other_sims %>%
                     group_by(area, aM) %>%
                     mutate(N = N - N[1]) %>%
                     ungroup() %>%
-                    mutate(N = N / sd(N)),
+                    mutate(N = N / sd(N),
+                           aM = factor(aM, levels = c(1e-4, 1), labels = c("low", "high"))),
                 aes(ymin = 0, ymax = N), fill = "gray80", color = NA) +
     geom_line(aes(color = pool), size = 0.75) +
-    scale_y_continuous("Scaled N") +
-    scale_x_continuous("Time") +
-    facet_wrap(~ aM + area) +
+    scale_y_continuous("Scaled nitrogen") +
+    scale_x_continuous("Time (days)") +
     scale_color_manual(NULL, values = color_pal) +
-    theme(legend.position = "none",
-          strip.text.x = element_blank(),
-          panel.spacing.y = unit(1.5, "lines")) +
     geom_text(data = tibble(pool = factor(upper_levels),
-                            time =  c(40, 30, 40),
+                            time =  c(40, 26.5, 40),
                             N =     c(2.6, 1.2, 0.3),
-                            aM = factor(rep(1e-4, 3), levels = levels(other_sims$aM)),
+                            aM = factor(rep("low", 3), levels = c("low", "high")),
                             area = factor(rep(1e3, 3), levels = levels(other_sims$area))),
-        aes(label = pool, color = pool), fontface = "bold", hjust = 0) +
-    geom_text(data = tibble(time =  rep(0, 2),
-                            N =     rep(4.44, 2),
-                            aM = factor(c(1e-4, 1), levels = levels(other_sims$aM)),
-                            area = factor(rep(100, 2), levels = levels(other_sims$area)),
-                            lab = c("Low attack rates on midges:",
-                                    "High attack rates on midges:")),
-              aes(label = lab), hjust = 0, vjust = 1,
-              fontface = "bold", size = 12 * (5/14)) +
+        aes(label = pool, color = pool), fontface = "bold", hjust = 0, size = 3) +
     coord_cartesian(ylim = c(-1.4121, 4.443)) +
+    facet_grid(area ~ aM) +
+    labs(subtitle = "Attack rate on midges") +
+    theme(legend.position = "none",
+          strip.text.y = element_blank(),
+          panel.spacing.y = unit(1.5, "lines"),
+          panel.spacing.x = unit(2.5, "lines"),
+          plot.subtitle = element_text(face = "bold", size = 12, hjust = 0.5)) +
     NULL
+
+
+ggsave("~/Desktop/N_midge_attack.pdf", trans_p2, width = 5, height = 5)
+
+
+
 
 
 V_gain <- function(V, D) {
@@ -174,24 +181,31 @@ other_sims2 <- map2_dfr(rep(c(100, 1000), each = 2), rep(c(1e-4, 1), 2),
                            food_web(tmax = 100, s = 10, b = b_, w = 20,
                                     .lM = 0.1, .aM = aM_) %>%
                                mutate(area = area_, aM = aM_)
-                       })
-
-trans_p3 <- other_sims2 %>%
+                       }) %>%
     spread(pool, N) %>%
     mutate(Vg = V_gain(detritivore, detritus),
            Vl = V_loss(detritivore, predator, herbivore, midge, aM),
            Hg = H_gain(plant, herbivore),
            Hl = H_loss(herbivore, predator, detritivore, midge, aM)) %>%
     select(-nitrogen:-midge) %>%
-    mutate_at(vars(area, aM), factor) %>%
+    mutate_at(vars(area), factor) %>%
     gather("variable", "value", Vg:Hl) %>%
     mutate(pool = factor(ifelse(grepl("^V", variable), "detritivore", "herbivore")),
-           type = factor(ifelse(grepl("l$", variable), "loss", "gain"))) %>%
+           type = factor(ifelse(grepl("l$", variable), "top-down", "bottom-up")),
+           aM = factor(aM, levels = c(1e-4, 1), labels = c("low", "high"))) %>%
     select(-variable) %>%
     select(area, aM, pool, type, everything()) %>%
     group_by(area, aM, pool, type) %>%
-    mutate(value = value - value[1]) %>%
-    filter(pool == "detritivore") %>%
+    mutate(value = value - value[1])
+
+
+
+
+
+trans_p3 <- other_sims2 %>%
+    ungroup() %>%
+    mutate(lty = ifelse(pool == "herbivore" & type == "top-down", 0, 1) %>%
+               factor()) %>%
     ggplot() +
     geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
     geom_ribbon(data = other_sims %>%
@@ -199,32 +213,37 @@ trans_p3 <- other_sims2 %>%
                     group_by(area, aM) %>%
                     mutate(N = N - N[1]) %>%
                     ungroup() %>%
-                    mutate(N = 0.15 * N / max(N)),
+                    mutate(N = 0.15 * N / max(N),
+                           aM = factor(aM, levels = c(1e-4, 1), labels = c("low", "high"))),
                 aes(time, ymin = 0, ymax = N), fill = "gray80", color = NA) +
-    geom_line(aes(time, value, linetype = type), size = 1, color = color_pal[1]) +
-    scale_y_continuous("Change in magnitude of per-capita N flux") +
-    scale_x_continuous("Time") +
-    facet_wrap(~ aM + area) +
+    geom_line(aes(time, value, linetype = lty, color = pool, group = interaction(pool, type)), size = 1) +
+    scale_y_continuous(expression("Effect on detritivores (" * day^{-1} * ")" )) +
+    scale_x_continuous("Time (days)") +
+    facet_grid(area ~ aM) +
+    labs(subtitle = "Attack rate on midges") +
     theme(legend.position = "none",
-          strip.text.x = element_blank(),
-          panel.spacing.y = unit(1.5, "lines")) +
-    geom_text(data = tibble(time =  rep(40, 2),
-                            value = c(0.105, 0.03),
-                            aM = factor(rep(1e-4, 2), levels = levels(other_sims$aM)),
-                            area = factor(rep(1e3, 2), levels = levels(other_sims$area)),
-                            lab = c("gain", "loss")),
-              aes(time, value, label = lab), fontface = "bold", hjust = 0,
-              color = color_pal[1]) +
-    geom_text(data = tibble(time =  rep(0, 2),
-                            value = rep(0.15, 2),
-                            aM = factor(c(1e-4, 1), levels = levels(other_sims$aM)),
-                            area = factor(rep(100, 2), levels = levels(other_sims$area)),
-                            lab = c("Low attack rates on midges:",
-                                    "High attack rates on midges:")),
-              aes(time, value, label = lab), hjust = 0, vjust = 1,
-              fontface = "bold", size = 12 * (5/14)) +
-    scale_linetype_manual(values = 1:2) +
+          strip.text.y = element_blank(),
+          panel.spacing.y = unit(1.5, "lines"),
+          panel.spacing.x = unit(2.5, "lines"),
+          plot.subtitle = element_text(face = "bold", size = 12, hjust = 0.5)) +
+    scale_color_manual(values = color_pal[1:2]) +
+    geom_text(data = tibble(time =  c(50, 50),
+                            value = c(0.098, 0.00),
+                            aM = factor(rep("high", 2), levels = levels(other_sims2$aM)),
+                            area = factor(rep(1e3, 2), levels = levels(other_sims2$area)),
+                            lab = c("bottom-up", "top-down")),
+              aes(time, value, label = lab), fontface = "bold", hjust = 0) +
+    scale_linetype_manual(values = c(2, 1)) +
     NULL
+
+# ADD RIGHT-HAND LABEL FOR MIDGE-PULSE INTENSITY
+# DO THE SAME THING WITH trans_p2
+
+
+ggsave("~/Desktop/up_down_attack_rates.pdf", trans_p3, width = 5, height = 5)
+
+
+
 
 
 
