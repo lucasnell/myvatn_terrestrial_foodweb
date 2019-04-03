@@ -81,12 +81,8 @@ H_loss <- function(H, R, V, M, aM) {
 one_combo <- function(row_i) {
     .w <- row_i$w
     .b <- row_i$b
-    # .lM <- row_i$lM
-    .lM <- 0.325
-    # .mM <- row_i$mM
-    .mM <- 0.5
     .aM <- row_i$aM
-    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, .lM = .lM, .aM = .aM, .mM = .mM)
+    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, .aM = .aM)
     fw <- fw %>%
         spread(pool, N) %>%
         mutate(Vg = V_gain(detritivore, detritus),
@@ -123,7 +119,6 @@ one_combo <- function(row_i) {
                   cum_gain_V = sum(Vg[Vg > Vg[1]] - Vg[1]),
                   cum_gain_H = sum(Hg[Hg > Hg[1]] - Hg[1])) %>%
         ungroup() %>%
-        # mutate(w = .w, b = .b, lM = .lM, mM = .mM, aM = .aM, area = b * w) %>%
         mutate(w = .w, b = .b, aM = .aM, area = b * w) %>%
         select(w, b, aM, area, everything())
     return(fw)
@@ -136,8 +131,6 @@ one_combo <- function(row_i) {
 
 pulse_pars <- expand.grid(w = seq(10, 30, length.out = 25),
                           b = seq(0.1, 100, length.out = 25),
-                          # lM = c(0.1, 0.325, 0.55),
-                          # mM = c(0.1, 0.5, 2.5),
                           aM = seq(1e-3, 1e-2, length.out = 25)) %>%
     split(row(.)[,1])
 
