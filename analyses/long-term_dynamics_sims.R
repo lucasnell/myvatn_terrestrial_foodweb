@@ -9,6 +9,14 @@ suppressPackageStartupMessages({
     library(parallel)
 })
 
+ep_obj <- equil_pools(lD = 0.2)
+
+plot(ep_obj)
+ep_obj
+
+
+
+
 
 # Number of cores to use:
 n_cores <- as.integer(detectCores() * 0.9)
@@ -47,7 +55,7 @@ return_time <- function(x, s, w, thresh = 1e-1, ...) {
 }
 
 parlist <- par_estimates %>%
-        filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
+        filter(V==1, H==1, R==1, iN == 10) %>%
         as.list()
 V_gain <- function(V, D) {
     aDV <- parlist[["aDV"]]
@@ -82,7 +90,7 @@ one_combo <- function(row_i) {
     .w <- row_i$w
     .b <- row_i$b
     .aM <- row_i$aM
-    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, .aM = .aM)
+    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, other_pars = list(aM = .aM))
     fw <- fw %>%
         spread(pool, N) %>%
         mutate(Vg = V_gain(detritivore, detritus),

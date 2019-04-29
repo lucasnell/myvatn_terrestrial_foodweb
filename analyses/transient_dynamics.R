@@ -26,7 +26,8 @@ library(forcats)
 
 
 
-middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20, .aM = 0.001) %>%
+middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
+                       other_pars = list(aM = 0.001)) %>%
     mutate(pool = fct_recode(pool, soil = "nitrogen"))
 
 # < order of colors: green, red, purple, pink, light green, yellow >
@@ -101,7 +102,7 @@ other_sims <- map2_dfr(rep(c(100, 1000), each = 2),
                        function(area_, aM_) {
                            b_ <- area_ / 20
                            food_web(tmax = 100, s = 10, b = b_, w = 20,
-                                    .lM = 0.1, .aM = aM_) %>%
+                                    other_pars = list(aM = aM_, lM = 0.1)) %>%
                                filter(pool %in% c(upper_levels, "midge")) %>%
                                mutate(pool = droplevels(pool),
                                       area = area_, aM = aM_)
@@ -210,7 +211,7 @@ other_sims2 <- map2_dfr(rep(c(100, 1000), each = 2), rep(c(1e-4, 1), 2),
                        function(area_, aM_) {
                            b_ <- area_ / 20
                            food_web(tmax = 100, s = 10, b = b_, w = 20,
-                                    .lM = 0.1, .aM = aM_) %>%
+                                    other_pars = list(aM = aM_, lM = 0.1)) %>%
                                mutate(area = area_, aM = aM_)
                        }) %>%
     spread(pool, N) %>%

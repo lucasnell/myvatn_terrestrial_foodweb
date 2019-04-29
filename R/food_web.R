@@ -66,6 +66,7 @@ diff_eq <- function(t, y, pars) {
 #' @importFrom dplyr filter
 #' @importFrom dplyr arrange
 #' @importFrom tidyr gather
+#' @importFrom purrr set_names
 #'
 #' @return A data frame with the following columns: `time`, `pool`, `N`.
 #'
@@ -94,32 +95,46 @@ diff_eq <- function(t, y, pars) {
 #' web_output
 #'
 food_web <- function(tmax, b, s, w, tstep = 1,
-                     .V = TRUE, .R = TRUE, .H = TRUE,
-                     .iN = 10, .mM = 0.5, .aM = 1, .lM = 0.1,
-                     pool_starts = NULL) {
+                     pool_starts = NULL,
+                     ep_obj = NULL,
+                     other_pars = list()) {
 
-    if (!inherits(.V, "logical") || !inherits(.R, "logical") || !inherits(.H, "logical") ||
-        length(.V) != 1 || length(.R) != 1 || length(.H) != 1) {
-        stop("\n.V, .R, and .H must all be length-1 logicals (TRUE or FALSE).")
-    }
-    if (!.iN %in% par_estimates$iN) {
-        stop("\nYour options for .iN are ",
-             paste(unique(par_estimates$iN), collapse = ", "))
-    }
+    # .iN = 10, .mM = 0.5, .aM = 1, .lM = 0.1,
+    .iN <- 10
+    if (!is.null(other_pars$iN)) .iN <- other_pars$iN
 
     pars <- par_estimates %>%
-        filter(V == ifelse(.V,1,0), R == ifelse(.R,1,0), H == ifelse(.H,1,0),
-               iN == .iN) %>%
-        mutate(mM = .mM,
-               aM = .aM,
-               lM = .lM) %>%
+        filter(V == 1, R == 1, H == 1, iN == .iN) %>%
         dplyr::select(-V, -R, -H)
     if (nrow(pars) == 0) {
-        stop("\nYou're using a combination of .V, .R, .H, and .iN that we don't have ",
-             "parameter values for.")
+        iN_vals <- par_estimates %>%
+            filter(V == 1, R == 1, H == 1) %>%
+            .[["iN"]] %>%
+            unique() %>%
+            paste(collapse = ", ")
+        stop("\nYou're requesting an `iN` value that we don't have parameter values ",
+             "for. The possibilities are as follows: ", iN_vals)
     }
     pars <- as.list(pars)
     pars$midges <- function(t_) midge_pulse(t_, b, s, w)
+    if (length(other_pars) > 0) {
+        if (!all(names(other_pars) %in% names(pars))) {
+            bad_pn <- names(other_pars)[!names(other_pars) %in% names(pars)]
+            stop("\nThe following name(s) in ... args don't match with a parameter ",
+                 "for the simulations: ",
+                 paste(sprintf('"%s"', bad_pn), collapse = ", "))
+        }
+        for (p in names(other_pars)) pars[[p]] <- other_pars[[p]]
+    }
+
+    # Set equilibrium values from `ep_obj`
+    if (!is.null(ep_obj)) {
+        stopifnot(inherits(ep_obj, "equil_pools"))
+        ep_vals <- ep_obj$vals %>%
+            .[["eq"]] %>%
+            set_names(nm = paste0(c("N", "D", "P", "V", "H", "R"), "eq"))
+        for (p in names(ep_vals)) pars[[p]] <- ep_vals[[p]]
+    }
 
     pool_names <- c("N", "D", "P", "V", "H", "R", "M")
     # Default values:
@@ -139,9 +154,6 @@ food_web <- function(tmax, b, s, w, tstep = 1,
         init[names(pool_starts)] <- unlist(pool_starts)
     }
     names(init) <- c(pool_names[pool_names != "M"], "M")
-    if (!.V) init[["V"]] <- 0
-    if (!.R) init[["R"]] <- 0
-    if (!.H) init[["H"]] <- 0
 
     time <- seq(0, tmax, tstep)
     if (time[length(time)] < tmax) time <- c(time, tmax)
@@ -149,7 +161,7 @@ food_web <- function(tmax, b, s, w, tstep = 1,
 
     solved_ode <- solved_ode %>%
         as.data.frame() %>%  # <-- prevents "matrix as column is not supported" error
-        as_data_frame() %>%
+        as_tibble() %>%
         rename(
             nitrogen = N,
             detritus = D,
@@ -193,7 +205,7 @@ plot_web <- function(web_df) {
         ggplot(aes(time, N)) +
         facet_wrap(~pool, scales="free_y") +
         # The horizontal lines show the initial states
-        geom_hline(data = web_output %>% filter(time == min(time)),
+        geom_hline(data = web_df %>% filter(time == min(time)),
                    aes(yintercept=N), color="firebrick") +
         geom_line(size = 1) +
         geom_point(aes(time, minb), shape="") +

@@ -126,7 +126,7 @@ grid.draw(hm)
 
 
 parlist <- par_estimates %>%
-    filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
+    filter(V==1, H==1, R==1, iN == 10) %>%
     as.list()
 V_loss <- function(V, R, H, M, aM) {
     aR <- parlist[["aR"]]
@@ -146,7 +146,8 @@ td_input_sims <- crossing(aM = c(0.00175, 0.00550, 0.00925),
             .w <- .df$w
             .area <- .df$area
             .b <- .area / .w
-            fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, .aM = .aM)
+            fw <- food_web(tmax = 250, s = 10, b = .b, w = .w,
+                           other_pars = list(aM = .aM))
             Vl <- fw %>%
                 spread(pool, N) %>%
                 mutate(Vl = V_loss(detritivore, predator, herbivore, midge, .aM)) %>%
