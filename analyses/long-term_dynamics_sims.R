@@ -2,21 +2,15 @@
 # Run the simulations analyzed in long-term_dynamics.R
 
 
+if (!require(pbmcapply)) install.packages("pbmcapply")
+
+
 # load packages
 suppressPackageStartupMessages({
     library(mtf)
     library(tidyverse)
-    library(parallel)
+    library(pbmcapply)
 })
-
-ep_obj <- equil_pools(lD = 0.2)
-
-plot(ep_obj)
-ep_obj
-
-
-
-
 
 # Number of cores to use:
 n_cores <- as.integer(detectCores() * 0.9)
@@ -25,58 +19,40 @@ n_cores <- as.integer(detectCores() * 0.9)
 # Summary functions
 # ------------------------
 
-# Time to max:
-to_max <- function(x, s, w) {
-    x <- x[s:length(x)]
-    which(x == max(x))[1] - w
-}
-# Time to min:
-to_min <- function(x, s, w) {
-    x <- x[s:length(x)]
-    which(x == min(x))[1] - w
-}
-# Cumulative N:
-cum_N <- function(x) sum(x)
-# Min N below equilibrium
-min_below <- function(x) min(x - x[1])
-# Max N above equilibrium
-max_above <- function(x) max(x - x[1])
-# Return time
-return_time <- function(x, s, w, thresh = 1e-1, ...) {
-    n <- length(x)
-    x_dr <- diff(range(x))
-    y <- abs(rev((x[(s+w):n] - x[1]) / x_dr))
-    ind <- which(y > thresh)
-    if (length(ind) == 0) return(NA_real_)
-    if (ind[1] == length(y)) return(NaN)
-    ind <- ind[1] - 1
-    ind <- n - ind + 1
-    return(ind - (s + w))
-}
-
 parlist <- par_estimates %>%
         filter(V==1, H==1, R==1, iN == 10) %>%
         as.list()
-V_gain <- function(V, D) {
-    aDV <- parlist[["aDV"]]
+V_gain <- function(V, D, aDV) {
     hD <- parlist[["hD"]]
     (aDV*D*V/(1 + aDV*hD*D)) / V
 }
-V_loss <- function(V, R, H, M, aR, f) {
+V_loss <- function(V, R, H, M, f, hM) {
     aR <- parlist[["aR"]]
-    hVHM <- parlist[["hVHM"]]
-    ((aR*V*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M)) / V
+    hVH <- parlist[["hVH"]]
+    ((aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / V
 }
-H_gain <- function(P, H) {
-    aPH <- parlist[["aPH"]]
+H_gain <- function(P, H, aPH) {
     hP <- parlist[["hP"]]
     (aPH*P*H/(1 + aPH*hP*P)) / H
 }
-H_loss <- function(H, R, V, M, aR, f) {
+H_loss <- function(H, R, V, M, f, hM) {
     aR <- parlist[["aR"]]
-    hVHM <- parlist[["hVHM"]]
-    ((aR*H*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M)) / H
+    hVH <- parlist[["hVH"]]
+    ((aR*H*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / H
 }
+
+M_flux_R <- function(H, R, V, M, f, hM) {
+    aR <- parlist[["aR"]]
+    hVH <- parlist[["hVH"]]
+    ((aR * f)*M*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M) / M
+}
+M_flux_D <- function(M, mM) {
+    mM*M
+}
+
+
+
+
 
 
 
@@ -89,31 +65,47 @@ H_loss <- function(H, R, V, M, aR, f) {
 one_combo <- function(row_i) {
     .w <- row_i$w
     .b <- row_i$b
-    .f <- row_i$f
-    .aR <- par_estimates$aR[1]
-    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, other_pars = list(f = .f))
+    .other_pars <- as.list(unlist(row_i))
+    .other_pars$w <- NULL
+    .other_pars$b <- NULL
+
+    # Changing aDV or aPH changed equil. pool sizes, so need to find equil_pools objects
+    # that specify the new sizes if either arg is not the default:
+    if (.other_pars$aDV == par_estimates$aDV[1] &&
+        .other_pars$aPH == par_estimates$aPH[1]) {  # defaults
+        .ep_obj <- NULL
+    } else {
+        .ep_obj <- ep_df %>%
+            filter(aDV == .other_pars$aDV, aPH == .other_pars$aPH) %>%
+            .[["pools"]]
+        if (length(.ep_obj) == 0) {
+            stop("\nDesired combination of aDV and aPH isn't available")
+        }
+        .ep_obj <- .ep_obj[[1]]
+    }
+
+    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, ep_obj = .ep_obj,
+                   other_pars = .other_pars)
+
     fw <- fw %>%
         spread(pool, N) %>%
-        mutate(Vg = V_gain(detritivore, detritus),
-               Vl = V_loss(detritivore, predator, herbivore, midge, .aR, .f),
-               Hg = H_gain(plant, herbivore),
-               Hl = H_loss(herbivore, predator, detritivore, midge, .aR, .f)) %>%
-        gather("pool", "N", nitrogen:midge) %>%
+        mutate(Vg = V_gain(detritivore, detritus, .other_pars$aDV),
+               Vl = V_loss(detritivore, predator, herbivore, midge, .other_pars$f,
+                           .other_pars$hM),
+               Hg = H_gain(plant, herbivore, .other_pars$aPH),
+               Hl = H_loss(herbivore, predator, detritivore, midge, .other_pars$f,
+                           .other_pars$hM),
+               MfR = M_flux_R(herbivore, predator, detritivore, midge, .other_pars$f,
+                        .other_pars$hM),
+               MfD = M_flux_D(midge, .other_pars$mM)) %>%
+        gather("pool", "N", soil:midge) %>%
         filter(pool != "midge") %>%
-        mutate(pool = gsub("nitrogen", "soil", pool),
-               pool = factor(pool,
+        mutate(pool = factor(pool,
                              levels = c("soil", "detritus", "plant",
                                         "detritivore", "herbivore", "predator"))) %>%
         arrange(pool, time) %>%
         group_by(pool) %>%
-        summarize(to_max = to_max(N, s = 10, w = .w),
-                  to_min = to_min(N, s = 10, w = .w),
-                  cum_N = cum_N(N),
-                  min_below = min_below(N),
-                  max_above = max_above(N),
-                  return_time = return_time(N, s = 10, w = .w),
-                  #
-                  max_gain_V = max(Vg - Vg[1]),
+        summarize(max_gain_V = max(Vg - Vg[1]),
                   min_gain_V = min(Vg - Vg[1]),
                   max_loss_V = max(Vl - Vl[1]),
                   min_loss_V = min(Vl - Vl[1]),
@@ -126,21 +118,37 @@ one_combo <- function(row_i) {
                   cum_pos_loss_H = sum(Hl[Hl > Hl[1]] - Hl[1]),
                   cum_neg_loss_H = sum(Hl[Hl < Hl[1]] - Hl[1]),
                   cum_gain_V = sum(Vg[Vg > Vg[1]] - Vg[1]),
-                  cum_gain_H = sum(Hg[Hg > Hg[1]] - Hg[1])) %>%
+                  cum_gain_H = sum(Hg[Hg > Hg[1]] - Hg[1]),
+
+                  cum_MfR = sum(MfR),
+                  cum_MfD = sum(MfD)) %>%
         ungroup() %>%
-        mutate(w = .w, b = .b, f = .f, area = b * w) %>%
+        mutate(w = .w, b = .b, f = .other_pars$f, area = b * w) %>%
         select(w, b, f, area, everything())
     return(fw)
 }
+
+
+# Equilibrium pool size changes
+ep_df <- crossing(aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
+                  aPH = c(par_estimates$aPH[1], par_estimates$aDV[1])) %>%
+    mutate(pools = map2(aDV, aPH, ~ equil_pools(aDV = .x, aPH = .y)))
+
+
 
 
 # ------------------------
 # Combinations of parameter values
 # ------------------------
 
-pulse_pars <- expand.grid(w = seq(10, 30, length.out = 25),
-                          b = seq(0.1, 100, length.out = 25),
-                          f = seq(8e-3, 8e-2, length.out = 25)) %>%
+par_combs <- expand.grid(w = seq(10, 25, length.out = 25),
+                         b = seq(0.1, 40, length.out = 25),
+                         f = seq(8e-3, 8e-2, length.out = 25),
+                         mM = par_estimates$mM[1] * c(0.5, 1, 2),
+                         hM = par_estimates$hM[1] * c(0.5, 1, 2),
+                         # Plant / herbivore uptake rates:
+                         aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
+                         aPH = c(par_estimates$aPH[1], par_estimates$aDV[1])) %>%
     split(row(.)[,1])
 
 
@@ -148,41 +156,8 @@ pulse_pars <- expand.grid(w = seq(10, 30, length.out = 25),
 # Run and summarize simulations
 # ------------------------
 
-pulse_df <- mclapply(pulse_pars, one_combo, mc.cores = n_cores)
+pulse_df <- pbmclapply(par_combs, one_combo, mc.cores = n_cores)
 pulse_df <- bind_rows(pulse_df)
-
-# ------------------------
-# Make sure the following return TRUE:
-# ------------------------
-
-# Verify that there aren't any NaN values (i.e., that they all returned to equilibrium):
-pulse_df %>%
-    gather("param", "value", to_max:cum_gain_H, factor_key = TRUE) %>%
-    filter(is.nan(value)) %>%
-    nrow() %>%
-    `==`(0)
-# Verify that there aren't any NA values (i.e., that they all were perturbed enough):
-pulse_df %>%
-    gather("param", "value", to_max:cum_gain_H, factor_key = TRUE) %>%
-    filter(is.na(value)) %>%
-    nrow() %>%
-    `==`(0)
-# If -to_min or -to_max is > w, that means that those functions malfunctioned
-pulse_df %>%
-    filter(-to_min > w || -to_max > w) %>%
-    nrow() %>%
-    `==`(0)
-
-
-# ------------------------
-# Make sure the following values generally make sense:
-# ------------------------
-
-# Summary of different parameters:
-pulse_df %>%
-    gather("param", "value", to_max:return_time, factor_key = TRUE) %>%
-    group_by(param) %>%
-    summarize(min = min(value, na.rm = TRUE), max = max(value, na.rm = TRUE))
 
 
 write_csv(pulse_df, "data-raw/pulse_data.csv")

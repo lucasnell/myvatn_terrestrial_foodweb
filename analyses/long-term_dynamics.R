@@ -130,8 +130,9 @@ parlist <- par_estimates %>%
     as.list()
 V_loss <- function(V, R, H, M, aM) {
     aR <- parlist[["aR"]]
-    hVHM <- parlist[["hVHM"]]
-    ((aR*V*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M)) / V
+    hVH <- parlist[["hVH"]]
+    hM <- parlist[["hM"]]
+    ((aR*V*R)/(1 + aR*hVH*(V + H) + aM*hM*M)) / V
 }
 
 

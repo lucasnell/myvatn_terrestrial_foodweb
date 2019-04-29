@@ -41,4 +41,16 @@ par_estimates <- par_estimates %>%
     rename(f = aM)
 
 
+sw <- function(x) starts_with(x, ignore.case = FALSE)
+ew <- function(x) ends_with(x, ignore.case = FALSE)
+
+#'
+#' Below allows midges to have their own handling time.
+#'
+par_estimates <- par_estimates %>%
+    mutate(hM = hVHM) %>%
+    rename(hVH = hVHM) %>%
+    select(V, H, R, iN, sw("l"), sw("m"), f, sw("a"), sw("h"), everything())
+
+
 # usethis::use_data(par_estimates, overwrite = TRUE)

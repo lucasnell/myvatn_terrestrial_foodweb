@@ -16,10 +16,10 @@ diff_eq <- function(t, y, pars) {
                             (1 - lH)*(mH0 + mH*H)*H + (1 - lR)*(mR0 + mR*R)*R +
                             (1 - lM)*mM*M - aDV*D*V/(1 + aDV*hD*D) - mD*D,
                         P = aNP*N*P/(1 + aNP*hN*N) - aPH*P*H/(1 + aPH*hP*P) - (mP0 + mP*P)*P,
-                        V = aDV*D*V/(1 + aDV*hD*D) - (aR*V*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M) - (mV0 + mV*V)*V,
-                        H = aPH*P*H/(1 + aPH*hP*P) - (aR*H*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M) - (mH0 + mH*H)*H,
-                        R = (aR*V*R + aR*H*R + (aR * f)*M*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M) - (mR0 + mR*R)*R,
-                        M = iM - mM*M - ((aR * f)*M*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M))
+                        V = aDV*D*V/(1 + aDV*hD*D) - (aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M) - (mV0 + mV*V)*V,
+                        H = aPH*P*H/(1 + aPH*hP*P) - (aR*H*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M) - (mH0 + mH*H)*H,
+                        R = (aR*V*R + aR*H*R + (aR * f)*M*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M) - (mR0 + mR*R)*R,
+                        M = iM - mM*M - ((aR * f)*M*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M))
 
                   }))
 

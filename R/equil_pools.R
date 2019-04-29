@@ -22,6 +22,8 @@
 equil_pools <- function(tmax = 1000, tstep = 1, ...) {
 
 
+    .call <- match.call()
+
     pars <- par_estimates %>%
         filter(V == 1, R == 1, H == 1, iN == iN[2]) %>%
         dplyr::select(-V, -R, -H) %>%
@@ -76,7 +78,8 @@ equil_pools <- function(tmax = 1000, tstep = 1, ...) {
         summarize(eq = N) %>%
         ungroup()
 
-    out <- structure(list(vals = eq_pools, ts = solved_ode), class = "equil_pools")
+    out <- structure(list(vals = eq_pools, ts = solved_ode, call = .call),
+                     class = "equil_pools")
 
     return(out)
 

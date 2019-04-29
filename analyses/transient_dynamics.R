@@ -183,8 +183,9 @@ V_loss <- function(V, R, H, M, aR, f) {
         filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
         as.list()
     aR <- parlist[["aR"]]
-    hVHM <- parlist[["hVHM"]]
-    ((aR*V*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M)) / V
+    hVH <- parlist[["hVH"]]
+    hM <- parlist[["hM"]]
+    ((aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / V
 }
 H_gain <- function(P, H) {
     parlist <- par_estimates %>%
@@ -199,8 +200,9 @@ H_loss <- function(H, R, V, M, aR, f) {
         filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
         as.list()
     aR <- parlist[["aR"]]
-    hVHM <- parlist[["hVHM"]]
-    ((aR*H*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M)) / H
+    hVH <- parlist[["hVH"]]
+    hM <- parlist[["hM"]]
+    ((aR*H*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / H
 }
 
 
@@ -218,7 +220,7 @@ other_sims2 <- map2_dfr(rep(c(100, 1000), each = 2), rep(c(8e-4, 8), 2),
            Vl = V_loss(detritivore, predator, herbivore, midge, par_estimates$aR[1], f),
            Hg = H_gain(plant, herbivore),
            Hl = H_loss(herbivore, predator, detritivore, midge, par_estimates$aR[1], f)) %>%
-    select(-nitrogen:-midge) %>%
+    select(-soil:-midge) %>%
     mutate_at(vars(area), factor) %>%
     gather("variable", "value", Vg:Hl) %>%
     mutate(pool = factor(ifelse(grepl("^V", variable), "detritivore", "herbivore")),
