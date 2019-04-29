@@ -32,7 +32,7 @@
 \item{aDV}{ Uptake rate for DV. }
 \item{aPH}{ Uptake rate for PH. }
 \item{aR}{ Uptake rate for R. }
-\item{aM}{ Uptake rate of M for R. }
+\item{f}{ Relative rate of predator attack on midges in relation to that on herbivores and detritivores. }
 \item{hN}{ Handling time for uptake of N. }
 \item{hD}{ Handling time for uptake of D. }
 \item{hP}{ Handling time for uptake of P. }

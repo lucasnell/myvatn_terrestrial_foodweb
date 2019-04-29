@@ -27,4 +27,18 @@ par_estimates <- full_join(tibbles$full_pars,
     mutate_all(fill_nas) %>%
     mutate_at(vars(V, H, R), as.integer)
 
+
+#'
+#' Below changes attack rate on midges to the relative attack rate in relation to
+#' the rate for herbivores and detritivores.
+#'
+#' The overall attack rate was used to originally calculate the equilibrium values,
+#' but we've decided to use the relative rate in the paper because it improves
+#' the clarity of discussion.
+#'
+par_estimates <- par_estimates %>%
+    mutate(aM = aM / aR) %>%
+    rename(f = aM)
+
+
 # usethis::use_data(par_estimates, overwrite = TRUE)

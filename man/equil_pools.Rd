@@ -16,5 +16,5 @@ All parameters in \code{\link{par_estimates}} other than \code{V}, \code{H}, and
 those ending in \code{eq} are permitted.}
 }
 \description{
-Calculate equilibrium pool sizes after changing parameters.
+This function only works for when all pools are present.
 }

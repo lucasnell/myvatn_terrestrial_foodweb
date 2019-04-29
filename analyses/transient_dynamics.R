@@ -27,8 +27,7 @@ library(forcats)
 
 
 middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
-                       other_pars = list(aM = 0.001)) %>%
-    mutate(pool = fct_recode(pool, soil = "nitrogen"))
+                       other_pars = list(f = 0.008))
 
 # < order of colors: green, red, purple, pink, light green, yellow >
 # rows correspond to `RColorBrewer::brewer.pal(6, "Dark2")`
@@ -98,26 +97,26 @@ trans_p1 <- middle_sim %>%
 
 
 other_sims <- map2_dfr(rep(c(100, 1000), each = 2),
-                       rep(c(1e-4, 1), 2),
-                       function(area_, aM_) {
+                       rep(c(8e-4, 8), 2),
+                       function(area_, f_) {
                            b_ <- area_ / 20
                            food_web(tmax = 100, s = 10, b = b_, w = 20,
-                                    other_pars = list(aM = aM_, lM = 0.1)) %>%
+                                    other_pars = list(f = f_, lM = 0.1)) %>%
                                filter(pool %in% c(upper_levels, "midge")) %>%
                                mutate(pool = droplevels(pool),
-                                      area = area_, aM = aM_)
+                                      area = area_, f = f_)
     }) %>%
-    mutate_at(vars(area, aM), factor) %>%
+    mutate_at(vars(area, f), factor) %>%
     mutate(pool = factor(paste(pool), levels = c(upper_levels, "midge")))
 
 
 trans_p2 <- other_sims %>%
     filter(pool != "midge") %>%
     mutate(pool = droplevels(pool)) %>%
-    group_by(pool, area, aM) %>%
+    group_by(pool, area, f) %>%
     mutate(N = (N - N[1]) / N[1]) %>%
     ungroup() %>%
-    mutate(aM = factor(aM, levels = range(as.numeric(paste(aM))),
+    mutate(f = factor(f, levels = range(as.numeric(paste(f))),
                        labels = paste(c("low", "high"), "attack rate")),
            area = factor(area, levels = range(as.numeric(paste(area))),
                       labels = paste(c("low", "high"), "midge input"))) %>%
@@ -125,11 +124,11 @@ trans_p2 <- other_sims %>%
     geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
     geom_ribbon(data = other_sims %>%
                     filter(pool == "midge") %>%
-                    group_by(area, aM) %>%
+                    group_by(area, f) %>%
                     mutate(N = N - N[1]) %>%
                     ungroup() %>%
                     mutate(N = N / sd(N),
-                           aM = factor(aM, levels = range(as.numeric(paste(aM))),
+                           f = factor(f, levels = range(as.numeric(paste(f))),
                                        labels = paste(c("low", "high"), "attack rate")),
                            area = factor(area, levels = range(as.numeric(paste(area))),
                                          labels = paste(c("low", "high"), "midge input"))),
@@ -139,7 +138,7 @@ trans_p2 <- other_sims %>%
     scale_x_continuous("Time (days)") +
     scale_color_manual(NULL, values = color_pal) +
     geom_text(data = tibble(time =  rep(0, 4), N = rep(4.4, 4),
-                            aM = factor(paste(rep(c("low", "high"), each=2), "attack rate"),
+                            f = factor(paste(rep(c("low", "high"), each=2), "attack rate"),
                                         levels = paste(c("low", "high"), "attack rate")),
                             area = factor(paste(rep(c("low", "high"), 2), "midge input"),
                                           levels = paste(c("low", "high"), "midge input")),
@@ -148,12 +147,12 @@ trans_p2 <- other_sims %>%
     geom_text(data = tibble(pool = factor(upper_levels),
                             time =  c(50, 90, 100),
                             N =     c(1.45, -0.15, 0.97),
-                            aM = factor(paste(rep("low", 3), "attack rate"),
+                            f = factor(paste(rep("low", 3), "attack rate"),
                                         levels = paste(c("low", "high"), "attack rate")),
                             area = factor(paste(rep("high", 3), "midge input"),
                                           levels = paste(c("low", "high"), "midge input"))),
         aes(label = pool, color = pool), hjust = 1, size = 10 / 2.835) +
-    facet_grid(aM ~ area) +
+    facet_grid(f ~ area) +
     theme(legend.position = "none",
           strip.text.y = element_text(face = "plain", size = 11, angle = 270,
                                       margin = margin(l = 4)),
@@ -179,13 +178,13 @@ V_gain <- function(V, D) {
     hD <- parlist[["hD"]]
     (aDV*D*V/(1 + aDV*hD*D)) / V
 }
-V_loss <- function(V, R, H, M, aM) {
+V_loss <- function(V, R, H, M, aR, f) {
     parlist <- par_estimates %>%
         filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
         as.list()
     aR <- parlist[["aR"]]
     hVHM <- parlist[["hVHM"]]
-    ((aR*V*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M)) / V
+    ((aR*V*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M)) / V
 }
 H_gain <- function(P, H) {
     parlist <- par_estimates %>%
@@ -195,42 +194,42 @@ H_gain <- function(P, H) {
     hP <- parlist[["hP"]]
     (aPH*P*H/(1 + aPH*hP*P)) / H
 }
-H_loss <- function(H, R, V, M, aM) {
+H_loss <- function(H, R, V, M, aR, f) {
     parlist <- par_estimates %>%
         filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
         as.list()
     aR <- parlist[["aR"]]
     hVHM <- parlist[["hVHM"]]
-    ((aR*H*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M)) / H
+    ((aR*H*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M)) / H
 }
 
 
 
 
-other_sims2 <- map2_dfr(rep(c(100, 1000), each = 2), rep(c(1e-4, 1), 2),
-                       function(area_, aM_) {
+other_sims2 <- map2_dfr(rep(c(100, 1000), each = 2), rep(c(8e-4, 8), 2),
+                       function(area_, f_) {
                            b_ <- area_ / 20
                            food_web(tmax = 100, s = 10, b = b_, w = 20,
-                                    other_pars = list(aM = aM_, lM = 0.1)) %>%
-                               mutate(area = area_, aM = aM_)
+                                    other_pars = list(f = f_, lM = 0.1)) %>%
+                               mutate(area = area_, f = f_)
                        }) %>%
     spread(pool, N) %>%
     mutate(Vg = V_gain(detritivore, detritus),
-           Vl = V_loss(detritivore, predator, herbivore, midge, aM),
+           Vl = V_loss(detritivore, predator, herbivore, midge, par_estimates$aR[1], f),
            Hg = H_gain(plant, herbivore),
-           Hl = H_loss(herbivore, predator, detritivore, midge, aM)) %>%
+           Hl = H_loss(herbivore, predator, detritivore, midge, par_estimates$aR[1], f)) %>%
     select(-nitrogen:-midge) %>%
     mutate_at(vars(area), factor) %>%
     gather("variable", "value", Vg:Hl) %>%
     mutate(pool = factor(ifelse(grepl("^V", variable), "detritivore", "herbivore")),
            type = factor(ifelse(grepl("l$", variable), "top-down", "bottom-up")),
-           aM = factor(aM, levels = range(as.numeric(paste(aM))),
+           f = factor(f, levels = range(as.numeric(paste(f))),
                        labels = paste(c("low", "high"), "attack rate")),
            area = factor(area, levels = range(as.numeric(paste(area))),
                          labels = paste(c("low", "high"), "midge input"))) %>%
     select(-variable) %>%
-    select(area, aM, pool, type, everything()) %>%
-    group_by(area, aM, pool, type) %>%
+    select(area, f, pool, type, everything()) %>%
+    group_by(area, f, pool, type) %>%
     mutate(value = value - value[1]) %>%
     ungroup()
 
@@ -253,7 +252,7 @@ trans_p3 <- ggplot(data = NULL) +
                       # color = pool,
                       group = interaction(pool, type)), size = 1, color = "gray60") +
     geom_text(data = tibble(time =  rep(0, 4), N = rep(max(other_sims2$value), 4),
-                            aM = factor(paste(rep(c("low", "high"), each=2), "attack rate"),
+                            f = factor(paste(rep(c("low", "high"), each=2), "attack rate"),
                                         levels = paste(c("low", "high"), "attack rate")),
                             area = factor(paste(rep(c("low", "high"), 2), "midge input"),
                                           levels = paste(c("low", "high"), "midge input")),
@@ -264,14 +263,14 @@ trans_p3 <- ggplot(data = NULL) +
     scale_color_manual(values = color_pal[1:2]) +
     geom_text(data = tibble(time =  c(  40,   18,    23),
                             value = c(0.10, 0.055, 0.022),
-                            aM = factor(paste(c("low","low","low"), "attack rate"),
-                                        levels = levels(other_sims2$aM)),
+                            f = factor(paste(c("low","low","low"), "attack rate"),
+                                        levels = levels(other_sims2$f)),
                             area = factor(paste(c("high","high","high"), "midge input"),
                                           levels = levels(other_sims2$area)),
                             lab = c("BU detritivore", "BU\nherbivore",  "TD both")),
               aes(time, value, label = lab), color = c(color_pal[1:2], "gray60"),
               hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835) +
-    facet_grid(aM ~ area) +
+    facet_grid(f ~ area) +
     theme(legend.position = "none",
           strip.text.y = element_text(face = "plain", size = 11, angle = 270,
                                       margin = margin(l = 4)),

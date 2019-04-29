@@ -54,7 +54,7 @@ equil_pools <- function(tmax = 1000, tstep = 1, ...) {
         as.data.frame() %>%  # <-- prevents "matrix as column is not supported" error
         as_tibble() %>%
         rename(
-            nitrogen = N,
+            soil = N,
             detritus = D,
             plant = P,
             detritivore = V,
@@ -64,7 +64,7 @@ equil_pools <- function(tmax = 1000, tstep = 1, ...) {
         ) %>%
         gather('pool', 'N', -time) %>%
         filter(pool != "midge") %>%
-        mutate(pool = factor(pool, levels = c("nitrogen", "detritus", "plant",
+        mutate(pool = factor(pool, levels = c("soil", "detritus", "plant",
                                               "detritivore", "herbivore",
                                               "predator")),
                time = as.integer(time)) %>%

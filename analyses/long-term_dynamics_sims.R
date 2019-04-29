@@ -62,20 +62,20 @@ V_gain <- function(V, D) {
     hD <- parlist[["hD"]]
     (aDV*D*V/(1 + aDV*hD*D)) / V
 }
-V_loss <- function(V, R, H, M, aM) {
+V_loss <- function(V, R, H, M, aR, f) {
     aR <- parlist[["aR"]]
     hVHM <- parlist[["hVHM"]]
-    ((aR*V*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M)) / V
+    ((aR*V*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M)) / V
 }
 H_gain <- function(P, H) {
     aPH <- parlist[["aPH"]]
     hP <- parlist[["hP"]]
     (aPH*P*H/(1 + aPH*hP*P)) / H
 }
-H_loss <- function(H, R, V, M, aM) {
+H_loss <- function(H, R, V, M, aR, f) {
     aR <- parlist[["aR"]]
     hVHM <- parlist[["hVHM"]]
-    ((aR*H*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M)) / H
+    ((aR*H*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M)) / H
 }
 
 
@@ -89,14 +89,15 @@ H_loss <- function(H, R, V, M, aM) {
 one_combo <- function(row_i) {
     .w <- row_i$w
     .b <- row_i$b
-    .aM <- row_i$aM
-    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, other_pars = list(aM = .aM))
+    .f <- row_i$f
+    .aR <- par_estimates$aR[1]
+    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, other_pars = list(f = .f))
     fw <- fw %>%
         spread(pool, N) %>%
         mutate(Vg = V_gain(detritivore, detritus),
-               Vl = V_loss(detritivore, predator, herbivore, midge, .aM),
+               Vl = V_loss(detritivore, predator, herbivore, midge, .aR, .f),
                Hg = H_gain(plant, herbivore),
-               Hl = H_loss(herbivore, predator, detritivore, midge, .aM)) %>%
+               Hl = H_loss(herbivore, predator, detritivore, midge, .aR, .f)) %>%
         gather("pool", "N", nitrogen:midge) %>%
         filter(pool != "midge") %>%
         mutate(pool = gsub("nitrogen", "soil", pool),
@@ -127,8 +128,8 @@ one_combo <- function(row_i) {
                   cum_gain_V = sum(Vg[Vg > Vg[1]] - Vg[1]),
                   cum_gain_H = sum(Hg[Hg > Hg[1]] - Hg[1])) %>%
         ungroup() %>%
-        mutate(w = .w, b = .b, aM = .aM, area = b * w) %>%
-        select(w, b, aM, area, everything())
+        mutate(w = .w, b = .b, f = .f, area = b * w) %>%
+        select(w, b, f, area, everything())
     return(fw)
 }
 
@@ -139,7 +140,7 @@ one_combo <- function(row_i) {
 
 pulse_pars <- expand.grid(w = seq(10, 30, length.out = 25),
                           b = seq(0.1, 100, length.out = 25),
-                          aM = seq(1e-3, 1e-2, length.out = 25)) %>%
+                          f = seq(8e-3, 8e-2, length.out = 25)) %>%
     split(row(.)[,1])
 
 

@@ -4,11 +4,8 @@
 \alias{food_web}
 \title{Run a food web.}
 \usage{
-food_web(tmax, b, s, w,
-         tstep = 1,
-         .V = TRUE, .R = TRUE, .H = TRUE,
-         .mM = 0.5, .aM = 1, .lM = 0.1,
-         pool_starts = NULL)
+food_web(tmax, b, s, w, tstep = 1, pool_starts = NULL, ep_obj = NULL,
+  other_pars = list())
 }
 \arguments{
 \item{tmax}{Duration over which to run the model.}
@@ -21,27 +18,17 @@ food_web(tmax, b, s, w,
 
 \item{tstep}{Step size in units of time. Defaults to \code{1}.}
 
-\item{.V}{Boolean for whether to include the V pool. Defaults to \code{TRUE}.}
-
-\item{.R}{Boolean for whether to include the R pool. Defaults to \code{TRUE}.}
-
-\item{.H}{Boolean for whether to include the H pool. Defaults to \code{TRUE}.}
-
-\item{.iN}{Input rate from pool N. Options for this include \code{5}, \code{10}, or \code{20}.
-Defaults to \code{10}.}
-
-\item{.mM}{Loss rate of midges. Defaults to 0.01.}
-
-\item{.aM}{Attack rate for midges. Defaults to 20.}
-
-\item{.lM}{Loss rate of midges.}
-
 \item{pool_starts}{Named list of initial values for each pool.
 Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
 (for nitrogen, detritus, plant, detritivore, herbivore, predator, and midge
 pools, respectively).
 Any pools not included here will start at their equilibrium value, except
 for midges that start at zero by default.}
+
+\item{ep_obj}{Output from the \code{\link{equil_pools}} function that specifies
+equilibrium pool sizes when you change variable values from defaults.
+This is used when you pass something to \code{other_pars} that changes equilibrium
+pool size(s).}
 
 \item{other_pars}{A named list of other parameter values to use instead of defaults.
 Possible parameter names include all column names in \code{par_estimates}
@@ -56,17 +43,8 @@ see \code{vignette("smooth_pulse", "mtf")}.
 }
 \examples{
 # What happens to the food web bc of this midge pulse?
-web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1)
+web_output <- food_web(tmax = 1000, b = 400, s = 10, w = 40)
 web_output
 
-# If you want to adjust starting value for predators:
-web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
-                       pool_starts = list(R0 = 10))
-web_output
-
-# If you want to remove predators from the food web entirely:
-web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
-                       .R = FALSE)
-web_output
 
 }

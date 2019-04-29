@@ -16,10 +16,10 @@ diff_eq <- function(t, y, pars) {
                             (1 - lH)*(mH0 + mH*H)*H + (1 - lR)*(mR0 + mR*R)*R +
                             (1 - lM)*mM*M - aDV*D*V/(1 + aDV*hD*D) - mD*D,
                         P = aNP*N*P/(1 + aNP*hN*N) - aPH*P*H/(1 + aPH*hP*P) - (mP0 + mP*P)*P,
-                        V = aDV*D*V/(1 + aDV*hD*D) - (aR*V*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M) - (mV0 + mV*V)*V,
-                        H = aPH*P*H/(1 + aPH*hP*P) - (aR*H*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M) - (mH0 + mH*H)*H,
-                        R = (aR*V*R + aR*H*R + aM*M*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M) - (mR0 + mR*R)*R,
-                        M = iM - mM*M - (aM*M*R)/(1 + aR*hVHM*(V + H) + aM*hVHM*M))
+                        V = aDV*D*V/(1 + aDV*hD*D) - (aR*V*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M) - (mV0 + mV*V)*V,
+                        H = aPH*P*H/(1 + aPH*hP*P) - (aR*H*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M) - (mH0 + mH*H)*H,
+                        R = (aR*V*R + aR*H*R + (aR * f)*M*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M) - (mR0 + mR*R)*R,
+                        M = iM - mM*M - ((aR * f)*M*R)/(1 + aR*hVHM*(V + H) + (aR * f)*hVHM*M))
 
                   }))
 
@@ -38,20 +38,16 @@ diff_eq <- function(t, y, pars) {
 #' @param s Start time for midge pulse
 #' @param w Width of the midge pulse.
 #' @param tstep Step size in units of time. Defaults to \code{1}.
-#' @param .V Boolean for whether to include the V pool. Defaults to `TRUE`.
-#' @param .R Boolean for whether to include the R pool. Defaults to `TRUE`.
-#' @param .H Boolean for whether to include the H pool. Defaults to `TRUE`.
-#' @param .mM Loss rate of midges. Defaults to 0.01.
-#' @param .lM Loss rate of midges.
-#' @param .aM Attack rate for midges. Defaults to 20.
-#' @param .iN Input rate from pool N. Options for this include `5`, `10`, or `20`.
-#'     Defaults to `10`.
 #' @param pool_starts Named list of initial values for each pool.
 #'     Names can include "N0", "D0", "P0", "V0", "H0", "R0", and "M0"
 #'     (for nitrogen, detritus, plant, detritivore, herbivore, predator, and midge
 #'     pools, respectively).
 #'     Any pools not included here will start at their equilibrium value, except
 #'     for midges that start at zero by default.
+#' @param ep_obj Output from the \code{\link{equil_pools}} function that specifies
+#'     equilibrium pool sizes when you change variable values from defaults.
+#'     This is used when you pass something to `other_pars` that changes equilibrium
+#'     pool size(s).
 #' @param other_pars A named list of other parameter values to use instead of defaults.
 #'     Possible parameter names include all column names in `par_estimates`
 #'     except the first three (see `?par_estimates` for a description of column names).
@@ -71,35 +67,20 @@ diff_eq <- function(t, y, pars) {
 #' @return A data frame with the following columns: `time`, `pool`, `N`.
 #'
 #'
-#' @usage food_web(tmax, b, s, w,
-#'          tstep = 1,
-#'          .V = TRUE, .R = TRUE, .H = TRUE,
-#'          .mM = 0.5, .aM = 1, .lM = 0.1,
-#'          pool_starts = NULL)
 #'
 #' @export
 #'
 #' @examples
 #' # What happens to the food web bc of this midge pulse?
-#' web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1)
+#' web_output <- food_web(tmax = 1000, b = 400, s = 10, w = 40)
 #' web_output
 #'
-#' # If you want to adjust starting value for predators:
-#' web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
-#'                        pool_starts = list(R0 = 10))
-#' web_output
-#'
-#' # If you want to remove predators from the food web entirely:
-#' web_output <- food_web(tmax = 1000, a = 1e9, b = 0, r = 400, w = 40, d = 1,
-#'                        .R = FALSE)
-#' web_output
 #'
 food_web <- function(tmax, b, s, w, tstep = 1,
                      pool_starts = NULL,
                      ep_obj = NULL,
                      other_pars = list()) {
 
-    # .iN = 10, .mM = 0.5, .aM = 1, .lM = 0.1,
     .iN <- 10
     if (!is.null(other_pars$iN)) .iN <- other_pars$iN
 
@@ -163,7 +144,7 @@ food_web <- function(tmax, b, s, w, tstep = 1,
         as.data.frame() %>%  # <-- prevents "matrix as column is not supported" error
         as_tibble() %>%
         rename(
-            nitrogen = N,
+            soil = N,
             detritus = D,
             plant = P,
             detritivore = V,
@@ -172,7 +153,7 @@ food_web <- function(tmax, b, s, w, tstep = 1,
             midge = M
         ) %>%
         gather('pool', 'N', -time) %>%
-        mutate(pool = factor(pool, levels = c("nitrogen", "detritus", "plant",
+        mutate(pool = factor(pool, levels = c("soil", "detritus", "plant",
                                               "detritivore", "herbivore",
                                               "predator", "midge")),
                time = as.integer(time)) %>%
