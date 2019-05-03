@@ -26,3 +26,26 @@
                         axis.title.x = element_text(margin = margin(15,0,0,0))))
 
 }
+
+
+
+#' Color palette.
+#'
+#' @export
+#' @noRd
+#'
+color_pal <- function() {
+    # < order of colors: green, red, purple, pink, light green, yellow >
+    # rows correspond to `RColorBrewer::brewer.pal(6, "Dark2")`
+    rgb_mat <- rbind(c(27,158,119), c(217,95,2), c(117,112,179),
+                     c(231,41,138), c(102,166,30), c(230,171,2))
+    # Switching detritus with plant and detritivore with herbivore
+    # Order is now "detritivore", "herbivore", "predator", "soil", "detritus", "plant"
+    rgb_mat <- rgb_mat[c(2, 5, 3, 6, 4, 1),]
+    # Multipliers for each color, < 1 makes it darker
+    rgb_mults <- c(0.5, 1.3, 1.1,
+                   1.05, 0.9, 1)
+    cp <- apply(rgb_mat * matrix(rgb_mults, 6, 3), 1,
+                function(x) rgb(x[1], x[2], x[3], maxColorValue = 255))
+    return(cp)
+}

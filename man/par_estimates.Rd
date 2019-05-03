@@ -36,7 +36,8 @@
 \item{hN}{ Handling time for uptake of N. }
 \item{hD}{ Handling time for uptake of D. }
 \item{hP}{ Handling time for uptake of P. }
-\item{hVHM}{ Handling time for uptake of V, H, and M. }
+\item{hVH}{ Handling time for uptake of V and H. }
+\item{hM}{ Handling time for uptake of M. }
 \item{Neq}{  Equilibrium value for N. }
 \item{Deq}{  Equilibrium value for D. }
 \item{Peq}{  Equilibrium value for P. }

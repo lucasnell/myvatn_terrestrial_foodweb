@@ -2,6 +2,7 @@
 
 S3method(plot,equil_pools)
 S3method(print,equil_pools)
+export(color_pal)
 export(equil_pools)
 export(food_web)
 export(plot_web)
