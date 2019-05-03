@@ -1,0 +1,75 @@
+---
+title: "Supplemental Information"
+author: "Lucas A. Nell"
+date: "5/3/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+
+
+parlist <- par_estimates %>%
+    filter(V==1, H==1, R==1, iN == 10) %>%
+    as.list()
+V_loss <- function(V, R, H, M, f) {
+    aR <- parlist[["aR"]]
+    hVH <- parlist[["hVH"]]
+    hM <- parlist[["hM"]]
+    ((aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / V
+}
+
+
+# Takes ~1 min w/ 4 cores
+td_input_sims <- crossing(f = quantile(seq(8e-3, 8e-2, length.out = 25), c(0.1,0.5,0.9)),
+                          w = c(10, 30),
+                          area = seq(0, 1000, length.out = 10)) %>%
+    split(1:nrow(.)) %>%
+    pbmclapply(
+        function(.df) {
+            .f <- .df$f
+            .w <- .df$w
+            .area <- .df$area
+            .b <- .area / .w
+            fw <- food_web(tmax = 250, s = 10, b = .b, w = .w,
+                           other_pars = list(f = .f))
+            Vl <- fw %>%
+                spread(pool, N) %>%
+                mutate(Vl = V_loss(detritivore, predator, herbivore, midge, .f)) %>%
+                .[["Vl"]]
+            .td <- sum(Vl[Vl > Vl[1]] - Vl[1]) + sum(Vl[Vl < Vl[1]] - Vl[1])
+            return(mutate(.df, td = .td))
+        }, mc.cores = parallel::detectCores()) %>%
+    bind_rows()
+
+
+td_input_plot <- td_input_sims %>%
+    mutate_at(vars(f, area), function(x) x %>% paste() %>% as.numeric()) %>%
+    mutate(f = factor(f, levels = sort(unique(f)),
+                      labels = c("low", "mid", "high")),
+           b = area / w,
+           w = factor(w)) %>%
+    ggplot(aes(area)) +
+    geom_line(aes(y = td, color = f, linetype = w), size = 1) + # net top-down
+    # Manually specify colors from viridis's 5-color "inferno" palette
+    scale_color_manual("Midge availability",
+                       values = c("#000004FF", "#4C0C6BFF", "#A82E5FFF",
+                                  "#EF6C23FF", "#F6D645FF")[c(1, 4, 5)]) +
+    scale_linetype_manual("Pulse width", values = c(2, 1)) +
+    xlab("Total midge input") +
+    ylab("Total top-down effect") +
+    theme(legend.position = c(0.75, 0.25), legend.box = "horizontal",
+          legend.title = element_text(size = 10),
+          legend.key.width = grid::unit(0.075, "npc"))
+
+
+# ggsave(filename = "~/Desktop/6-td_input.pdf", td_input_plot, width = 7, height = 4)
+
+
+```
+

@@ -17,33 +17,19 @@
 
 
 # load packages
-library(mtf)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-library(purrr)
-library(forcats)
+suppressPackageStartupMessages({
+    library(mtf)
+    library(dplyr)
+    library(tidyr)
+    library(ggplot2)
+    library(purrr)
+    library(forcats)
+})
 
 
 
 middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
                        other_pars = list(f = 0.008))
-
-# < order of colors: green, red, purple, pink, light green, yellow >
-# rows correspond to `RColorBrewer::brewer.pal(6, "Dark2")`
-rgb_mat <- rbind(c(27,158,119), c(217,95,2), c(117,112,179),
-                 c(231,41,138), c(102,166,30), c(230,171,2))
-# Switching detritus with plant and detritivore with herbivore
-# Order is now "detritivore", "herbivore", "predator", "soil", "detritus", "plant"
-rgb_mat <- rgb_mat[c(2, 5, 3, 6, 4, 1),]
-# Multipliers for each color, < 1 makes it darker
-rgb_mults <- c(0.5, 1.3, 1.1,
-               1.05, 0.9, 1)
-color_pal <- apply(rgb_mat * matrix(rgb_mults, 6, 3), 1,
-                   function(x) rgb(x[1], x[2], x[3], maxColorValue = 255))
-
-
-
 
 
 upper_levels <- c("detritivore", "herbivore", "predator")
@@ -68,7 +54,7 @@ trans_p1 <- middle_sim %>%
     scale_y_continuous("Proportional change in nitrogen", breaks = c(0, 1, 2)) +
     scale_x_continuous("Time (days)") +
     facet_wrap(~ level, nrow = 2) +
-    scale_color_manual(values = color_pal[c(4:6, 1:3)]) +
+    scale_color_manual(values = color_pal()[c(4:6, 1:3)]) +
     theme(legend.position = "none",
           panel.spacing = unit(1.5, "lines")) +
     geom_text(data = tibble(
@@ -101,7 +87,7 @@ other_sims <- map2_dfr(rep(c(100, 1000), each = 2),
                        function(area_, f_) {
                            b_ <- area_ / 20
                            food_web(tmax = 100, s = 10, b = b_, w = 20,
-                                    other_pars = list(f = f_, lM = 0.1)) %>%
+                                    other_pars = list(f = f_)) %>%
                                filter(pool %in% c(upper_levels, "midge")) %>%
                                mutate(pool = droplevels(pool),
                                       area = area_, f = f_)
@@ -136,7 +122,7 @@ trans_p2 <- other_sims %>%
     geom_line(aes(color = pool), size = 0.75) +
     scale_y_continuous("Proportional change in nitrogen") +
     scale_x_continuous("Time (days)") +
-    scale_color_manual(NULL, values = color_pal) +
+    scale_color_manual(NULL, values = color_pal()) +
     geom_text(data = tibble(time =  rep(0, 4), N = rep(4.4, 4),
                             f = factor(paste(rep(c("low", "high"), each=2), "attack rate"),
                                         levels = paste(c("low", "high"), "attack rate")),
@@ -169,36 +155,26 @@ trans_p2 <- other_sims %>%
 
 
 
-
+parlist <- par_estimates %>%
+    filter(V==1, H==1, R==1, iN == 10) %>%
+    as.list()
 V_gain <- function(V, D) {
-    parlist <- par_estimates %>%
-        filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
-        as.list()
     aDV <- parlist[["aDV"]]
     hD <- parlist[["hD"]]
     (aDV*D*V/(1 + aDV*hD*D)) / V
 }
-V_loss <- function(V, R, H, M, aR, f) {
-    parlist <- par_estimates %>%
-        filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
-        as.list()
+V_loss <- function(V, R, H, M, f) {
     aR <- parlist[["aR"]]
     hVH <- parlist[["hVH"]]
     hM <- parlist[["hM"]]
     ((aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / V
 }
 H_gain <- function(P, H) {
-    parlist <- par_estimates %>%
-        filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
-        as.list()
     aPH <- parlist[["aPH"]]
     hP <- parlist[["hP"]]
     (aPH*P*H/(1 + aPH*hP*P)) / H
 }
-H_loss <- function(H, R, V, M, aR, f) {
-    parlist <- par_estimates %>%
-        filter(V==1, H==1, R==1, iN == formals(food_web)$.iN) %>%
-        as.list()
+H_loss <- function(H, R, V, M, f) {
     aR <- parlist[["aR"]]
     hVH <- parlist[["hVH"]]
     hM <- parlist[["hM"]]
@@ -212,14 +188,14 @@ other_sims2 <- map2_dfr(rep(c(100, 1000), each = 2), rep(c(8e-4, 8), 2),
                        function(area_, f_) {
                            b_ <- area_ / 20
                            food_web(tmax = 100, s = 10, b = b_, w = 20,
-                                    other_pars = list(f = f_, lM = 0.1)) %>%
+                                    other_pars = list(f = f_)) %>%
                                mutate(area = area_, f = f_)
                        }) %>%
     spread(pool, N) %>%
     mutate(Vg = V_gain(detritivore, detritus),
-           Vl = V_loss(detritivore, predator, herbivore, midge, par_estimates$aR[1], f),
+           Vl = V_loss(detritivore, predator, herbivore, midge, f),
            Hg = H_gain(plant, herbivore),
-           Hl = H_loss(herbivore, predator, detritivore, midge, par_estimates$aR[1], f)) %>%
+           Hl = H_loss(herbivore, predator, detritivore, midge, f)) %>%
     select(-soil:-midge) %>%
     mutate_at(vars(area), factor) %>%
     gather("variable", "value", Vg:Hl) %>%
@@ -245,14 +221,10 @@ trans_p3 <- ggplot(data = NULL) +
     geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
     geom_line(data = other_sims2 %>% filter(type == "bottom-up"),
               aes(time, value,
-                  # linetype = type,
                   color = pool,
                   group = interaction(pool, type)), size = 1, linetype = 1) +
     geom_line(data = other_sims2 %>% filter(type == "top-down", pool == "detritivore"),
-                  aes(time, value,
-                      # linetype = type,
-                      # color = pool,
-                      group = interaction(pool, type)), size = 1, color = "gray60") +
+                  aes(time, value), size = 1, color = "gray60") +
     geom_text(data = tibble(time =  rep(0, 4), N = rep(max(other_sims2$value), 4),
                             f = factor(paste(rep(c("low", "high"), each=2), "attack rate"),
                                         levels = paste(c("low", "high"), "attack rate")),
@@ -262,7 +234,7 @@ trans_p3 <- ggplot(data = NULL) +
               aes(time, N, label = labs), hjust = 0, vjust = 1, size = 12 / 2.835) +
     scale_y_continuous(expression("Effect on pool (" * day^{-1} * ")" )) +
     scale_x_continuous("Time (days)") +
-    scale_color_manual(values = color_pal[1:2]) +
+    scale_color_manual(values = color_pal()[1:2]) +
     geom_text(data = tibble(time =  c(  40,   18,    23),
                             value = c(0.10, 0.055, 0.022),
                             f = factor(paste(c("low","low","low"), "attack rate"),
@@ -270,7 +242,7 @@ trans_p3 <- ggplot(data = NULL) +
                             area = factor(paste(c("high","high","high"), "midge input"),
                                           levels = levels(other_sims2$area)),
                             lab = c("BU detritivore", "BU\nherbivore",  "TD both")),
-              aes(time, value, label = lab), color = c(color_pal[1:2], "gray60"),
+              aes(time, value, label = lab), color = c(color_pal()[1:2], "gray60"),
               hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835) +
     facet_grid(f ~ area) +
     theme(legend.position = "none",
