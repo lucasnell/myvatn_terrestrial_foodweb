@@ -10,10 +10,6 @@
 #'
 
 
-# trans_p1
-# trans_p2
-# trans_p3
-
 
 
 # load packages
@@ -23,13 +19,13 @@ suppressPackageStartupMessages({
     library(tidyr)
     library(ggplot2)
     library(purrr)
-    library(forcats)
+    library(viridisLite)
 })
 
 
 
 middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
-                       other_pars = list(f = 0.008))
+                       other_pars = list(f = 3))
 
 
 upper_levels <- c("detritivore", "herbivore", "predator")
@@ -44,6 +40,7 @@ trans_p1 <- middle_sim %>%
     group_by(pool) %>%
     mutate(N = (N - N[1]) / (N[1])) %>%
     ungroup() %>%
+    {max_N <<- max(.$N); .} %>%
     ggplot(aes(time, N)) +
     geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
     geom_ribbon(data = middle_sim %>%
@@ -51,7 +48,7 @@ trans_p1 <- middle_sim %>%
                     mutate(N = N / sd(N)),
                 aes(ymin = 0, ymax = N), fill = "gray80", color = NA) +
     geom_line(aes(color = pool), size = 0.75) +
-    scale_y_continuous("Proportional change in nitrogen", breaks = c(0, 1, 2)) +
+    scale_y_continuous("Proportional change in nitrogen", breaks = c(0, 2, 4)) +
     scale_x_continuous("Time (days)") +
     facet_wrap(~ level, nrow = 2) +
     scale_color_manual(values = color_pal()[c(4:6, 1:3)]) +
@@ -59,17 +56,20 @@ trans_p1 <- middle_sim %>%
           panel.spacing = unit(1.5, "lines")) +
     geom_text(data = tibble(
         pool = sort(unique(middle_sim$pool[middle_sim$pool != "midge"])),
-        time =  c( 43,  50,  50,  45,  50,  60),
-        N =     c(2.1, 0.8, 0.2, 0.5, 0.1, 1.0),
+        time =  c( 43,  40,  45,
+                   35,  50,  48),
+        N =     c(2.1, 0.92, 0.2,
+                  1.8, -0.2, 3),
         level = factor(rep(1:0, each = 3), levels = 0:1,
                        labels = paste(c("Upper", "Lower"), "trophic levels"))),
         aes(label = pool, color = pool), size = 10 / 2.835) +
-    geom_text(data = tibble(time = 22, N = 2,
+    geom_text(data = tibble(time = 24, N = 2.3,
                             level = factor(0, levels = 0:1,
                                            labels = paste(c("Upper", "Lower"),
                                                           "trophic levels"))),
               label = "midge", color = "gray40", size = 10 / 2.835) +
-    geom_text(data = tibble(time =  rep(0, 2), N = rep(2.523417, 2),
+    geom_text(data = tibble(time =  rep(0, 2),
+                            N = rep(max_N, 2),
                             level = factor(paste(c("Upper", "Lower"), "trophic levels")),
                             labs = letters[1:2]),
               aes(label = labs), hjust = 0, vjust = 1, size = 12 / 2.835)
@@ -82,8 +82,8 @@ trans_p1 <- middle_sim %>%
 
 
 
-other_sims <- map2_dfr(rep(c(100, 1000), each = 2),
-                       rep(c(8e-4, 8), 2),
+other_sims <- map2_dfr(rep(c(250, 500), each = 2),
+                       rep(c(8e-3, 8), 2),
                        function(area_, f_) {
                            b_ <- area_ / 20
                            food_web(tmax = 100, s = 10, b = b_, w = 20,
@@ -103,9 +103,10 @@ trans_p2 <- other_sims %>%
     mutate(N = (N - N[1]) / N[1]) %>%
     ungroup() %>%
     mutate(f = factor(f, levels = range(as.numeric(paste(f))),
-                       labels = paste(c("low", "high"), "attack rate")),
+                       labels = paste(c("low", "high"), "accessibility")),
            area = factor(area, levels = range(as.numeric(paste(area))),
                       labels = paste(c("low", "high"), "midge input"))) %>%
+    {max_N <<- max(.$N); .} %>%
     ggplot(aes(time, N)) +
     geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
     geom_ribbon(data = other_sims %>%
@@ -115,7 +116,7 @@ trans_p2 <- other_sims %>%
                     ungroup() %>%
                     mutate(N = N / sd(N),
                            f = factor(f, levels = range(as.numeric(paste(f))),
-                                       labels = paste(c("low", "high"), "attack rate")),
+                                       labels = paste(c("low", "high"), "accessibility")),
                            area = factor(area, levels = range(as.numeric(paste(area))),
                                          labels = paste(c("low", "high"), "midge input"))),
                 aes(ymin = 0, ymax = N), fill = "gray80", color = NA) +
@@ -123,18 +124,18 @@ trans_p2 <- other_sims %>%
     scale_y_continuous("Proportional change in nitrogen") +
     scale_x_continuous("Time (days)") +
     scale_color_manual(NULL, values = color_pal()) +
-    geom_text(data = tibble(time =  rep(0, 4), N = rep(4.4, 4),
-                            f = factor(paste(rep(c("low", "high"), each=2), "attack rate"),
-                                        levels = paste(c("low", "high"), "attack rate")),
+    geom_text(data = tibble(time =  rep(0, 4), N = rep(max_N, 4),
+                            f = factor(paste(rep(c("low", "high"), each=2), "accessibility"),
+                                        levels = paste(c("low", "high"), "accessibility")),
                             area = factor(paste(rep(c("low", "high"), 2), "midge input"),
                                           levels = paste(c("low", "high"), "midge input")),
                             labs = letters[1:4]),
         aes(label = labs), hjust = 0, vjust = 1, size = 12 / 2.835) +
     geom_text(data = tibble(pool = factor(upper_levels),
                             time =  c(50, 90, 100),
-                            N =     c(1.45, -0.15, 0.97),
-                            f = factor(paste(rep("low", 3), "attack rate"),
-                                        levels = paste(c("low", "high"), "attack rate")),
+                            N =     c(1.1, -0.2, 0.7),
+                            f = factor(paste(rep("low", 3), "accessibility"),
+                                        levels = paste(c("low", "high"), "accessibility")),
                             area = factor(paste(rep("high", 3), "midge input"),
                                           levels = paste(c("low", "high"), "midge input"))),
         aes(label = pool, color = pool), hjust = 1, size = 10 / 2.835) +
@@ -145,8 +146,7 @@ trans_p2 <- other_sims %>%
           strip.text.x = element_text(face = "plain", size = 11,
                                       margin = margin(b = 4)),
           panel.spacing.y = unit(1.5, "lines"),
-          panel.spacing.x = unit(2.5, "lines"),
-          axis.title = element_text(size = 12)) +
+          panel.spacing.x = unit(2.5, "lines")) +
     NULL
 # trans_p2
 
@@ -184,7 +184,7 @@ H_loss <- function(H, R, V, M, f) {
 
 
 
-other_sims2 <- map2_dfr(rep(c(100, 1000), each = 2), rep(c(8e-4, 8), 2),
+other_sims2 <- map2_dfr(rep(c(250, 500), each = 2), rep(c(8e-3, 8), 2),
                        function(area_, f_) {
                            b_ <- area_ / 20
                            food_web(tmax = 100, s = 10, b = b_, w = 20,
@@ -202,7 +202,7 @@ other_sims2 <- map2_dfr(rep(c(100, 1000), each = 2), rep(c(8e-4, 8), 2),
     mutate(pool = factor(ifelse(grepl("^V", variable), "detritivore", "herbivore")),
            type = factor(ifelse(grepl("l$", variable), "top-down", "bottom-up")),
            f = factor(f, levels = range(as.numeric(paste(f))),
-                       labels = paste(c("low", "high"), "attack rate")),
+                       labels = paste(c("low", "high"), "accessibility")),
            area = factor(area, levels = range(as.numeric(paste(area))),
                          labels = paste(c("low", "high"), "midge input"))) %>%
     select(-variable) %>%
@@ -226,18 +226,19 @@ trans_p3 <- ggplot(data = NULL) +
     geom_line(data = other_sims2 %>% filter(type == "top-down", pool == "detritivore"),
                   aes(time, value), size = 1, color = "gray60") +
     geom_text(data = tibble(time =  rep(0, 4), N = rep(max(other_sims2$value), 4),
-                            f = factor(paste(rep(c("low", "high"), each=2), "attack rate"),
-                                        levels = paste(c("low", "high"), "attack rate")),
+                            f = factor(paste(rep(c("low", "high"), each=2), "accessibility"),
+                                        levels = paste(c("low", "high"), "accessibility")),
                             area = factor(paste(rep(c("low", "high"), 2), "midge input"),
                                           levels = paste(c("low", "high"), "midge input")),
                             labs = letters[1:4]),
               aes(time, N, label = labs), hjust = 0, vjust = 1, size = 12 / 2.835) +
-    scale_y_continuous(expression("Effect on pool (" * day^{-1} * ")" )) +
+    scale_y_continuous(expression("Effect on pool (" * day^{-1} * ")" ),
+                       limits = c(-0.03641979, 0.1)) +
     scale_x_continuous("Time (days)") +
     scale_color_manual(values = color_pal()[1:2]) +
-    geom_text(data = tibble(time =  c(  40,   18,    23),
-                            value = c(0.10, 0.055, 0.022),
-                            f = factor(paste(c("low","low","low"), "attack rate"),
+    geom_text(data = tibble(time =  c(  40,   18,    35),
+                            value = c(0.07, 0.039, 0.003),
+                            f = factor(paste(c("low","low","low"), "accessibility"),
                                         levels = levels(other_sims2$f)),
                             area = factor(paste(c("high","high","high"), "midge input"),
                                           levels = levels(other_sims2$area)),
@@ -251,10 +252,9 @@ trans_p3 <- ggplot(data = NULL) +
           strip.text.x = element_text(face = "plain", size = 11,
                                       margin = margin(b = 4)),
           panel.spacing.y = unit(1.5, "lines"),
-          panel.spacing.x = unit(2.5, "lines"),
-          axis.title = element_text(size = 12)) +
+          panel.spacing.x = unit(2.5, "lines")) +
     NULL
-
+# trans_p3
 
 
 
@@ -262,7 +262,45 @@ trans_p3 <- ggplot(data = NULL) +
 
 
 
+impute <- function(time, value) {
+    X_ <- zoo::zoo(value, time) %>%
+        zoo::na.approx() %>%
+        as.numeric()
+    return(X_)
+}
 
+
+
+
+trans_p4 <- other_sims2 %>%
+    filter(type == "top-down", pool == "detritivore",
+           f == "high accessibility", area == "high midge input") %>%
+    select(-pool, -f, -type, -area) %>%
+    {bind_rows(., tibble(time = seq(34.1, 34.9, 0.1), value = NA_real_))} %>%
+    arrange(time) %>%
+    mutate(value = impute(time, value)) %>%
+    {
+        ggplot(., aes(time, value)) +
+            geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
+            geom_ribbon(data = . %>% filter(time < 35),
+                        aes(ymin = 0, ymax = value),
+                        fill = viridis(1, begin = 0.7, end = 0.7, alpha = 0.75)) +
+            geom_ribbon(data = . %>% filter(time >= 35),
+                        aes(ymin = 0, ymax = value),
+                        fill = inferno(1, begin = 0.5, end = 0.5, alpha = 0.75)) +
+            geom_line(size = 1) +
+            geom_text(data = tibble(time = c(40, 14),
+                             value = c(0.01, -0.02),
+                             lab = c("top-down\nintensification",
+                                     "top-down\nalleviation")),
+                      aes(label = lab), hjust = 0, vjust = 0.5, size = 10 / 2.835) +
+            scale_y_continuous(expression("Effect on pool (" * day^{-1} * ")" ),
+                               limits = c(-0.03641979, 0.1)) +
+            scale_x_continuous("Time (days)")
+    }
+
+
+# ggsave("~/Desktop/5-td_cartoon.pdf", trans_p4, width = 5, height = 5)
 
 
 # trans_p1

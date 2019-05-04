@@ -21,6 +21,7 @@
                                                   margin = margin(b = 1, t = 0, 0, 0)),
                         legend.text = element_text(size = 10),
                         axis.text = element_text(size = 10, color = "black"),
+                        axis.title = element_text(size = 12),
                         axis.title.y = element_text(angle = 90,
                                                     margin = margin(0,15,0,0)),
                         axis.title.x = element_text(margin = margin(15,0,0,0))))

@@ -125,20 +125,89 @@ hm$widths <- unit.pmax(hmg1$widths, hmg2$widths, hmg3$widths)
 # grid.draw(hm)
 
 
-# pdf(file = "~/Desktop/5-heatmaps.pdf", width = 4.5, height = 9)
+# pdf(file = "~/Desktop/6-heatmaps.pdf", width = 4.5, height = 9)
 # grid.newpage()
 # grid.draw(hm)
 # dev.off()
 
 
+parlist <- par_estimates %>%
+    filter(V==1, H==1, R==1, iN == 10) %>%
+    as.list()
+V_gain <- function(V, D, aDV) {
+    hD <- parlist[["hD"]]
+    (aDV*D*V/(1 + aDV*hD*D)) / V
+}
+V_loss <- function(V, R, H, M, f, hM) {
+    aR <- parlist[["aR"]]
+    hVH <- parlist[["hVH"]]
+    ((aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / V
+}
+H_gain <- function(P, H, aPH) {
+    hP <- parlist[["hP"]]
+    (aPH*P*H/(1 + aPH*hP*P)) / H
+}
+H_loss <- function(H, R, V, M, f, hM) {
+    aR <- parlist[["aR"]]
+    hVH <- parlist[["hVH"]]
+    ((aR*H*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / H
+}
+
+# Runs simulations for one combination of parameters
+one_combo <- function(row_i) {
+    .w <- 20
+    .b <- row_i$b
+    .other_pars <- as.list(unlist(row_i))
+    .other_pars$b <- NULL
 
 
-td_bu_plot <- pulse_df %>%
-    mutate_at(vars(f, b), function(x) x %>% paste() %>% as.numeric()) %>%
-    filter(w == 20,
-           pool %in% c("detritivore", "herbivore"),
-           f %in% as.numeric(quantile(f, 0.5))) %>%
-    group_by(f, b, pool) %>%
+
+    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, other_pars = .other_pars)
+
+    fw <- fw %>%
+        spread(pool, N) %>%
+        mutate(Vg = V_gain(detritivore, detritus, par_estimates$aDV[1]),
+               Vl = V_loss(detritivore, predator, herbivore, midge, .other_pars$f,
+                           .other_pars$hM),
+               Hg = H_gain(plant, herbivore, par_estimates$aPH[1]),
+               Hl = H_loss(herbivore, predator, detritivore, midge, .other_pars$f,
+                           .other_pars$hM)) %>%
+        gather("pool", "N", soil:midge) %>%
+        filter(pool != "midge") %>%
+        mutate(pool = factor(pool,
+                             levels = c("soil", "detritus", "plant",
+                                        "detritivore", "herbivore", "predator"))) %>%
+        arrange(pool, time) %>%
+        group_by(pool) %>%
+        summarize(cum_pos_loss_V = sum(Vl[Vl > Vl[1]] - Vl[1]),
+                  cum_neg_loss_V = sum(Vl[Vl < Vl[1]] - Vl[1]),
+                  cum_pos_loss_H = sum(Hl[Hl > Hl[1]] - Hl[1]),
+                  cum_neg_loss_H = sum(Hl[Hl < Hl[1]] - Hl[1]),
+                  cum_gain_V = sum(Vg[Vg > Vg[1]] - Vg[1]),
+                  cum_gain_H = sum(Hg[Hg > Hg[1]] - Hg[1])) %>%
+        ungroup() %>%
+        mutate(b = .b, mM = .other_pars$mM, hM = .other_pars$hM) %>%
+        select(b, everything())
+    return(fw)
+}
+
+
+
+
+pulse_df2 <- crossing(b = seq(5, 50, length.out = 10),
+                      f = 3,
+                      mM = par_estimates$mM[1] * c(0.5, 1, 2),
+                      hM = par_estimates$hM[1] * c(0.5, 1, 2)) %>%
+    split(row(.)[,1]) %>%
+    pbmclapply(one_combo, mc.cores = parallel::detectCores()) %>%
+    bind_rows() %>%
+    filter(pool %in% c("detritivore", "herbivore")) %>%
+    mutate(mM = factor(mM, levels = sort(unique(mM)),
+                       labels = paste(c("low", "mid", "high"), "midge\ndecay rate")),
+           hM = factor(hM, levels = sort(unique(hM)),
+                       labels = paste(c("low", "mid", "high"),
+                                      "midge\nhandling time"))) %>%
+    group_by(b, pool, mM, hM) %>%
     summarize(cum_pos_loss = ifelse(pool[1] == "detritivore", cum_pos_loss_V[1],
                                     cum_pos_loss_H[1]),
               cum_neg_loss = ifelse(pool[1] == "detritivore", cum_neg_loss_V[1],
@@ -147,27 +216,56 @@ td_bu_plot <- pulse_df %>%
               cum_gain = ifelse(pool[1] == "detritivore", cum_gain_V[1],
                                 cum_gain_H[1])) %>%
     ungroup() %>%
+    arrange(b)
+
+
+
+td_bu_plot33 <- pulse_df2 %>%
     ggplot(aes(cum_gain, cum_loss)) +
     geom_abline(slope = 1, intercept = 0, linetype = 2, color = "gray50") +
-    geom_line(aes(color = pool), size = 1) +
+    geom_path(aes(color = pool), size = 1) +
     geom_point(aes(size = b, color = pool)) +
-    geom_text(data = tibble(cum_gain = c(6, 2.5),
-                            cum_loss = rep(1.4, 2),
-                            pool = factor(c("detritivore", "herbivore"),
-                                          levels = c("detritivore", "herbivore"))),
+    geom_text(data = tibble(cum_gain = c(5, 1),
+                            cum_loss = rep(0.3, 2),
+                            pool = sort(unique(pulse_df2$pool)),
+                            hM = sort(unique(pulse_df2$hM))[3],
+                            mM = sort(unique(pulse_df2$mM))[1]),
               aes(label = pool, color = pool), hjust = 0, vjust = 1, size = 10 / 2.835) +
+    facet_grid(mM ~ hM) +
     scale_color_manual(values = color_pal()[1:2], guide = FALSE) +
-    scale_size_continuous("Midge pulse\nintensity", range = c(0.5, 6),
+    scale_size_continuous("Midge pulse\nintensity", range = c(0.5, 4),
                           breaks = c(1, 5, 25)) +
     xlab("Bottom-up effect") +
     ylab("Total top-down effect") +
-    theme(legend.position = c(0.85, 0.25), legend.background = element_blank()) +
+    # theme(legend.position = c(0.85, 0.25), legend.background = element_blank()) +
     NULL
 
 
 
+# ggsave(filename = "~/Desktop/7-top_vs_bottom_3x3.pdf", td_bu_plot33, width = 8, height = 5)
 
 
-# ggsave(filename = "~/Desktop/6-top_vs_bottom.pdf", td_bu_plot, width = 7, height = 4)
+
+td_bu_plot22 <- pulse_df2 %>%
+    filter(!grepl("^mid", mM), !grepl("^mid", hM)) %>%
+    ggplot(aes(cum_gain, cum_loss)) +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, color = "gray50") +
+    geom_path(aes(color = pool), size = 1) +
+    geom_point(aes(size = b, color = pool)) +
+    geom_text(data = tibble(cum_gain = c(5, 1),
+                            cum_loss = rep(0.2, 2),
+                            pool = sort(unique(pulse_df2$pool)),
+                            hM = sort(unique(pulse_df2$hM))[3],
+                            mM = sort(unique(pulse_df2$mM))[1]),
+              aes(label = pool, color = pool), hjust = 0, vjust = 1, size = 10 / 2.835) +
+    facet_grid(mM ~ hM) +
+    scale_color_manual(values = color_pal()[1:2], guide = FALSE) +
+    scale_size_continuous("Midge pulse\nintensity", range = c(0.5, 4),
+                          breaks = c(1, 5, 25)) +
+    xlab("Bottom-up effect") +
+    ylab("Total top-down effect") +
+    # theme(legend.position = c(0.85, 0.25), legend.background = element_blank()) +
+    NULL
 
 
+# ggsave(filename = "~/Desktop/7-top_vs_bottom_2x2.pdf", td_bu_plot22, width = 8, height = 5)

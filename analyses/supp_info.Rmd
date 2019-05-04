@@ -3,15 +3,32 @@ title: "Supplemental Information"
 author: "Lucas A. Nell"
 date: "5/3/2019"
 output: pdf_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, fig.width = 7)
+knitr::opts_knit$set(root.dir = normalizePath(".."))
+
+# load packages
+suppressPackageStartupMessages({
+    library(mtf)
+    library(tidyverse)
+    library(grid)
+    library(parallel)
+    library(cowplot)
+})
+
+
 ```
 
 
 
-```{r cars}
+## Total input vs. total top-down effect
+
+
+```{r td-input-plot, fig.height=4}
 
 
 parlist <- par_estimates %>%
@@ -30,7 +47,7 @@ td_input_sims <- crossing(f = quantile(seq(8e-3, 8e-2, length.out = 25), c(0.1,0
                           w = c(10, 30),
                           area = seq(0, 1000, length.out = 10)) %>%
     split(1:nrow(.)) %>%
-    pbmclapply(
+    mclapply(
         function(.df) {
             .f <- .df$f
             .w <- .df$w
@@ -57,19 +74,551 @@ td_input_plot <- td_input_sims %>%
     ggplot(aes(area)) +
     geom_line(aes(y = td, color = f, linetype = w), size = 1) + # net top-down
     # Manually specify colors from viridis's 5-color "inferno" palette
-    scale_color_manual("Midge availability",
+    scale_color_manual("Midge\navailability",
                        values = c("#000004FF", "#4C0C6BFF", "#A82E5FFF",
                                   "#EF6C23FF", "#F6D645FF")[c(1, 4, 5)]) +
     scale_linetype_manual("Pulse width", values = c(2, 1)) +
     xlab("Total midge input") +
     ylab("Total top-down effect") +
-    theme(legend.position = c(0.75, 0.25), legend.box = "horizontal",
+    theme(legend.position = c(0.6, 0.25), legend.box = "horizontal",
           legend.title = element_text(size = 10),
           legend.key.width = grid::unit(0.075, "npc"))
 
 
+td_input_plot
+
 # ggsave(filename = "~/Desktop/6-td_input.pdf", td_input_plot, width = 7, height = 4)
 
+
+```
+
+
+
+
+
+## Proportion of midges that are consumed by predators
+
+
+
+```{r m_pred_prop, fig.height=8}
+
+# PROPORTION OF MIDGES THAT ARE CONSUMED BY PREDATORS
+
+
+parlist <- par_estimates %>%
+    filter(V==1, H==1, R==1, iN == 10) %>%
+    as.list()
+M_pred <- function(M, R, V, H, f) {
+    aR <- parlist$aR
+    hVH <- parlist$hVH
+    hM <- parlist$hM
+    ((aR * f)*M*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)
+}
+
+m_pred_sims <- crossing(f = c(8e-3, 4.004, 8),
+                        area = seq(1, 1000, length.out = 5),
+                        hM = par_estimates$hM[1] * c(0.5, 1, 2),
+                        mM = par_estimates$mM[1] * c(0.5, 1, 2)) %>%
+    split(1:nrow(.)) %>%
+    mclapply(
+        function(.df) {
+            .f <- .df$f
+            .w <- 20
+            .area <- .df$area
+            .b <- .area / .w
+            .hM <- .df$hM
+            .mM <- .df$mM
+            fw <- food_web(tmax = 250, s = 10, b = .b, w = .w,
+                           other_pars = list(f = .f, hM = .hM, mM = .mM))
+            Mp <- fw %>%
+                spread(pool, N) %>%
+                mutate(Mp = M_pred(midge, predator, detritivore, herbivore, .f)) %>%
+                .[["Mp"]]
+            return(mutate(.df, mp = sum(Mp)))
+        }, mc.cores = parallel::detectCores()) %>%
+    bind_rows()
+
+
+mps_p1 <- m_pred_sims %>% 
+    filter(f == 4.004) %>% 
+    mutate(mp = mp / area,
+           hM = factor(hM, levels = par_estimates$hM[1] * c(0.5, 1, 2),
+                       labels = c("low", "mid", "high")),
+           mM = factor(mM, levels = par_estimates$mM[1] * c(0.5, 1, 2),
+                       labels = paste(c("low", "mid", "high"), 
+                                          "midge\ndecay rate"))) %>% 
+    ggplot(aes(area, mp, linetype = hM)) +
+    geom_line() +
+    geom_point() +
+    facet_wrap(~ mM) +
+    scale_linetype_manual("midge\nhandling\ntime:", values = 1:3)+
+    scale_y_continuous("Proportion of midge input consumed", limits = c(0, 0.6)) +
+    scale_x_continuous("Total midge input", breaks = c(250, 750)) +
+    theme(strip.background.x = element_blank(),
+          axis.title = element_text(size = 11))
+    
+mps_p2 <- m_pred_sims %>% 
+    filter(hM == par_estimates$hM[1]) %>% 
+    mutate(mp = mp / area,
+           f = factor(f, levels = c(8e-3, 4.004, 8),
+                      labels = c("low", "mid", "high")),
+           mM = factor(mM, levels = par_estimates$mM[1] * c(0.5, 1, 2),
+                       labels = paste(c("low", "mid", "high"), 
+                                          "midge\ndecay rate"))) %>% 
+    ggplot(aes(area, mp, linetype = f)) +
+    geom_line() +
+    geom_point() +
+    facet_wrap(~ mM) +
+    scale_linetype_manual("midge\naccessibility:", values = 1:3) +
+    scale_y_continuous("Proportion of midge input consumed", limits = c(0, 0.6)) +
+    scale_x_continuous("Total midge input", breaks = c(250, 750)) +
+    theme(strip.background.x = element_blank(),
+          axis.title = element_text(size = 11))
+   
+cowplot::plot_grid(mps_p1, mps_p2, align = "v", ncol = 1)
+
+
+
+```
+
+
+
+
+
+
+
+
+## Figure 7 but keeping aPH and aDV the same and varying aNP.
+
+
+```{r fig7-varying-aNP, fig.height=4}
+
+
+.aDV <- mean(as.numeric(par_estimates[1,c("aDV", "aPH")]))
+.aPH <- .aDV
+
+
+
+
+parlist <- par_estimates %>%
+    filter(V==1, H==1, R==1, iN == 10) %>%
+    as.list()
+V_gain <- function(V, D) {
+    hD <- parlist[["hD"]]
+    aDV <- .aDV
+    (aDV*D*V/(1 + aDV*hD*D)) / V
+}
+V_loss <- function(V, R, H, M, f) {
+    aR <- parlist[["aR"]]
+    hVH <- parlist[["hVH"]]
+    hM <- parlist[["hM"]]
+    ((aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / V
+}
+H_gain <- function(P, H) {
+    hP <- parlist[["hP"]]
+    aPH <- .aPH
+    (aPH*P*H/(1 + aPH*hP*P)) / H
+}
+H_loss <- function(H, R, V, M, f) {
+    aR <- parlist[["aR"]]
+    hVH <- parlist[["hVH"]]
+    hM <- parlist[["hM"]]
+    ((aR*H*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / H
+}
+
+
+
+# Equilibrium pool size changes
+ep_df <- crossing(aDV = .aDV,
+                  aPH = .aPH,
+                  aNP = par_estimates$aNP[1] * c(1/5, 1, 5)) %>%
+    mutate(pools = map2(aDV, aPH, ~ equil_pools(aDV = .x, aPH = .y)))
+
+
+
+# Runs simulations for one combination of parameters
+one_combo <- function(row_i) {
+    .w <- 20
+    .b <- row_i$b
+    .other_pars <- as.list(unlist(row_i))
+    .other_pars$b <- NULL
+    
+    # Changing aDV or aPH changed equil. pool sizes, so need to find equil_pools objects
+    # that specify the new sizes if either arg is not the default:
+    .ep_obj <- ep_df %>%
+        filter(aNP == .other_pars$aNP) %>%
+        .[["pools"]]
+    if (length(.ep_obj) == 0) {
+        stop("\nDesired combination of aDV and aPH isn't available")
+    }
+    .ep_obj <- .ep_obj[[1]]
+
+
+    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, other_pars = .other_pars,
+                   ep_obj = .ep_obj)
+
+    fw <- fw %>%
+        spread(pool, N) %>%
+        mutate(Vg = V_gain(detritivore, detritus),
+               Vl = V_loss(detritivore, predator, herbivore, midge, .other_pars$f),
+               Hg = H_gain(plant, herbivore),
+               Hl = H_loss(herbivore, predator, detritivore, midge, .other_pars$f)) %>%
+        gather("pool", "N", soil:midge) %>%
+        filter(pool != "midge") %>%
+        mutate(pool = factor(pool,
+                             levels = c("soil", "detritus", "plant",
+                                        "detritivore", "herbivore", "predator"))) %>%
+        arrange(pool, time) %>%
+        group_by(pool) %>%
+        summarize(cum_pos_loss_V = sum(Vl[Vl > Vl[1]] - Vl[1]),
+                  cum_neg_loss_V = sum(Vl[Vl < Vl[1]] - Vl[1]),
+                  cum_pos_loss_H = sum(Hl[Hl > Hl[1]] - Hl[1]),
+                  cum_neg_loss_H = sum(Hl[Hl < Hl[1]] - Hl[1]),
+                  cum_gain_V = sum(Vg[Vg > Vg[1]] - Vg[1]),
+                  cum_gain_H = sum(Hg[Hg > Hg[1]] - Hg[1])) %>%
+        ungroup() %>%
+        mutate(b = .b, aNP = .other_pars$aNP) %>%
+        select(b, everything())
+    return(fw)
+}
+
+
+
+
+pulse_df2 <- crossing(b = seq(5, 50, length.out = 10),
+                      f = 3,
+                      aDV = .aDV,
+                      aPH = .aPH,
+                      aNP = par_estimates$aNP[1] * c(1/5, 1, 5)) %>%
+    split(row(.)[,1]) %>%
+    map_dfr(one_combo) %>%
+    filter(pool %in% c("detritivore", "herbivore")) %>%
+    mutate(aNP = factor(aNP, levels = sort(unique(aNP)),
+                       labels = paste(c("low", "mid", "high"), "NP\nuptake rate"))) %>%
+    group_by(b, pool, aNP) %>%
+    summarize(cum_pos_loss = ifelse(pool[1] == "detritivore", cum_pos_loss_V[1],
+                                    cum_pos_loss_H[1]),
+              cum_neg_loss = ifelse(pool[1] == "detritivore", cum_neg_loss_V[1],
+                                    cum_neg_loss_H[1]),
+              cum_loss = cum_pos_loss + cum_neg_loss,
+              cum_gain = ifelse(pool[1] == "detritivore", cum_gain_V[1],
+                                cum_gain_H[1])) %>%
+    ungroup() %>%
+    arrange(b)
+
+
+pulse_df2 %>%
+    ggplot(aes(cum_gain, cum_loss)) +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, color = "gray50") +
+    geom_path(aes(color = pool), size = 1) +
+    geom_point(aes(size = b, color = pool)) +
+    geom_text(data = tibble(cum_gain = c(14, 6),
+                            cum_loss = rep(1, 2),
+                            pool = sort(unique(pulse_df2$pool)),
+                            aNP = sort(unique(pulse_df2$aNP))[3]),
+              aes(label = pool, color = pool), hjust = 1, vjust = 1, size = 10 / 2.835) +
+    facet_grid(~ aNP) +
+    scale_color_manual(values = color_pal()[1:2], guide = FALSE) +
+    scale_size_continuous("Midge pulse\nintensity", range = c(0.5, 4),
+                          breaks = c(1, 5, 25)) +
+    xlab("Bottom-up effect") +
+    ylab("Total top-down effect") +
+    theme(legend.position = c(0.75, 0.25), 
+          legend.background = element_blank(),
+          strip.background = element_blank()) +
+    NULL
+
+```
+
+
+
+
+
+## Figure 4 by hM
+
+```{r fig4-hM, fig.height = 10}
+
+
+
+parlist <- par_estimates %>%
+    filter(V==1, H==1, R==1, iN == 10) %>%
+    as.list()
+V_gain <- function(V, D) {
+    hD <- parlist[["hD"]]
+    aDV <- parlist[["aDV"]]
+    (aDV*D*V/(1 + aDV*hD*D)) / V
+}
+V_loss <- function(V, R, H, M, f, hM) {
+    aR <- parlist[["aR"]]
+    hVH <- parlist[["hVH"]]
+    ((aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / V
+}
+H_gain <- function(P, H) {
+    hP <- parlist[["hP"]]
+    aPH <- parlist[["aPH"]]
+    (aPH*P*H/(1 + aPH*hP*P)) / H
+}
+H_loss <- function(H, R, V, M, f, hM) {
+    aR <- parlist[["aR"]]
+    hVH <- parlist[["hVH"]]
+    ((aR*H*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / H
+}
+
+other_sims2 <- crossing(area = c(250, 500),
+                        f = c(8e-3, 8),
+                        hM = par_estimates$hM[1] * c(0.5, 2)) %>% 
+    split(1:nrow(.)) %>% 
+    map_dfr(function(row_i) {
+        area_ = row_i$area
+        .other_pars <- as.list(unlist(row_i))
+        .other_pars$b <- NULL
+        .other_pars$area <- NULL
+        b_ <- area_ / 20
+        food_web(tmax = 100, s = 10, b = b_, w = 20,
+                 other_pars = .other_pars) %>%
+            mutate(area = area_, f = row_i$f, hM = row_i$hM)
+    }) %>%
+    spread(pool, N) %>%
+    mutate(Vg = V_gain(detritivore, detritus),
+           Vl = V_loss(detritivore, predator, herbivore, midge, f, hM),
+           Hg = H_gain(plant, herbivore),
+           Hl = H_loss(herbivore, predator, detritivore, midge, f, hM)) %>%
+    select(-soil:-midge) %>%
+    mutate_at(vars(area), factor) %>%
+    gather("variable", "value", Vg:Hl) %>%
+    mutate(pool = factor(ifelse(grepl("^V", variable), "detritivore", "herbivore")),
+           type = factor(ifelse(grepl("l$", variable), "top-down", "bottom-up")),
+           f = factor(f, levels = range(as.numeric(paste(f))),
+                      labels = paste(c("low", "high"), "accessibility")),
+           area = factor(area, levels = range(as.numeric(paste(area))),
+                         labels = paste(c("low", "high"), "midge input"))) %>%
+    select(-variable) %>%
+    select(area, f, pool, type, everything()) %>%
+    group_by(area, f, pool, type) %>%
+    mutate(value = value - value[1]) %>%
+    ungroup()
+
+
+
+
+
+
+
+trans_p31a <- ggplot(data = NULL) +
+    geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
+    geom_line(data = other_sims2 %>% filter(hM == min(hM), type == "bottom-up"),
+              aes(time, value,
+                  color = pool,
+                  group = interaction(pool, type)), size = 1, linetype = 1) +
+    geom_line(data = other_sims2 %>% filter(hM == min(hM), type == "top-down", pool == "detritivore"),
+              aes(time, value), size = 1, color = "gray60") +
+    scale_y_continuous(expression("Effect on pool (" * day^{-1} * ")" )) +
+    scale_x_continuous("Time (days)") +
+    scale_color_manual(values = color_pal()[1:2]) +
+    geom_text(data = tibble(time =  c(  40,   20,    40),
+                            value = c(0.07, 0.039, 0.15),
+                            f = factor(paste(c("low","low","high"), "accessibility"),
+                                       levels = levels(other_sims2$f)),
+                            area = factor(paste(c("high","high","high"), "midge input"),
+                                          levels = levels(other_sims2$area)),
+                            lab = c("BU detritivore", "BU\nherbivore",  "TD both")),
+              aes(time, value, label = lab), color = c(color_pal()[1:2], "gray60"),
+              hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835) +
+    facet_grid(f ~ area) +
+    ggtitle("Low midge handling time") +
+    theme(legend.position = "none",
+          strip.text.y = element_text(face = "plain", size = 11, angle = 270,
+                                      margin = margin(l = 4)),
+          strip.text.x = element_text(face = "plain", size = 11,
+                                      margin = margin(b = 4)),
+          panel.spacing.y = unit(1.5, "lines"),
+          panel.spacing.x = unit(2.5, "lines"),
+          plot.title = element_text(hjust = 0.5),
+          strip.background = element_blank()) +
+    NULL
+
+trans_p31b <- ggplot(data = NULL) +
+    geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
+    geom_line(data = other_sims2 %>% filter(hM == max(hM), type == "bottom-up"),
+              aes(time, value,
+                  color = pool,
+                  group = interaction(pool, type)), size = 1, linetype = 1) +
+    geom_line(data = other_sims2 %>% filter(hM == max(hM), type == "top-down", pool == "detritivore"),
+              aes(time, value), size = 1, color = "gray60") +
+    scale_y_continuous(expression("Effect on pool (" * day^{-1} * ")" )) +
+    scale_x_continuous("Time (days)") +
+    scale_color_manual(values = color_pal()[1:2]) +
+    facet_grid(f ~ area) +
+    ggtitle("High midge handling time") +
+    theme(legend.position = "none",
+          strip.text.y = element_text(face = "plain", size = 11, angle = 270,
+                                      margin = margin(l = 4)),
+          strip.text.x = element_text(face = "plain", size = 11,
+                                      margin = margin(b = 4)),
+          panel.spacing.y = unit(1.5, "lines"),
+          panel.spacing.x = unit(2.5, "lines"),
+          plot.title = element_text(hjust = 0.5),
+          strip.background = element_blank()) +
+    NULL
+
+
+cowplot::plot_grid(trans_p31a, trans_p31b, ncol = 1, align = "v", 
+                   labels = sprintf("(%s)", letters[1:2]),
+                   label_fontface = "plain")
+
+```
+
+
+
+
+
+## Figure 5 by hM
+
+### Low hM
+
+```{r fig5-hM, fig.height = 9, fig.width = 4.5}
+
+
+
+full_pulse_df <- read_csv("data-raw/pulse_data.csv",
+                         col_types = cols(
+                             w = "f",
+                             pool = "f",
+                             .default = "d")) %>%
+        mutate_at(vars(b, f), ~ factor(signif(., digits = 6)))
+
+make_vec <- function(cname) rep(signif(par_combs[[cname]], digits = 6), each = 6)
+
+par_combs <- expand.grid(w = seq(10, 25, length.out = 25),
+                         b = seq(0.1, 40, length.out = 25),
+                         f = seq(8e-3, 8e-2, length.out = 25),
+                         mM = par_estimates$mM[1] * c(0.5, 1, 2),
+                         hM = par_estimates$hM[1] * c(0.5, 1, 2),
+                         # Plant / herbivore uptake rates:
+                         aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
+                         aPH = c(par_estimates$aPH[1], par_estimates$aDV[1])) %>%
+    mutate_at(vars(b, f, mM, hM, aDV, aPH), ~ signif(., digits = 6))
+
+pulse_df <- full_pulse_df %>%
+    mutate(mM = make_vec("mM"),
+           hM = make_vec("hM"),
+           aDV = make_vec("aDV"),
+           aPH = make_vec("aPH")) %>%
+    filter(mM == signif(par_estimates$mM[1], digits = 6),
+           hM != signif(par_estimates$hM[1], digits = 6),
+           aDV == signif(par_estimates$aDV[1], digits = 6),
+           aPH == signif(par_estimates$aPH[1], digits = 6)) %>%
+    select(-mM, -aDV, -aPH)
+
+
+
+heat_plot <- function(.col, .hM, .facet_lab = NULL,
+                      .pool = "detritivore", .df = NULL, .w = NULL, .title = NULL,
+                      .legend_title = NULL,
+                      .legend_breaks = waiver(), .legend_labels = waiver(),
+                      flip_sign = FALSE, flip_color = FALSE,
+                      keep_x = TRUE, keep_y = TRUE, .pal_opt = "C") {
+    if (is.null(.df)) .df <- pulse_df
+    .df <- .df %>% filter(hM == .hM)
+    if (is.null(.w)) .w <- .df$w %>% paste() %>% as.numeric() %>% median()
+    .col <- enquo(.col)
+    # if (is.null(.title)) .title <- .pool
+    .df <- .df %>%
+        filter(pool == .pool, w == .w) %>%
+        mutate(f = f %>% paste() %>% as.numeric())
+    if (flip_sign) {
+        .df <- .df %>% mutate_at(vars(!!.col), ~ . * -1)
+    }
+    p <- .df %>%
+        ggplot(aes(f, area)) +
+        geom_tile(aes(fill = !!.col)) +
+        geom_contour(aes(z = !!.col), color = "white", bins = 7) +
+        scale_fill_viridis_c(.legend_title, option = .pal_opt, breaks = .legend_breaks,
+                             labels = .legend_labels) +
+        # ggtitle(.title) +
+        ylab("Total midge input") +
+        scale_x_continuous("Midge availability", breaks = c(0.04, 0.08)) +
+        theme(legend.title = element_text(size = 10),
+              legend.key.width = grid::unit(0.02, "npc"),
+              plot.title = element_text(hjust = 0, size = 12))
+    if (!is.null(.facet_lab)) {
+        p <- p  +
+            geom_text(data = tibble(f = 0.008, area = 750, lab = .facet_lab),
+                      aes(label = lab), hjust = 0, vjust = 0, size = 12 / 2.835)
+    }
+    if (!keep_x) {
+        p <- p + theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+    }
+    if (!keep_y) {
+        p <- p + theme(axis.title.y = element_blank())
+    }
+    return(p)
+}
+
+
+
+
+
+hm1 <- heat_plot(cum_pos_loss_V, min(pulse_df$hM), .pal_opt = "B", .facet_lab = "a",
+                 .legend_breaks = c(0.1, 1.5),
+                 keep_y = FALSE, keep_x = FALSE,
+                 .legend_title = "Top-down\nintensification")
+hm2 <-  heat_plot(cum_neg_loss_V, min(pulse_df$hM), .pal_opt = "D", flip_sign = TRUE,  .facet_lab = "b",
+                 .legend_breaks = c(0.001, 0.01),
+                 .legend_title = "Top-down\nalleviation", keep_x = FALSE)
+hm3 <- heat_plot(cum_gain_V, min(pulse_df$hM), .legend_title = "Bottom-up",  .facet_lab = "c",
+                 keep_y = FALSE,
+                 .pal_opt = "C")
+suppressMessages({
+hm3 <- hm3 +
+    scale_fill_gradient("Bottom-up", high = "deepskyblue", low = "black",
+                        breaks = c(1, 5))})
+
+
+hmg1 <- ggplotGrob(hm1)
+hmg2 <- ggplotGrob(hm2)
+hmg3 <- ggplotGrob(hm3)
+
+hm_a <- rbind(hmg1, hmg2, hmg3, size = "first")
+hm_a$widths <- unit.pmax(hmg1$widths, hmg2$widths, hmg3$widths)
+
+# grid.newpage()
+grid.draw(hm_a)
+
+
+
+```
+
+
+### High hM
+
+```{r fig5-hM-B, fig.height = 9, fig.width = 4.5}
+
+
+hm1 <- heat_plot(cum_pos_loss_V, max(pulse_df$hM), .pal_opt = "B", .facet_lab = "a",
+                 .legend_breaks = c(0.1, 1),
+                 keep_y = FALSE, keep_x = FALSE,
+                 .legend_title = "Top-down\nintensification")
+hm2 <- heat_plot(cum_neg_loss_V, max(pulse_df$hM), .pal_opt = "D", flip_sign = TRUE,  .facet_lab = "b",
+                 .legend_breaks = c(0.05, 0.4),
+                 .legend_title = "Top-down\nalleviation", keep_x = FALSE)
+hm3 <- heat_plot(cum_gain_V, max(pulse_df$hM), .legend_title = "Bottom-up",  .facet_lab = "c",
+                 keep_y = FALSE,
+                 .pal_opt = "C")
+suppressMessages({
+    hm3 <- hm3 +
+        scale_fill_gradient("Bottom-up", high = "deepskyblue", low = "black",
+                            breaks = c(1, 5))})
+
+hmg1 <- ggplotGrob(hm1)
+hmg2 <- ggplotGrob(hm2)
+hmg3 <- ggplotGrob(hm3)
+
+hm_b <- rbind(hmg1, hmg2, hmg3, size = "first")
+hm_b$widths <- unit.pmax(hmg1$widths, hmg2$widths, hmg3$widths)
+
+# grid.newpage()
+grid.draw(hm_b)
 
 ```
 
