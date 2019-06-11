@@ -11,3 +11,4 @@ inst/doc
 under_constr
 *.nb
 explore_pars
+*/pulse_data.*

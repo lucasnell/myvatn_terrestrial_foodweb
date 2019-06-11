@@ -480,7 +480,8 @@ cowplot::plot_grid(trans_p31a, trans_p31b, ncol = 1, align = "v",
 
 
 
-full_pulse_df <- read_csv("data-raw/pulse_data.csv",
+full_pulse_df <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
+                                 "sim_combinations.csv.gz"),
                          col_types = cols(
                              w = "f",
                              pool = "f",

@@ -141,9 +141,12 @@ ep_df <- crossing(aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
 # Combinations of parameter values
 # ------------------------
 
-par_combs <- expand.grid(w = seq(10, 25, length.out = 25),
-                         b = seq(0.1, 40, length.out = 25),
-                         f = seq(8e-3, 8, length.out = 25),
+# par_combs <- expand.grid(w = seq(10, 25, length.out = 25),
+#                          b = seq(0.1, 40, length.out = 25),
+#                          f = seq(8e-3, 8, length.out = 25),
+par_combs <- expand.grid(w = seq(10, 25, length.out = 2),
+                         b = seq(0.1, 40, length.out = 2),
+                         f = seq(8e-3, 8, length.out = 2),
                          mM = par_estimates$mM[1] * c(0.5, 1, 2),
                          hM = par_estimates$hM[1] * c(0.5, 1, 2),
                          # Plant / herbivore uptake rates:
@@ -159,6 +162,5 @@ par_combs <- expand.grid(w = seq(10, 25, length.out = 25),
 pulse_df <- pbmclapply(par_combs, one_combo, mc.cores = n_cores)
 pulse_df <- bind_rows(pulse_df)
 
-
-write_csv(pulse_df, "data-raw/pulse_data.csv")
+write_csv(pulse_df, "~/Box Sync/Iceland Food Web Model/Results/sim_combinations.csv.gz")
 

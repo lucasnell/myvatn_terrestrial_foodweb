@@ -9,7 +9,9 @@ suppressPackageStartupMessages({
 })
 
 
+dir <- sprintf("~/Box Sync/Iceland Food Web Model/Results/Figures_%s/", Sys.Date())
 
+if (!dir.exists(dir)) dir.create(dir)
 
 #'
 #' Note that in `geom_text` below, I added `/ 2.835` to the size arguments to
@@ -19,7 +21,7 @@ suppressPackageStartupMessages({
 
 
 
-full_pulse_df <- read_csv("data-raw/pulse_data.csv",
+full_pulse_df <- read_csv("~/Box Sync/Iceland Food Web Model/Results/sim_combinations.csv.gz",
                          col_types = cols(
                              w = "f",
                              pool = "f",
@@ -75,10 +77,15 @@ heat_plot <- function(.col, .facet_lab = NULL,
                              labels = .legend_labels) +
         # ggtitle(.title) +
         ylab("Total midge input") +
-        scale_x_continuous("Midge availability", breaks = c(0.04, 0.08)) +
+        scale_x_continuous("Midge accessibility", breaks = c(0.04, 0.08)) +
         theme(legend.title = element_text(size = 10),
               legend.key.width = grid::unit(0.02, "npc"),
-              plot.title = element_text(hjust = 0, size = 12))
+              plot.title = element_text(hjust = 0, size = 12),
+              axis.text = element_text(size = 10, color = "black"),
+              axis.title = element_text(size = 12),
+              plot.margin = margin(0,0,0,0),
+              legend.margin = margin(0,0,0,0),
+              legend.text = element_text(size = 10))
     if (!is.null(.facet_lab)) {
         p <- p  +
             geom_text(data = tibble(f = 0.008, area = 750, lab = .facet_lab),
@@ -97,19 +104,24 @@ heat_plot <- function(.col, .facet_lab = NULL,
 
 
 
-hm1 <- heat_plot(cum_pos_loss_V, .pal_opt = "B", .facet_lab = "a",
+hm1 <- heat_plot(cum_pos_loss_V, .pal_opt = "B", #.facet_lab = "a",
                  .legend_breaks = c(0.1, 1.5),
-                 keep_y = FALSE, keep_x = FALSE,
+                 # keep_y = FALSE, keep_x = FALSE,
                  .legend_title = "Top-down\nintensification")
-hm2 <- heat_plot(cum_neg_loss_V, .pal_opt = "D", flip_sign = TRUE,  .facet_lab = "b",
+hm2 <- heat_plot(cum_neg_loss_V, .pal_opt = "D", flip_sign = TRUE, # .facet_lab = "b",
                  .legend_breaks = c(0.01, 0.075),
-                 .legend_title = "Top-down\nalleviation", keep_x = FALSE)
-hm3 <- heat_plot(cum_gain_V, .legend_title = "Bottom-up",  .facet_lab = "c",
-                 keep_y = FALSE,
+                 .legend_title = "Top-down\nalleviation") # , keep_x = FALSE)
+hm3 <- heat_plot(cum_gain_V, .legend_title = "Bottom-up",  #.facet_lab = "c",
+                 #keep_y = FALSE,
                  .pal_opt = "C") +
     scale_fill_gradient("Bottom-up", high = "deepskyblue", low = "black",
                         breaks = c(1, 5))
 # heat_plot(cum_gain_H, "herbivore", .title = "Enhancement of bottom-up effect", flip_color = TRUE)
+
+
+library(cowplot)
+
+plot_grid(hm1, hm2, hm3, trans_p4, align = "hv", axis = "lrb")
 
 
 hmg1 <- ggplotGrob(hm1)
@@ -125,10 +137,15 @@ hm$widths <- unit.pmax(hmg1$widths, hmg2$widths, hmg3$widths)
 # grid.draw(hm)
 
 
-# pdf(file = "~/Desktop/6-heatmaps.pdf", width = 4.5, height = 9)
+# pdf(file = paste0(dir, "5-heatmaps.pdf"), width = 4.5, height = 9)
 # grid.newpage()
 # grid.draw(hm)
 # dev.off()
+
+pdf(file = paste0(dir, "5-heatmaps2.pdf"), width = 7, height = 5)
+plot_grid(hm1, hm2, hm3, trans_p4, align = "hv", axis = "lrb", labels = letters[1:4])
+dev.off()
+
 
 
 parlist <- par_estimates %>%
@@ -205,8 +222,8 @@ pulse_df2 <- crossing(b = seq(5, 50, length.out = 10),
     mutate(mM = factor(mM, levels = sort(unique(mM)),
                        labels = paste(c("low", "mid", "high"), "midge\ndecay rate")),
            hM = factor(hM, levels = sort(unique(hM)),
-                       labels = paste(c("low", "mid", "high"),
-                                      "midge\nhandling time"))) %>%
+                       labels = paste(c("high", "mid", "low"),
+                                      "midge\naccessibility"))) %>%
     group_by(b, pool, mM, hM) %>%
     summarize(cum_pos_loss = ifelse(pool[1] == "detritivore", cum_pos_loss_V[1],
                                     cum_pos_loss_H[1]),
@@ -242,7 +259,7 @@ td_bu_plot33 <- pulse_df2 %>%
 
 
 
-# ggsave(filename = "~/Desktop/7-top_vs_bottom_3x3.pdf", td_bu_plot33, width = 8, height = 5)
+# ggsave(filename = paste0(dir, "6-top_vs_bottom_3x3.pdf"), td_bu_plot33, width = 8, height = 5)
 
 
 
@@ -268,4 +285,4 @@ td_bu_plot22 <- pulse_df2 %>%
     NULL
 
 
-# ggsave(filename = "~/Desktop/7-top_vs_bottom_2x2.pdf", td_bu_plot22, width = 8, height = 5)
+# ggsave(filename = paste0(dir, "6-top_vs_bottom_2x2.pdf"), td_bu_plot22, width = 8, height = 5)

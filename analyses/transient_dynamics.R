@@ -24,6 +24,11 @@ suppressPackageStartupMessages({
 
 
 
+dir <- sprintf("~/Box Sync/Iceland Food Web Model/Results/Figures_%s/", Sys.Date())
+
+if (!dir.exists(dir)) dir.create(dir)
+
+
 middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
                        other_pars = list(f = 3))
 
@@ -76,7 +81,7 @@ trans_p1 <- middle_sim %>%
 # trans_p1
 
 
-# ggsave("~/Desktop/2-N_timeseries.pdf", trans_p1, width = 5, height = 5)
+# ggsave(paste0(dir, "2-N_timeseries.pdf"), trans_p1, width = 5, height = 5)
 
 
 
@@ -150,7 +155,7 @@ trans_p2 <- other_sims %>%
     NULL
 # trans_p2
 
-# ggsave("~/Desktop/3-N_midge_attack.pdf", trans_p2, width = 5, height = 5)
+# ggsave(paste0(dir, "3-N_midge_attack.pdf"), trans_p2, width = 5, height = 5)
 
 
 
@@ -258,7 +263,7 @@ trans_p3 <- ggplot(data = NULL) +
 
 
 
-# ggsave("~/Desktop/4-up_down_attack_rates.pdf", trans_p3, width = 5, height = 5)
+# ggsave(paste0(dir, "4-up_down_attack_rates.pdf"), trans_p3, width = 5, height = 5)
 
 
 
@@ -289,20 +294,26 @@ trans_p4 <- other_sims2 %>%
                         aes(ymin = 0, ymax = value),
                         fill = inferno(1, begin = 0.5, end = 0.5, alpha = 0.75)) +
             geom_line(size = 1) +
-            geom_text(data = tibble(time = c(40, 14),
-                             value = c(0.01, -0.02),
-                             lab = c("top-down\nintensification",
-                                     "top-down\nalleviation")),
-                      aes(label = lab), hjust = 0, vjust = 0.5, size = 10 / 2.835) +
+            # geom_text(data = tibble(time = c(40, 14),
+            #                  value = c(0.01, -0.02),
+            #                  lab = c("intensification",
+            #                          "alleviation")),
+            #           aes(label = lab), hjust = 0, vjust = 0.5, size = 10 / 2.835) +
             scale_y_continuous(expression("Effect on pool (" * day^{-1} * ")" ),
                                limits = c(-0.03641979, 0.1)) +
-            scale_x_continuous("Time (days)")
+            scale_x_continuous("Time (days)") +
+            theme(plot.title = element_text(hjust = 0, size = 12),
+                  axis.text = element_text(size = 10, color = "black"),
+                  axis.title = element_text(size = 12),
+                  legend.margin = margin(0,0,0,0),
+                  legend.text = element_text(size = 10))
     }
 
 
-# ggsave("~/Desktop/5-td_cartoon.pdf", trans_p4, width = 5, height = 5)
+# ggsave(paste0(dir, "5-td_cartoon.pdf"), trans_p4, width = 5, height = 5)
 
 
 # trans_p1
 # trans_p2
 # trans_p3
+# trans_p4
