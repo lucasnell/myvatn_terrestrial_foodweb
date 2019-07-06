@@ -32,10 +32,14 @@
 
 #' Color palette.
 #'
+#' @param .alpha Transparency in range `[0,1]`.
+#'
 #' @export
 #' @noRd
 #'
-color_pal <- function() {
+color_pal <- function(.alpha = 1) {
+    stopifnot(length(.alpha) == 1)
+    stopifnot(.alpha >= 0 & .alpha <= 1)
     # < order of colors: green, red, purple, pink, light green, yellow >
     # rows correspond to `RColorBrewer::brewer.pal(6, "Dark2")`
     rgb_mat <- rbind(c(27,158,119), c(217,95,2), c(117,112,179),
@@ -46,7 +50,12 @@ color_pal <- function() {
     # Multipliers for each color, < 1 makes it darker
     rgb_mults <- c(0.5, 1.3, 1.1,
                    1.05, 0.9, 1)
-    cp <- apply(rgb_mat * matrix(rgb_mults, 6, 3), 1,
-                function(x) rgb(x[1], x[2], x[3], maxColorValue = 255))
+    rgbs <- rgb_mat * matrix(rgb_mults, 6, 3)
+    if (.alpha < 1) {
+        for (i in 1:nrow(rgbs)) {
+            rgbs[i,] <- rgbs[i,] + .alpha * (255 - rgbs[i,])
+        }
+    }
+    cp <- apply(rgbs, 1, function(x) rgb(x[1], x[2], x[3], maxColorValue = 255))
     return(cp)
 }
