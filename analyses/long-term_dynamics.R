@@ -54,94 +54,6 @@ pulse_df <- full_pulse_df %>%
 
 
 
-heat_plot <- function(.col, .facet_lab = NULL,
-                      .pool = "detritivore", .df = NULL, .w = NULL, .title = NULL,
-                      .legend_title = NULL,
-                      .legend_breaks = waiver(), .legend_labels = waiver(),
-                      flip_sign = FALSE, flip_color = FALSE,
-                      keep_x = TRUE, keep_y = TRUE, .pal_opt = "C") {
-    if (is.null(.df)) .df <- pulse_df
-    if (is.null(.w)) .w <- .df$w %>% paste() %>% as.numeric() %>% median()
-    .col <- enquo(.col)
-    # if (is.null(.title)) .title <- .pool
-    .df <- .df %>%
-        filter(pool == .pool, w == .w) %>%
-        mutate(f = f %>% paste() %>% as.numeric())
-    if (flip_sign) {
-        .df <- .df %>% mutate_at(vars(!!.col), ~ . * -1)
-    }
-    p <- .df %>%
-        ggplot(aes(f, area)) +
-        geom_tile(aes(fill = !!.col)) +
-        geom_contour(aes(z = !!.col), color = "white", bins = 7) +
-        scale_fill_viridis_c(.legend_title, option = .pal_opt, breaks = .legend_breaks,
-                             labels = .legend_labels) +
-        # ggtitle(.title) +
-        ylab(expression("Total midge input (" * g ~ N ~ m^{-2} * ")")) +
-        scale_x_continuous("Midge accessibility", breaks = c(0, 4, 8)) +
-        theme(legend.title = element_text(size = 10),
-              legend.key.width = grid::unit(0.02, "npc"),
-              plot.title = element_text(hjust = 0, size = 12),
-              axis.text = element_text(size = 10, color = "black"),
-              axis.title = element_text(size = 12),
-              plot.margin = margin(0,0,0,0),
-              legend.margin = margin(0,0,0,0),
-              legend.text = element_text(size = 10))
-    if (!is.null(.facet_lab)) {
-        p <- p  +
-            geom_text(data = tibble(f = 0.008, area = 750, lab = .facet_lab),
-                      aes(label = lab), hjust = 0, vjust = 0, size = 12 / 2.835)
-    }
-    if (!keep_x) {
-        p <- p + theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-    }
-    if (!keep_y) {
-        p <- p + theme(axis.title.y = element_blank())
-    }
-    return(p)
-}
-
-
-
-hm1 <- heat_plot(cum_pos_loss_V, .pal_opt = "B", .facet_lab = "a",
-                 .legend_breaks = c(0.1, 1.5),
-                 keep_y = FALSE, keep_x = FALSE,
-                 .legend_title = "Top-down\nintensification")
-hm2 <- heat_plot(cum_neg_loss_V, .pal_opt = "D", flip_sign = TRUE, .facet_lab = "b",
-                 .legend_breaks = c(0.1, 0.7),
-                 .legend_title = "Top-down\nalleviation", keep_x = FALSE)
-hm3 <- heat_plot(cum_gain_V, .legend_title = "Bottom-up", .facet_lab = "c",
-                 keep_y = FALSE,
-                 .pal_opt = "C") +
-    scale_fill_gradient("Bottom-up", high = "deepskyblue", low = "black",
-                        breaks = c(1, 5))
-# heat_plot(cum_gain_H, "herbivore", .title = "Enhancement of bottom-up effect", flip_color = TRUE)
-
-
-
-
-
-hmg1 <- ggplotGrob(hm1)
-hmg2 <- ggplotGrob(hm2)
-hmg3 <- ggplotGrob(hm3)
-
-hm <- rbind(hmg1, hmg2, hmg3, size = "first")
-hm$widths <- unit.pmax(hmg1$widths, hmg2$widths, hmg3$widths)
-
-
-
-# grid.newpage(); grid.draw(hm)
-
-
-pdf(file = paste0(dir, "5-heatmaps.pdf"), width = 4.5, height = 9)
-grid.newpage()
-grid.draw(hm)
-dev.off()
-
-
-
-
-
 
 
 
@@ -223,10 +135,17 @@ ggsave(filename = paste0(dir, "6-td_bu_avail.pdf"), td_bu_avail_plot, width = 7,
 
 
 
+
+
+
+
 # =======================================================================================
 # =======================================================================================
 # =======================================================================================
-# =======================================================================================
+
+#       need to change the following plot to look at factors that influence
+#       BU effects for detritivores in relation to herbivores
+
 # =======================================================================================
 # =======================================================================================
 # =======================================================================================
