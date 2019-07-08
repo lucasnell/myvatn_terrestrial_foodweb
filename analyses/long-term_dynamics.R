@@ -128,7 +128,7 @@ td_bu_avail_plot <- pulse_df_fig6 %>%
     NULL
 
 
-ggsave(filename = paste0(dir, "6-td_bu_avail.pdf"), td_bu_avail_plot, width = 7, height = 5)
+ggsave(filename = paste0(dir, "5-td_bu_avail.pdf"), td_bu_avail_plot, width = 7, height = 5)
 
 
 
