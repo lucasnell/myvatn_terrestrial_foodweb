@@ -47,7 +47,7 @@ trans_p1 <- middle_sim %>%
     ungroup() %>%
     {max_N <<- max(.$N); .} %>%
     ggplot(aes(time, N)) +
-    geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
+    geom_hline(yintercept = 0, color = "gray70") +
     # geom_ribbon(data = middle_sim %>%
     #                 filter(pool == "midge") %>%
     #                 mutate(N = N / sd(N)),
@@ -56,7 +56,7 @@ trans_p1 <- middle_sim %>%
                  aes(xend = time2, yend = N), size = 1.5) +
     # geom_errorbarh(data = tibble(time = 10, time2 = 10+20, N = 2),
     #                aes(xmin = time, xmax = time2), height = 0.25, size = 1) +
-    geom_line(aes(color = pool), size = 0.75) +
+    geom_line(aes(color = pool), size = 1) +
     scale_y_continuous("Proportional change in N", breaks = c(0, 2, 4),
                        limits = c(-0.5, max_N)) +
     scale_x_continuous("Time (days)") +
@@ -115,7 +115,7 @@ trans_p2 <- other_sims %>%
                        labels = paste(c("low", "high"), "accessibility"))) %>%
     {max_N <<- max(.$N) * (2 / 1.5); .} %>%
     ggplot(aes(time, N)) +
-    geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
+    geom_hline(yintercept = 0, color = "gray70") +
     geom_segment(data = tibble(time = 10, time2 = 10+20, N = -0.05),
                  aes(xend = time2, yend = N), size = 1.5) +
     geom_ribbon(data = other_sims %>%
@@ -247,8 +247,8 @@ trans_p3 <- ggplot(data = NULL) +
                        limits = c(-0.03615922, 0.08581619)) +
     scale_x_continuous("Time (days)") +
     scale_color_manual(values = color_pal()[1:2]) +
-    geom_text(data = tibble(time =  c(  40,   18,    35),
-                            value = c(0.07, 0.039, 0.003),
+    geom_text(data = tibble(time =  c(  40,   17,    35),
+                            value = c(0.07, 0.033, 0.003),
                             f = factor(paste(c("low","low","low"), "accessibility"),
                                         levels = levels(other_sims2$f)),
                             lab = c("BU detritivore", "BU\nherbivore",  "TD both")),
@@ -288,7 +288,7 @@ trans_p4 <- other_sims2 %>%
     mutate(value = impute(time, value)) %>%
     {
         ggplot(., aes(time, value)) +
-            geom_hline(yintercept = 0, linetype = 2, color = "gray70") +
+            geom_hline(yintercept = 0, color = "gray70") +
             geom_ribbon(data = . %>% filter(time < 35),
                         aes(ymin = 0, ymax = value),
                         fill = "gray80") +
