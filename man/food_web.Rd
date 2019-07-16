@@ -38,8 +38,7 @@ except the first three (see \code{?par_estimates} for a description of column na
 A data frame with the following columns: \code{time}, \code{pool}, \code{N}.
 }
 \description{
-For more info on the midge-pulse parameters (\code{b}, \code{s}, \code{w}),
-see \code{vignette("smooth_pulse", "mtf")}.
+Run a food web.
 }
 \examples{
 # What happens to the food web bc of this midge pulse?

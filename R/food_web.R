@@ -29,9 +29,6 @@ diff_eq <- function(t, y, pars) {
 
 #' Run a food web.
 #'
-#' For more info on the midge-pulse parameters (`b`, `s`, `w`),
-#' see `vignette("smooth_pulse", "mtf")`.
-#'
 #'
 #' @param tmax Duration over which to run the model.
 #' @param b Maximum value of the midge pulse.
@@ -97,7 +94,10 @@ food_web <- function(tmax, b, s, w, tstep = 1,
              "for. The possibilities are as follows: ", iN_vals)
     }
     pars <- as.list(pars)
-    pars$midges <- function(t_) midge_pulse(t_, b, s, w)
+    pars$midges <- function(t_) {
+        f = ifelse(t_ > s & t_ <= (s + w), b, 0)
+        return(f)
+    }
     if (length(other_pars) > 0) {
         if (!all(names(other_pars) %in% names(pars))) {
             bad_pn <- names(other_pars)[!names(other_pars) %in% names(pars)]
