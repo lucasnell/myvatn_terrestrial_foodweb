@@ -1,6 +1,12 @@
 # Mývatn terrestrial foodweb
 
-Matt McCary
+Matthew A. McCary, Joseph S. Phillips, Tanjona Ramiadantsoa, Lucas A. Nell, 
+Amanda R. McCormick, and Jamieson C. Botsch
+
+
+
+
+
 
 ## Original description of model:
 
