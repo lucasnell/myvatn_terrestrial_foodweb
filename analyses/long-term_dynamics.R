@@ -67,7 +67,7 @@ pulse_df_fig6 <- full_pulse_df %>%
                          "TD intensification", "TD alleviation"))) %>%
     select(-variable) %>%
     mutate(id = interaction(direction, type)) %>%
-    filter(area < 350) %>%
+    filter(area < 500) %>%
     identity()
 
 
@@ -93,11 +93,12 @@ td_bu_avail_plot <- pulse_df_fig6 %>%
           legend.justification = "center",
           legend.box = "vertical",
           legend.title = element_text(size = 11, margin = margin(0,0,0,b=-4)),
-          legend.text = element_text(size = 10)) +
+          legend.text = element_text(size = 10),
+          strip.text.y = element_text(vjust = 1)) +
     NULL
 
 
-ggsave(filename = paste0(dir, "5-td_bu_avail.pdf"), td_bu_avail_plot, width = 7, height = 5)
+ggsave(filename = paste0(dir, "5-td_bu_avail.pdf"), td_bu_avail_plot, width = 5, height = 5)
 
 
 
