@@ -66,6 +66,13 @@ one_combo <- function(row_i) {
     .other_pars$w <- NULL
     .other_pars$b <- NULL
 
+    .f <- ifelse(!is.null(.other_pars$f), .other_pars$f, parlist$f)
+    .mM <- ifelse(!is.null(.other_pars$mM), .other_pars$mM, parlist$mM)
+    .hM <- ifelse(!is.null(.other_pars$hM), .other_pars$hM, parlist$hM)
+    .aDV <- ifelse(!is.null(.other_pars$aDV), .other_pars$aDV, parlist$aDV)
+    .aPH <- ifelse(!is.null(.other_pars$aPH), .other_pars$aPH, parlist$aPH)
+
+
     # Changing aDV or aPH changed equil. pool sizes, so need to find equil_pools objects
     # that specify the new sizes if either arg is not the default:
     if (.other_pars$aDV == par_estimates$aDV[1] &&
@@ -120,8 +127,14 @@ one_combo <- function(row_i) {
                   cum_MfR = sum(MfR),
                   cum_MfD = sum(MfD)) %>%
         ungroup() %>%
-        mutate(w = .w, b = .b, f = .other_pars$f, area = b * w) %>%
-        select(w, b, f, area, everything())
+        mutate(w = .w,
+               b = .b,
+               f = .f,
+               mM = .mM,
+               hM = .hM,
+               aDV = .aDV,
+               aPH = .aPH) %>%
+        select(w, b, f, mM, hM, aDV, aPH, everything())
     return(fw)
 }
 

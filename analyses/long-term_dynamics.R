@@ -22,55 +22,29 @@ if (!dir.exists(dir)) dir.create(dir)
 
 
 full_pulse_df <- read_csv("~/Box Sync/Iceland Food Web Model/Results/sim_combinations.csv.gz",
-                         col_types = cols(
-                             w = "f",
-                             pool = "f",
-                             .default = "d")) %>%
-        mutate_at(vars(b, f), ~ factor(signif(., digits = 6)))
-
-make_vec <- function(cname) rep(signif(par_combs[[cname]], digits = 6), each = 6)
-
-par_combs <- expand.grid(w = seq(10, 25, length.out = 25),
-                         b = seq(0.1, 40, length.out = 25),
-                         f = seq(8e-3, 8, length.out = 25),
-                         mM = par_estimates$mM[1] * c(0.5, 1, 2),
-                         hM = par_estimates$hM[1] * c(0.5, 1, 2),
-                         # Plant / herbivore uptake rates:
-                         aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
-                         aPH = c(par_estimates$aPH[1], par_estimates$aDV[1])) %>%
-    mutate_at(vars(b, f, mM, hM, aDV, aPH), ~ signif(., digits = 6))
-
+                         col_types = cols(pool = "f", .default = "d"))
 
 pulse_df <- full_pulse_df %>%
-    mutate(mM = make_vec("mM"),
-           hM = make_vec("hM"),
-           aDV = make_vec("aDV"),
-           aPH = make_vec("aPH")) %>%
-    filter(mM == signif(par_estimates$mM[1], digits = 6),
-           hM == signif(par_estimates$hM[1], digits = 6),
-           aDV == signif(par_estimates$aDV[1], digits = 6),
-           aPH == signif(par_estimates$aPH[1], digits = 6)) %>%
+    filter(mM == par_estimates$mM[1],
+           hM == par_estimates$hM[1],
+           aDV == par_estimates$aDV[1],
+           aPH == par_estimates$aPH[1]) %>%
     select(-mM, -hM, -aDV, -aPH)
 
 
-
-
-
-
 pulse_df_fig6 <- full_pulse_df %>%
-    mutate(mM = make_vec("mM"),
-           hM = make_vec("hM"),
-           aDV = make_vec("aDV"),
-           aPH = make_vec("aPH")) %>%
-    filter(aDV == signif(par_estimates$aDV[1], digits = 6),
-           aPH == signif(par_estimates$aPH[1], digits = 6),
-           w == 20,
-           pool == "soil") %>%
-    select(-aDV, -aPH, -w, -pool, -b) %>%
-    mutate(mM = factor(mM, levels = sort(unique(mM)),
-                       labels = paste(c("low", "mid", "high"), "midge\ndecay rate")),
+    filter(aDV == par_estimates$aDV[1],
+           aPH == par_estimates$aPH[1],
+           pool == "soil",
+           mM == median(mM),
+           f %in% range(f),
+           hM %in% range(hM)) %>%
+    mutate(area = w * b,
+           f = factor(f, levels = sort(unique(f)),
+                      labels = sprintf("%s midge\naccessibility",
+                                       c("low", "high"))),
            hM = factor(hM, levels = sort(unique(hM)),
-                       labels = paste(c("low", "mid", "high"),
+                       labels = paste(c("low", "high"),
                                       "midge\nhandling time"))) %>%
     select(area, f, mM, hM,
            cum_pos_loss_V, cum_pos_loss_H,
@@ -90,16 +64,11 @@ pulse_df_fig6 <- full_pulse_df %>%
                grepl("^cum_loss_", variable) ~ "TD total",
                TRUE ~ "BU total"
            ), levels = c("BU total", "TD total",
-                         "TD intensification", "TD alleviation")),
-           f = as.numeric(paste(f))) %>%
+                         "TD intensification", "TD alleviation"))) %>%
     select(-variable) %>%
-    filter(mM == "mid midge\ndecay rate") %>%
-    filter(f %in% quantile(f, c(0.1, 0.5, 0.9))) %>%
-    mutate(f = factor(f, levels = sort(unique(f)),
-                      labels = sprintf("%s midge\naccessibility",
-                                       c("low", "mid", "high")))) %>%
     mutate(id = interaction(direction, type)) %>%
-    filter(area < 350)
+    filter(area < 350) %>%
+    identity()
 
 
 
