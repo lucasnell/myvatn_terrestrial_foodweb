@@ -136,6 +136,14 @@ ep_df <- crossing(aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
 
 
 
+equil_pools(aDV = 0.011875, aPH = 0.03166667)
+equil_pools(tmax = 1e4, aDV = 0.011875, aPH = 0.03166667)
+
+equil_pools(aDV = 0.03166667, aPH = 0.03166667)
+equil_pools(tmax = 1e4, aDV = 0.03166667, aPH = 0.03166667)
+
+equil_pools(aDV = 0.011875, aPH = 0.011875)
+equil_pools(tmax = 1e4, aDV = 0.011875, aPH = 0.011875)
 
 # ------------------------
 # Combinations of parameter values
@@ -160,4 +168,94 @@ pulse_df <- pbmclapply(par_combs, one_combo, mc.cores = n_cores)
 pulse_df <- bind_rows(pulse_df)
 
 write_csv(pulse_df, "~/Box Sync/Iceland Food Web Model/Results/sim_combinations.csv.gz")
+
+
+
+
+
+
+# ------------------------
+# Getting back to equilibrium?
+# ------------------------
+
+extreme_combs <- expand.grid(w = 20,
+                             b = c(0.1, 50),
+                             f = c(8e-3, 8),
+                             mM = par_estimates$mM[1] * c(0.5, 2),
+                             hM = par_estimates$hM[1] * c(0.5, 2),
+                             # Plant / herbivore uptake rates:
+                             aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
+                             aPH = c(par_estimates$aPH[1], par_estimates$aDV[1])) %>%
+    split(row(.)[,1])
+
+equil_check <- function(row_i, .max_t = 250) {
+    .w <- row_i$w
+    .b <- row_i$b
+    .other_pars <- as.list(unlist(row_i))
+    .other_pars$w <- NULL
+    .other_pars$b <- NULL
+
+    # Changing aDV or aPH changed equil. pool sizes, so need to find equil_pools objects
+    # that specify the new sizes if either arg is not the default:
+    if (.other_pars$aDV == par_estimates$aDV[1] &&
+        .other_pars$aPH == par_estimates$aPH[1]) {  # defaults
+        .ep_obj <- NULL
+    } else {
+        .ep_obj <- ep_df %>%
+            filter(aDV == .other_pars$aDV, aPH == .other_pars$aPH) %>%
+            .[["pools"]]
+        if (length(.ep_obj) == 0) {
+            stop("\nDesired combination of aDV and aPH isn't available")
+        }
+        .ep_obj <- .ep_obj[[1]]
+    }
+
+    fw <- food_web(tmax = .max_t, s = 10, b = .b, w = .w, ep_obj = .ep_obj,
+                   other_pars = .other_pars) %>%
+        mutate(w = .w, b = .b, f = .other_pars$f, area = b * w,
+               mM = .other_pars$mM,
+               hM = .other_pars$hM,
+               aDV = .other_pars$aDV,
+               aPH = .other_pars$aPH) %>%
+        filter(pool != "midge") %>%
+        group_by(w, b, f, area, mM, hM, aDV, aPH, pool) %>%
+        summarize(N0 = N[1],
+                  Nn = tail(N, 1),
+                  Nratio = abs(Nn - N0) / N0) %>%
+        ungroup()
+
+    return(fw)
+
+}
+
+
+
+
+equil_df <- pbmclapply(extreme_combs, equil_check, .max_t = 250, mc.cores = n_cores)
+equil_df <- bind_rows(equil_df)
+
+equil_df500 <- pbmclapply(extreme_combs, equil_check, .max_t = 500, mc.cores = n_cores)
+equil_df500 <- bind_rows(equil_df500)
+
+equil_df1000 <- pbmclapply(extreme_combs, equil_check, .max_t = 1000, mc.cores = n_cores)
+equil_df1000 <- bind_rows(equil_df1000)
+
+
+
+equil_df1000 %>%
+    filter(aDV == par_estimates$aDV[1],
+           aPH == par_estimates$aPH[1]) %>%
+    .[["Nratio"]] %>%
+    max()
+
+
+for (x in c("w", "b", "f", "area", "mM", "hM", "aDV", "aPH")) {
+    print(x)
+    z <- equil_df %>%
+        filter(Nratio > 0.01) %>%
+        .[[x]] %>%
+        unique() %>%
+        print()
+    cat("\n")
+}
 
