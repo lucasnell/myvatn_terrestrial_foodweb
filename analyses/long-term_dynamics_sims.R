@@ -151,13 +151,15 @@ ep_df <- crossing(aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
 
 
 
+
+
 # ------------------------
 # Combinations of parameter values
 # ------------------------
 
 par_combs <- expand.grid(w = 20,
                          b = seq(0.1, 50, length.out = 25),
-                         f = c(8e-3, 4.004, 8),
+                         f = c(0.8, 4.4, 8),
                          mM = par_estimates$mM[1] * c(0.5, 1, 2),
                          hM = par_estimates$hM[1] * c(0.5, 1, 2),
                          # Plant / herbivore uptake rates:
