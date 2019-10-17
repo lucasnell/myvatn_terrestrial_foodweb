@@ -54,9 +54,6 @@ M_flux_D <- function(M, mM) {
 
 
 
-
-
-
 # ------------------------
 # Simulation function
 # ------------------------
@@ -84,7 +81,7 @@ one_combo <- function(row_i) {
         .ep_obj <- .ep_obj[[1]]
     }
 
-    fw <- food_web(tmax = 250, s = 10, b = .b, w = .w, ep_obj = .ep_obj,
+    fw <- food_web(tmax = 500, s = 10, b = .b, w = .w, ep_obj = .ep_obj,
                    other_pars = .other_pars)
 
     fw <- fw %>%
@@ -137,18 +134,24 @@ ep_df <- crossing(aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
 
 
 
+
+
+
+
 # ------------------------
 # Combinations of parameter values
 # ------------------------
 
-par_combs <- expand.grid(w = seq(10, 25, length.out = 25),
-                         b = seq(0.1, 40, length.out = 25),
-                         f = seq(8e-3, 8, length.out = 25),
+par_combs <- expand.grid(w = 20,
+                         b = seq(0.1, 50, length.out = 25),
+                         f = c(8e-3, 4.004, 8),
                          mM = par_estimates$mM[1] * c(0.5, 1, 2),
                          hM = par_estimates$hM[1] * c(0.5, 1, 2),
                          # Plant / herbivore uptake rates:
                          aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
                          aPH = c(par_estimates$aPH[1], par_estimates$aDV[1])) %>%
+    # This pairing makes detritivores go to zero:
+    filter(!(aDV == par_estimates$aPH[1] & aPH == par_estimates$aDV[1])) %>%
     split(row(.)[,1])
 
 
