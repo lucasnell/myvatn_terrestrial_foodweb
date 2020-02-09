@@ -1,6 +1,6 @@
-# ======================================
+# ======================================*
 # Plots for transient dynamics
-# ======================================
+# ======================================*
 
 
 
@@ -21,6 +21,8 @@ suppressPackageStartupMessages({
     library(purrr)
     library(viridisLite)
 })
+
+
 
 
 
@@ -87,7 +89,9 @@ trans_p1 <- middle_sim %>%
 # trans_p1
 
 
-ggsave(paste0(dir, "2-N_timeseries.pdf"), trans_p1, width = 5, height = 5)
+cairo_pdf(file = paste0(dir, "2-N_timeseries.pdf"), width = 5, height = 5)
+trans_p1
+dev.off()
 
 
 
@@ -167,8 +171,10 @@ trans_p2 <- other_sims %>%
     NULL
 # trans_p2
 
-ggsave(paste0(dir, "3-N_midge_attack.pdf"), trans_p2, width = 5, height = 3)
 
+cairo_pdf(file = paste0(dir, "3-N_midge_attack.pdf"), width = 5, height = 3)
+trans_p2
+dev.off()
 
 
 
@@ -247,13 +253,15 @@ trans_p3 <- ggplot(data = NULL) +
                        limits = c(-0.03615922, 0.08581619)) +
     scale_x_continuous("Time (days)") +
     scale_color_manual(values = color_pal()[1:2]) +
-    geom_text(data = tibble(time =  c(  40,   17,    35),
-                            value = c(0.07, 0.033, 0.003),
+    geom_text(data = tibble(time =  c(  38,   14,    35),
+                            value = c(0.06, 0.034, 0.001),
                             f = factor(paste(c("low","low","low"), "accessibility"),
                                         levels = levels(other_sims2$f)),
-                            lab = c("BU detritivore", "BU\nherbivore",  "TD both")),
+                            lab = sprintf("italic(%s)",
+                                          c("'BU'['detritivore']", "'BU'['herbivore']",
+                                            "'TD'['both']"))),
               aes(time, value, label = lab), color = c(color_pal()[1:2], "gray60"),
-              hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835) +
+              hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835, parse = TRUE) +
     facet_grid(~ f) +
     theme(legend.position = "none",
           strip.text = element_text(face = "plain", size = 11,
@@ -296,11 +304,12 @@ trans_p4 <- other_sims2 %>%
                         aes(ymin = 0, ymax = value),
                         fill = "gray80") +
             geom_line(size = 1, color = "gray60") +
-            geom_text(data = tibble(time = c(36, 14),
-                             value = c(0.015, -0.02),
-                             lab = paste0("top-down\n", c("intensification",
-                                                          "alleviation"))),
-                      aes(label = lab), hjust = 0, vjust = 0.5, size = 10 / 2.835) +
+            geom_text(data = tibble(time = c(37, 13),
+                             value = c(0.01, -0.02),
+                             lab = sprintf("italic('TD'['%s'])",
+                                           c("intensification", "alleviation"))),
+                      aes(label = lab), hjust = 0, vjust = 0.5, size = 10 / 2.835,
+                      parse = TRUE) +
             geom_text(data = tibble(time =  0, N = max(other_sims2$value),
                                     labs = letters[3]),
                       aes(time, N, label = labs), hjust = 0, vjust = 1,
@@ -319,7 +328,7 @@ trans_p4 <- other_sims2 %>%
 
 
 
-pdf(file = paste0(dir, "4-up_down_attack_rates.pdf"), width = 5, height = 6)
+cairo_pdf(file = paste0(dir, "4-up_down_attack_rates.pdf"), width = 5, height = 6)
 cowplot::plot_grid(trans_p3, trans_p4, ncol = 1)
 dev.off()
 
