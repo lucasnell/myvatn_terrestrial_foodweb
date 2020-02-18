@@ -171,7 +171,7 @@ pulse_df_s2 <- full_pulse_df %>%
            hM %in% range(hM)) %>%
     mutate(area = w * b,
            f = factor(f, levels = sort(unique(f)),
-                      labels = sprintf("%s midge\naccessibility",
+                      labels = sprintf("%s midge\nexploitation",
                                        c("low", "high"))),
            hM = factor(hM, levels = sort(unique(hM)),
                        labels = paste(c("low", "high"),

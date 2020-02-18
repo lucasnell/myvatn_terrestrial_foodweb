@@ -116,7 +116,7 @@ trans_p2 <- other_sims %>%
     mutate(N = (N - N[1]) / N[1]) %>%
     ungroup() %>%
     mutate(f = factor(f, levels = range(as.numeric(paste(f))),
-                       labels = paste(c("low", "high"), "accessibility"))) %>%
+                       labels = paste(c("low", "high"), "exploitation"))) %>%
     {max_N <<- max(.$N) * (2 / 1.5); .} %>%
     ggplot(aes(time, N)) +
     geom_hline(yintercept = 0, color = "gray70") +
@@ -129,7 +129,7 @@ trans_p2 <- other_sims %>%
                     ungroup() %>%
                     mutate(N = N / 1.5,
                            f = factor(f, levels = range(as.numeric(paste(f))),
-                                       labels = paste(c("low", "high"), "accessibility"))),
+                                       labels = paste(c("low", "high"), "exploitation"))),
                 aes(ymin = 0, ymax = N), fill = color_pal(0.5)[3]) +
     geom_line(aes(color = pool), size = 0.75) +
     scale_y_continuous("Proportional change in N", limits = c(-0.15, max_N),
@@ -139,25 +139,25 @@ trans_p2 <- other_sims %>%
     scale_x_continuous("Time (days)") +
     scale_color_manual(NULL, values = color_pal()) +
     geom_text(data = tibble(time =  rep(0, 2), N = rep(max_N, 2),
-                            f = factor(paste(c("low", "high"), "accessibility"),
-                                        levels = paste(c("low", "high"), "accessibility")),
+                            f = factor(paste(c("low", "high"), "exploitation"),
+                                        levels = paste(c("low", "high"), "exploitation")),
                             labs = letters[1:2]),
         aes(label = labs), hjust = 0, vjust = 1, size = 12 / 2.835) +
     geom_text(data = tibble(time =  75,
                             N =     1.4,
-                            f = factor("high accessibility",
-                                        levels = paste(c("low", "high"), "accessibility"))),
+                            f = factor("high exploitation",
+                                        levels = paste(c("low", "high"), "exploitation"))),
         label = "predator", color = color_pal()[3], hjust = 1, vjust = 1,
         size = 10 / 2.835) +
     geom_text(data = tibble(pool = factor(upper_levels[upper_levels != "predator"]),
                             time =  c(92, 100),
                             N =     c(0.3, -0.1),
-                            f = factor(paste(rep("high", 2), "accessibility"),
-                                        levels = paste(c("low", "high"), "accessibility"))),
+                            f = factor(paste(rep("high", 2), "exploitation"),
+                                        levels = paste(c("low", "high"), "exploitation"))),
         aes(label = pool, color = pool), hjust = 1, size = 10 / 2.835) +
     geom_text(data = tibble(time = 20, N = -0.1,
-                            f = factor("high accessibility",
-                                       levels = paste(c("low", "high"), "accessibility"))),
+                            f = factor("high exploitation",
+                                       levels = paste(c("low", "high"), "exploitation"))),
               label = "pulse", size = 10 / 2.835, hjust = 0.5, vjust = 1,
               color = "black") +
     facet_grid( ~ f) +
@@ -223,7 +223,7 @@ other_sims2 <- map_dfr(c(8e-3, 8),
     mutate(pool = factor(ifelse(grepl("^V", variable), "detritivore", "herbivore")),
            type = factor(ifelse(grepl("l$", variable), "top-down", "bottom-up")),
            f = factor(f, levels = range(as.numeric(paste(f))),
-                       labels = paste(c("low", "high"), "accessibility"))) %>%
+                       labels = paste(c("low", "high"), "exploitation"))) %>%
     select(-variable) %>%
     select(f, pool, type, everything()) %>%
     group_by(f, pool, type) %>%
@@ -245,17 +245,17 @@ trans_p3 <- ggplot(data = NULL) +
     geom_line(data = other_sims2 %>% filter(type == "top-down", pool == "detritivore"),
                   aes(time, value), size = 1, color = "gray60") +
     geom_text(data = tibble(time =  rep(0, 2), N = rep(max(other_sims2$value), 2),
-                            f = factor(paste(c("low", "high"), "accessibility"),
-                                        levels = paste(c("low", "high"), "accessibility")),
+                            f = factor(paste(c("low", "high"), "exploitation"),
+                                        levels = paste(c("low", "high"), "exploitation")),
                             labs = letters[1:2]),
               aes(time, N, label = labs), hjust = 0, vjust = 1, size = 12 / 2.835) +
     scale_y_continuous(expression("Effect on pool (" * day^{-1} * ")" ),
                        limits = c(-0.03615922, 0.08581619)) +
     scale_x_continuous("Time (days)") +
     scale_color_manual(values = color_pal()[1:2]) +
-    geom_text(data = tibble(time =  c(  38,   14,    35),
+    geom_text(data = tibble(time =  c(  38,   16,    35),
                             value = c(0.06, 0.034, 0.001),
-                            f = factor(paste(c("low","low","low"), "accessibility"),
+                            f = factor(paste(c("low","low","low"), "exploitation"),
                                         levels = levels(other_sims2$f)),
                             lab = sprintf("italic(%s)",
                                           c("'BU'['detritivore']", "'BU'['herbivore']",
@@ -289,7 +289,7 @@ impute <- function(time, value) {
 
 
 trans_p4 <- other_sims2 %>%
-    filter(type == "top-down", pool == "detritivore", f == "high accessibility") %>%
+    filter(type == "top-down", pool == "detritivore", f == "high exploitation") %>%
     select(-pool, -f, -type) %>%
     {bind_rows(., tibble(time = seq(34.1, 34.9, 0.1), value = NA_real_))} %>%
     arrange(time) %>%

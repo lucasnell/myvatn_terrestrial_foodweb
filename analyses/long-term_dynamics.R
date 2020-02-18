@@ -33,7 +33,7 @@ pulse_df_fig6 <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
            hM %in% range(hM)) %>%
     mutate(area = w * b,
            f = factor(f, levels = sort(unique(f)),
-                      labels = sprintf("%s midge\naccessibility",
+                      labels = sprintf("%s midge\nexploitation",
                                        c("low", "high"))),
            hM = factor(hM, levels = sort(unique(hM)),
                        labels = paste(c("low", "high"),
