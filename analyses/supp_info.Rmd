@@ -1,14 +1,47 @@
 ---
-title: "Supplemental Information"
-author: "Lucas A. Nell"
-date: "5/3/2019"
-output: pdf_document
+title: 'Supporting Information.'
+subtitle: "``Transient top-down and bottom-up effects of resources pulsed to multiple trophic levels''"
+date: ""
 editor_options: 
   chunk_output_type: console
 header-includes:
-    - \usepackage{caption}
-    - \renewcommand{\thefigure}{S\arabic{figure}}
+    - \usepackage{placeins}
+fontsize: 12pt
+geometry: margin=1in,letterpaper
+documentclass: article
+graphics: true
+colorlinks: true
+supplemental: true
+mathspec: true
+output:
+    bookdown::pdf_document2:
+        fig_caption: yes
+        template: template.tex
+        latex_engine: xelatex
+author:
+    - name: Matthew A. McCary
+      nums: "1,*"
+    - name: Joseph S. Phillips
+      nums: "2,†"
+    - name: Tanjona Ramiadantsoa
+      nums: "2"
+    - name: Lucas A. Nell
+      nums: "2"
+    - name: Amanda R. McCormick
+      nums: "2"
+    - name: Jamieson C. Botsch
+      nums: "2"
+affil:
+    - name: "Department of Entomology, University of Wisconsin, Madison, WI 53706, USA"
+      num: "1"
+    - name: "Department of Integrative Biology, University of Wisconsin, Madison, WI 53706, USA"
+      num: "2"
+    - name: "Corresponding author.  Email: matt.mccary@gmail.com. Present address: School of Forestry and Environmental Studies, Yale University, New Haven, CT"
+      num: "*"
+    - name: "Present address: Department of Aquaculture and Fish Biology, Hólar University, Skagafjörður, Iceland"
+      num: "†"
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
@@ -26,9 +59,15 @@ suppressPackageStartupMessages({
 parlist <- par_estimates %>%
         filter(V==1, H==1, R==1, iN == 10) %>%
         as.list()
-
-
 ```
+
+
+
+\textbf{\Large{Appendix S1}}
+
+
+
+
 
 
 
