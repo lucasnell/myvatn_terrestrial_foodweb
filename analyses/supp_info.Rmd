@@ -18,6 +18,8 @@ output:
         fig_caption: yes
         template: template.tex
         latex_engine: xelatex
+        number_sections: false
+        dev: cairo_pdf
 author:
     - name: Matthew A. McCary
       nums: "1,*"
@@ -44,7 +46,7 @@ affil:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 knitr::opts_knit$set(root.dir = normalizePath(".."))
 
 # load packages
@@ -54,6 +56,7 @@ suppressPackageStartupMessages({
     library(grid)
     library(parallel)
     library(cowplot)
+    library(viridisLite)
 })
 
 parlist <- par_estimates %>%
@@ -63,11 +66,7 @@ parlist <- par_estimates %>%
 
 
 
-\textbf{\Large{Appendix S1}}
-
-
-
-
+## Appendix S1
 
 
 
@@ -124,7 +123,7 @@ s1_caption <- paste("Time series of the bottom-up",
 
 
 
-```{r figure-s1, fig.width=5, fig.height=5, fig.cap=s1_caption}
+```{r figure-s1, fig.width=5, fig.height=4, fig.cap=s1_caption}
 
 trans_p3 <- ggplot(data = NULL) +
     geom_hline(yintercept = 0, color = "gray70") +
@@ -283,6 +282,247 @@ plot_s2 <- pulse_df_s2 %>%
 
 
 plot_s2
+
+```
+
+
+
+\clearpage
+
+
+## New figures
+
+
+
+
+This is figure 2 but with absolute values, not relative to $N_0$.
+
+```{r fig2-with-absolutes-caption}
+fig2_abs_caption <- paste("Time series of N content among all six pools.",
+                    "Lines indicate the N content at time $t$.",
+                    "The lower black bar represents the duration of the midge N pulse.",
+                    "Parameter values are as in Table 1, with predator exploitation",
+                    "$q = 3$, pulse duration $w = 20$, and pulse rate $b = 50$.")
+```
+
+
+
+```{r fig2-with-absolutes, fig.width=6, fig.height=5, fig.cap=fig2_abs_caption}
+
+
+middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
+                       other_pars = list(f = 3))
+
+
+upper_levels <- c("detritivore", "herbivore", "predator")
+
+
+# This just sets the bounds for the facets:
+dummy_data <- tibble(time = 20,
+                     pool = factor(rep(c("soil", "detritus", "plant", upper_levels),
+                                       each = 2),
+                                   levels = c("soil", "detritus", "plant", upper_levels)),
+                     N = c(middle_sim %>%
+                               filter(pool == "soil") %>%
+                               .[["N"]] %>%
+                               max() %>%
+                               rep(2),
+                           middle_sim %>%
+                               filter(pool %in% c("detritus", "plant")) %>%
+                               .[["N"]] %>%
+                               max() %>%
+                               rep(2 * 2),
+                           middle_sim %>%
+                               filter(pool %in% upper_levels) %>%
+                               .[["N"]] %>%
+                               max() %>%
+                               rep(3 * 2))) %>%
+    group_by(pool) %>%
+    mutate(N = N[1] * c(-0.1, 1)) %>% 
+    ungroup()
+
+trans_pS1 <- middle_sim %>%
+    filter(pool != "midge") %>%
+    mutate(pool = droplevels(pool)) %>%
+    ggplot(aes(time, N)) +
+    geom_hline(yintercept = 0, color = "gray70") +
+    geom_segment(data = tibble(time = 10, time2 = 10+20, N = 0),
+                 aes(xend = time2, yend = N), size = 1.5) +
+    geom_line(aes(color = pool), size = 1) +
+    geom_blank(data = dummy_data) +
+    scale_y_continuous(expression("Nitrogen" ~ (g ~ N ~ m^{-2}))) +
+    scale_x_continuous("Time (days)") +
+    facet_wrap(~ pool, nrow = 2, scales = "free") +
+    scale_color_manual(values = color_pal()[c(4:6, 1:3)], guide = FALSE) +
+    theme(panel.spacing = unit(1.5, "lines")) +
+    geom_text(data = dummy_data %>% 
+                  filter(N < 0, pool == "soil"),
+              label = "pulse", size = 10 / 2.835, hjust = 0.5, vjust = 0,
+              color = "black") +
+    NULL
+trans_pS1
+
+```
+
+
+
+
+
+\clearpage
+
+
+
+This is running with no pulse,but with non-equilibrium starting values.
+
+```{r start-not-at-equilibrium-caption}
+nae_caption <- paste("Time series of proportional changes in N content among all six",
+                     "pools with no midge pulse and when starting at random N contents.",
+                     "We ran 20 repetitions, each with different random starting N,",
+                     "and sub-panels separate repetitions.",
+                     "Lines indicate the N content at time $t$ relative to the ",
+                     "equilibrium value [i.e. $(N_t - N_{eq}) / N_{eq}$].",
+                     "Points indicate the starting N content relative to the ",
+                     "equilibrium value [i.e. $(N_0 - N_{eq}) / N_{eq}$].",
+                     "Parameter values are as in Table 1, with",
+                     "predator exploitation $q = 3$, pulse duration $w = 0$, and",
+                     "pulse rate $b = 0$.")
+```
+
+
+
+```{r start-not-at-equilibrium, fig.width=6, fig.height=7, fig.cap=nae_caption}
+
+
+not_at_eq <- function(.r) {
+    # Equilibrium Ns
+    Neqs <- par_estimates %>%
+        filter(V==1, H==1, R==1, iN == 10) %>%
+        select(ends_with("eq")) %>% 
+        as.list()
+    rename_vec <- list(N = "soil", D = "detritus", P = "plant", V = "detritivore", 
+                       H = "herbivore", R = "predator", M = "midge")
+    names(Neqs) <- names(Neqs) %>% 
+        gsub(pattern = "eq$", replacement = "") %>% 
+        map_chr(~ rename_vec[[.x]])
+    # Random starting Ns
+    N0s <- par_estimates %>%
+        filter(V==1, H==1, R==1, iN == 10) %>%
+        select(ends_with("eq")) %>% 
+        mutate_all(~ runif(1, .x * 0.5, .x * 1.5)) %>% 
+        as.list()
+    names(N0s) <- gsub("eq$", "0", names(N0s))
+    .dd <- food_web(tmax = 100, s = 1000, b = 0, w = 0, other_pars = list(f = 3),
+             pool_starts = N0s) %>%
+        filter(pool != "midge") %>%
+        mutate(pool = droplevels(pool),
+               rep = .r) %>% 
+        group_by(pool) %>% 
+        mutate(rel_N = (N - Neqs[[pool[[1]]]]) / Neqs[[pool[[1]]]]) %>% 
+        ungroup()
+    
+    return(.dd)
+}
+
+set.seed(1755669093)
+nae_df <- map_dfr(1:20, not_at_eq) %>% 
+    mutate(rep = factor(rep))
+
+
+nae_p <- nae_df %>% 
+    ggplot(aes(time, rel_N, color = pool)) +
+    geom_hline(yintercept = 0, color = "gray70") +
+    geom_point(data = nae_df %>% 
+                   filter(time == 0) %>% 
+                   mutate(time = -5)) +
+    geom_line(size = 0.75) +
+    ylab("Proportional change in N") +
+    xlab("Time (days)") +
+    facet_wrap(~ rep, ncol = 4) +
+    scale_color_manual(NULL, values = color_pal()[c(4:6, 1:3)]) +
+    theme(panel.spacing = unit(1.5, "lines"),
+          strip.text = element_blank()) +
+    NULL
+nae_p
+
+```
+
+
+
+\clearpage
+
+
+
+This varies $i_I$ and $\mu_I$, the inorganic nutrient input rate and density-independent
+loss of soil nutrients, respectively.
+
+
+```{r vary-iI-muI-caption}
+vain_caption <- paste("Time series of proportional changes in N content among all six",
+                     "pools with varying values of $i_I$ and $\\mu_I$,",
+                     "the inorganic nutrient input rate and density-independent",
+                     "loss of soil nutrients, respectively.",
+                     "Sub-panel labels indicate the values of each parameter, and",
+                     "middle values are the defaults used in the main text.",
+                     "Lines indicate the N content at time $t$ relative to the ",
+                     "starting value [i.e. $(N_t - N_{0}) / N_{0}$].",
+                     "Parameter values are as in Table 1, with",
+                     "predator exploitation $q = 3$, pulse duration $w = 0$, and",
+                     "pulse rate $b = 0$.")
+```
+
+
+
+```{r vary-iI-muI, fig.width=6, fig.height=5.5, fig.cap=vain_caption}
+
+
+vary_iN_mN <- function(.iN, .mN) {
+    pools <- equil_pools(iN = .iN, mN = .mN)
+    sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
+                    other_pars = list(f = 3, iN = .iN, mN = .mN), 
+                    ep_obj = pools) %>%
+        filter(pool != "midge") %>%
+        mutate(pool = droplevels(pool)) %>% 
+        group_by(pool) %>%
+        mutate(N_rel = (N - N[1]) / (N[1])) %>%
+        ungroup() %>% 
+        mutate(iN = .iN, mN = .mN)
+    return(sim)
+}
+
+
+vain_df <- crossing(.iN = c(5, 10, 20),
+                    .mN = c(0.005, 0.01, 0.02)) %>% 
+    pmap_dfr(vary_iN_mN) %>% 
+    mutate_at(vars(iN, mN), factor) %>%
+    mutate(mI = factor(mN, levels = levels(mN),
+                       labels = paste("italic(mu[I]) ==", levels(mN))),
+           iI = factor(iN, levels = levels(iN),
+                       labels = paste("italic(i[I]) ==", levels(iN))))
+
+
+vain_dummy <- vain_df %>% 
+    group_by(iI, mI) %>% 
+    filter(N_rel == max(N_rel)) %>% 
+    ungroup() %>% 
+    select(-pool, -N) %>% 
+    mutate(time = 10,
+           time2 = 10 + 20,
+           N_rel = -0.1 * N_rel)
+
+vain_p <- vain_df %>%
+    ggplot(aes(time, N_rel)) +
+    geom_hline(yintercept = 0, color = "gray70") +
+    geom_segment(data = vain_dummy,
+                 aes(xend = time2, yend = N_rel), size = 1.5) +
+    geom_line(aes(color = pool), size = 0.75) +
+    scale_y_continuous("Proportional change in N") +
+    scale_x_continuous("Time (days)") +
+    facet_wrap(mI ~ iI, nrow = 3, scales = "free_y", labeller = label_parsed) +
+    scale_color_manual(NULL, values = color_pal()[c(4:6, 1:3)]) +
+    theme(panel.spacing = unit(1, "lines"),
+          strip.text = element_text(family = "CMU Serif")) +
+    NULL
+vain_p
 
 ```
 
