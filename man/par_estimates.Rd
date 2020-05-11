@@ -4,7 +4,8 @@
 \name{par_estimates}
 \alias{par_estimates}
 \title{Parameter estimates for the food web model.}
-\format{A data frame with 8 rows and 37 variables:
+\format{
+A data frame with 8 rows and 37 variables:
 \describe{
 \item{V}{ Integer for whether the \code{V} pool is included (0 = \code{FALSE}, 1 = \code{TRUE}). }
 \item{H}{ Integer for whether the \code{H} pool is included (0 = \code{FALSE}, 1 = \code{TRUE}). }
@@ -44,7 +45,8 @@
 \item{Veq}{  Equilibrium value for V. }
 \item{Heq}{  Equilibrium value for H. }
 \item{Req}{  Equilibrium value for R. }
-}}
+}
+}
 \usage{
 par_estimates
 }

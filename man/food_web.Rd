@@ -4,8 +4,16 @@
 \alias{food_web}
 \title{Run a food web.}
 \usage{
-food_web(tmax, b, s, w, tstep = 1, pool_starts = NULL, ep_obj = NULL,
-  other_pars = list())
+food_web(
+  tmax,
+  b,
+  s,
+  w,
+  tstep = 1,
+  pool_starts = NULL,
+  ep_obj = NULL,
+  other_pars = list()
+)
 }
 \arguments{
 \item{tmax}{Duration over which to run the model.}
