@@ -31,6 +31,19 @@ dir <- sprintf("~/Box Sync/Iceland Food Web Model/Results/Figures_%s/", Sys.Date
 if (!dir.exists(dir)) dir.create(dir)
 
 
+
+
+# ================================================================================*
+# ================================================================================*
+
+# Figure 2 ----
+
+# ================================================================================*
+# ================================================================================*
+
+
+
+
 middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
                        other_pars = list(f = 3))
 
@@ -97,6 +110,17 @@ dev.off()
 
 
 
+
+# ================================================================================*
+# ================================================================================*
+
+# Figure 3 ----
+
+# ================================================================================*
+# ================================================================================*
+
+
+
 other_sims <- map_dfr(c(8e-3, 8),
                        function(f_) {
                            food_web(tmax = 100, s = 10, b = 20, w = 20,
@@ -106,36 +130,32 @@ other_sims <- map_dfr(c(8e-3, 8),
                                       f = f_)
     }) %>%
     mutate_at(vars(f), factor) %>%
-    mutate(pool = factor(paste(pool), levels = c(upper_levels, "midge")))
-
-
-trans_p2 <- other_sims %>%
-    filter(!pool %in% c("midge", "predator")) %>%
-    mutate(pool = droplevels(pool)) %>%
+    mutate(pool = factor(paste(pool), levels = c(upper_levels, "midge"))) %>%
     group_by(pool, f) %>%
     mutate(N = (N - N[1]) / N[1]) %>%
     ungroup() %>%
     mutate(f = factor(f, levels = range(as.numeric(paste(f))),
-                       labels = paste(c("low", "high"), "exploitation"))) %>%
-    {max_N <<- max(.$N) * (2 / 1.5); .} %>%
+                      labels = paste(c("low", "high"), "exploitation")))
+
+max_N <- 1.46
+N_mult <- 3
+
+trans_p2 <- other_sims %>%
+    filter(!pool %in% c("midge", "predator")) %>%
+    mutate(pool = droplevels(pool)) %>%
     ggplot(aes(time, N)) +
     geom_hline(yintercept = 0, color = "gray70") +
     geom_segment(data = tibble(time = 10, time2 = 10+20, N = -0.05),
                  aes(xend = time2, yend = N), size = 1.5) +
     geom_ribbon(data = other_sims %>%
                     filter(pool == "predator") %>%
-                    group_by(f) %>%
-                    mutate(N = N - N[1]) %>%
-                    ungroup() %>%
-                    mutate(N = N / 1.5,
-                           f = factor(f, levels = range(as.numeric(paste(f))),
-                                       labels = paste(c("low", "high"), "exploitation"))),
+                    mutate(N = N / N_mult),
                 aes(ymin = 0, ymax = N), fill = color_pal(0.5)[3]) +
     geom_line(aes(color = pool), size = 0.75) +
     scale_y_continuous("Proportional change in N", limits = c(-0.15, max_N),
-                       sec.axis = sec_axis(~ . * 1.5,
+                       sec.axis = sec_axis(~ . * N_mult,
                                            name = "Proportional change in N\n(predator)",
-                                           breaks = 0:2)) +
+                                           breaks = c(0, 2, 4))) +
     scale_x_continuous("Time (days)") +
     scale_color_manual(NULL, values = color_pal()) +
     geom_text(data = tibble(time =  rep(0, 2), N = rep(max_N, 2),
@@ -175,6 +195,22 @@ trans_p2 <- other_sims %>%
 cairo_pdf(file = paste0(dir, "3-N_midge_attack.pdf"), width = 5, height = 3)
 trans_p2
 dev.off()
+
+
+
+
+
+
+
+# ================================================================================*
+# ================================================================================*
+
+# Figure 4 ----
+
+# ================================================================================*
+# ================================================================================*
+
+
 
 
 
