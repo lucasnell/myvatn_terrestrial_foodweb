@@ -26,6 +26,69 @@ diff_eq <- function(t, y, pars) {
 }
 
 
+#' Differential equations for food web.
+#'
+#' In this version, midges DON'T go to predators!
+#'
+#' @noRd
+#'
+diff_eq__no_M_to_X <- function(t, y, pars) {
+
+    iM = pars$midges(t)
+
+    output <-
+        with(as.list(pars),
+             with(as.list(y),
+                  {
+                      c(I = iI - aIP*I*P/(1 + aIP*hI*I) + (1 - lD)*muD*D - muI*I,
+                        D = (1 - lP)*(muP + mP*P)*P + (1 - lV)*(muV + mV*V)*V +
+                            (1 - lH)*(muH + mH*H)*H + (1 - lX)*(muX + mX*X)*X +
+                            (1 - lM)*muM*M - aDV*D*V/(1 + aDV*hD*D) - muD*D,
+                        P = aIP*I*P/(1 + aIP*hI*I) - aPH*P*H/(1 + aPH*hP*P) - (muP + mP*P)*P,
+                        V = aDV*D*V/(1 + aDV*hD*D) - (aX*V*X)/(1 + aX*hX*(V + H)) - (muV + mV*V)*V,
+                        H = aPH*P*H/(1 + aPH*hP*P) - (aX*H*X)/(1 + aX*hX*(V + H)) - (muH + mH*H)*H,
+                        X = (aX*V*X + aX*H*X)/(1 + aX*hX*(V + H)) - (muX + mX*X)*X,
+                        M = iM - muM*M)
+                  }))
+
+    return(list(output))
+
+}
+
+
+
+#' Differential equations for food web.
+#'
+#' In this version, midges DON'T go to detritus!
+#'
+#' @noRd
+#'
+diff_eq__no_M_to_D <- function(t, y, pars) {
+
+    iM = pars$midges(t)
+
+    output <-
+        with(as.list(pars),
+             with(as.list(y),
+                  {
+                      c(I = iI - aIP*I*P/(1 + aIP*hI*I) + (1 - lD)*muD*D - muI*I,
+                        D = (1 - lP)*(muP + mP*P)*P + (1 - lV)*(muV + mV*V)*V +
+                            (1 - lH)*(muH + mH*H)*H + (1 - lX)*(muX + mX*X)*X -
+                            aDV*D*V/(1 + aDV*hD*D) - muD*D,
+                        P = aIP*I*P/(1 + aIP*hI*I) - aPH*P*H/(1 + aPH*hP*P) - (muP + mP*P)*P,
+                        V = aDV*D*V/(1 + aDV*hD*D) - (aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muV + mV*V)*V,
+                        H = aPH*P*H/(1 + aPH*hP*P) - (aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muH + mH*H)*H,
+                        X = (aX*V*X + aX*H*X + (aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muX + mX*X)*X,
+                        M = iM - ((aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M))
+                  }))
+
+    return(list(output))
+
+}
+
+
+
+
 #' Run a food web.
 #'
 #'
@@ -47,6 +110,10 @@ diff_eq <- function(t, y, pars) {
 #' @param other_pars A named list of other parameter values to use instead of defaults.
 #'     Possible parameter names include all column names in `par_estimates`
 #'     except the first three (see `?par_estimates` for a description of column names).
+#' @param midges_not_to Character specifying whether midges should NOT go to detritus
+#'     or NOT to predators. If `NULL` or `NA`, midges go to both.
+#'     Takes as input the following: `NULL`, `"X"`, `"predator"`, `"D"`, or `"detritus"`.
+#'     Defaults to `NULL`.
 #'
 #'
 #'
@@ -75,10 +142,15 @@ diff_eq <- function(t, y, pars) {
 food_web <- function(tmax, b, s, w, tstep = 1,
                      pool_starts = NULL,
                      ep_obj = NULL,
-                     other_pars = list()) {
+                     other_pars = list(),
+                     midges_not_to = NULL) {
 
     .iI <- 10
     if (!is.null(other_pars$iI)) .iI <- other_pars$iI
+
+    if (!is.null(midges_not_to) && !is.na(midges_not_to)) {
+        midges_not_to <- match.arg(midges_not_to, c("X", "predator", "D", "detritus"))
+    }
 
     pars <- par_estimates %>%
         filter(V == 1, X == 1, H == 1, iI == .iI) %>%
@@ -137,7 +209,11 @@ food_web <- function(tmax, b, s, w, tstep = 1,
 
     time <- seq(0, tmax, tstep)
     if (time[length(time)] < tmax) time <- c(time, tmax)
-    solved_ode <- ode(init, time, diff_eq, pars)
+
+    .diff_eq <- diff_eq
+    if (isTRUE(midges_not_to %in% c("X", "predator"))) .diff_eq <- diff_eq__no_M_to_X
+    if (isTRUE(midges_not_to %in% c("D", "detritus"))) .diff_eq <- diff_eq__no_M_to_D
+    solved_ode <- ode(init, time, .diff_eq, pars)
 
     solved_ode <- solved_ode %>%
         as.data.frame() %>%  # <-- prevents "matrix as column is not supported" error

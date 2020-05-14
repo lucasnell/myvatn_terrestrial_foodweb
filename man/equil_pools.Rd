@@ -4,12 +4,17 @@
 \alias{equil_pools}
 \title{Calculate equilibrium pool sizes after changing parameters.}
 \usage{
-equil_pools(tmax = 1000, tstep = 1, ...)
+equil_pools(tmax = 1000, tstep = 1, midges_not_to = NULL, ...)
 }
 \arguments{
 \item{tmax}{Duration over which to run the model.}
 
 \item{tstep}{Step size in units of time. Defaults to \code{1}.}
+
+\item{midges_not_to}{Character specifying whether midges should NOT go to detritus
+or NOT to predators. If \code{NULL} or \code{NA}, midges go to both.
+Takes as input the following: \code{NULL}, \code{"X"}, \code{"predator"}, \code{"D"}, or \code{"detritus"}.
+Defaults to \code{NULL}.}
 
 \item{...}{Other parameters to calculate equilibrium pool sizes for.
 All parameters in \code{\link{par_estimates}} other than \code{V}, \code{H}, and \code{X}, plus

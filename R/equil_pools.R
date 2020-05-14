@@ -19,10 +19,16 @@
 #'
 #' @export
 #'
-equil_pools <- function(tmax = 1000, tstep = 1, ...) {
+equil_pools <- function(tmax = 1000, tstep = 1,
+                        midges_not_to = NULL,
+                        ...) {
 
 
     .call <- match.call()
+
+    if (!is.null(midges_not_to) && !is.na(midges_not_to)) {
+        midges_not_to <- match.arg(midges_not_to, c("X", "predator", "D", "detritus"))
+    }
 
     pars <- par_estimates %>%
         filter(V == 1, X == 1, H == 1, iI == iI[2]) %>%
@@ -50,7 +56,11 @@ equil_pools <- function(tmax = 1000, tstep = 1, ...) {
 
     time <- seq(0, tmax, tstep)
     if (time[length(time)] < tmax) time <- c(time, tmax)
-    solved_ode <- ode(init, time, diff_eq, pars)
+
+    .diff_eq <- diff_eq
+    if (isTRUE(midges_not_to %in% c("X", "predator"))) .diff_eq <- diff_eq__no_M_to_X
+    if (isTRUE(midges_not_to %in% c("D", "detritus"))) .diff_eq <- diff_eq__no_M_to_D
+    solved_ode <- ode(init, time, .diff_eq, pars)
 
     solved_ode <- solved_ode %>%
         as.data.frame() %>%  # <-- prevents "matrix as column is not supported" error
