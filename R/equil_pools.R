@@ -5,7 +5,7 @@
 #'
 #' @inheritParams food_web
 #' @param ... Other parameters to calculate equilibrium pool sizes for.
-#'     All parameters in \code{\link{par_estimates}} other than `V`, `H`, and `R`, plus
+#'     All parameters in \code{\link{par_estimates}} other than `V`, `H`, and `X`, plus
 #'     those ending in `eq` are permitted.
 #'
 #' @importFrom deSolve ode
@@ -25,8 +25,8 @@ equil_pools <- function(tmax = 1000, tstep = 1, ...) {
     .call <- match.call()
 
     pars <- par_estimates %>%
-        filter(V == 1, R == 1, H == 1, iN == iN[2]) %>%
-        dplyr::select(-V, -R, -H) %>%
+        filter(V == 1, X == 1, H == 1, iI == iI[2]) %>%
+        dplyr::select(-V, -X, -H) %>%
         as.list()
 
     pars$midges <- function(t_) return(0)
@@ -43,7 +43,7 @@ equil_pools <- function(tmax = 1000, tstep = 1, ...) {
     }
 
     # Starting pool sizes (no reason for user to adjust these directly):
-    pool_names <- c("N", "D", "P", "V", "H", "R", "M")
+    pool_names <- c("I", "D", "P", "V", "H", "X", "M")
     init <- c(unlist(pars[paste0(pool_names[pool_names != "M"], "eq")]), M0 = 0)
     names(init) <- pool_names
 
@@ -56,12 +56,12 @@ equil_pools <- function(tmax = 1000, tstep = 1, ...) {
         as.data.frame() %>%  # <-- prevents "matrix as column is not supported" error
         as_tibble() %>%
         rename(
-            soil = N,
+            soil = I,
             detritus = D,
             plant = P,
             detritivore = V,
             herbivore = H,
-            predator = R,
+            predator = X,
             midge = M
         ) %>%
         gather('pool', 'N', -time) %>%

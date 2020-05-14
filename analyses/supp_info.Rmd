@@ -62,7 +62,7 @@ suppressPackageStartupMessages({
 })
 
 parlist <- par_estimates %>%
-        filter(V==1, H==1, R==1, iN == 10) %>%
+        filter(V==1, H==1, R==1, iI == 10) %>%
         as.list()
 ```
 
@@ -195,18 +195,18 @@ full_pulse_df <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
                          col_types = cols(pool = "f", .default = "d"))
 
 pulse_df <- full_pulse_df %>%
-    filter(mM == par_estimates$mM[1],
+    filter(muM == par_estimates$muM[1],
            hM == par_estimates$hM[1],
            aDV == par_estimates$aDV[1],
            aPH == par_estimates$aPH[1]) %>%
-    select(-mM, -hM, -aDV, -aPH)
+    select(-muM, -hM, -aDV, -aPH)
 
 
 pulse_df_s2 <- full_pulse_df %>%
     filter(aDV == par_estimates$aDV[1],
            aPH == par_estimates$aPH[1],
            pool == "soil",
-           mM == median(mM),
+           muM == median(muM),
            f %in% range(f),
            hM %in% range(hM)) %>%
     mutate(area = w * b,
@@ -216,7 +216,7 @@ pulse_df_s2 <- full_pulse_df %>%
            hM = factor(hM, levels = sort(unique(hM)),
                        labels = paste(c("low", "high"),
                                       "midge\nhandling time"))) %>%
-    select(area, f, mM, hM,
+    select(area, f, muM, hM,
            cum_pos_loss_H,
            cum_neg_loss_H,
            cum_gain_H) %>%
@@ -400,7 +400,7 @@ nae_caption <- paste("Time series of proportional changes in N content among all
 not_at_eq <- function(.r) {
     # Equilibrium Ns
     Neqs <- par_estimates %>%
-        filter(V==1, H==1, R==1, iN == 10) %>%
+        filter(V==1, H==1, R==1, iI == 10) %>%
         select(ends_with("eq")) %>% 
         as.list()
     rename_vec <- list(N = "soil", D = "detritus", P = "plant", V = "detritivore", 
@@ -410,7 +410,7 @@ not_at_eq <- function(.r) {
         map_chr(~ rename_vec[[.x]])
     # Random starting Ns
     N0s <- par_estimates %>%
-        filter(V==1, H==1, R==1, iN == 10) %>%
+        filter(V==1, H==1, R==1, iI == 10) %>%
         select(ends_with("eq")) %>% 
         mutate_all(~ runif(1, .x * 0.5, .x * 1.5)) %>% 
         as.list()
@@ -480,29 +480,29 @@ vain_caption <- paste("Time series of proportional changes in N content among al
 ```{r vary-iI-muI, fig.width=6, fig.height=5.5, fig.cap=vain_caption}
 
 
-vary_iN_mN <- function(.iN, .mN) {
-    pools <- equil_pools(iN = .iN, mN = .mN)
+vary_iI_mN <- function(.iI, .mN) {
+    pools <- equil_pools(iI = .iI, mN = .mN)
     sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
-                    other_pars = list(f = 3, iN = .iN, mN = .mN), 
+                    other_pars = list(f = 3, iI = .iI, mN = .mN), 
                     ep_obj = pools) %>%
         filter(pool != "midge") %>%
         mutate(pool = droplevels(pool)) %>% 
         group_by(pool) %>%
         mutate(N_rel = (N - N[1]) / (N[1])) %>%
         ungroup() %>% 
-        mutate(iN = .iN, mN = .mN)
+        mutate(iI = .iI, mN = .mN)
     return(sim)
 }
 
 
-vain_df <- crossing(.iN = c(5, 10, 20),
+vain_df <- crossing(.iI = c(5, 10, 20),
                     .mN = c(0.005, 0.01, 0.02)) %>% 
-    pmap_dfr(vary_iN_mN) %>% 
-    mutate_at(vars(iN, mN), factor) %>%
+    pmap_dfr(vary_iI_mN) %>% 
+    mutate_at(vars(iI, mN), factor) %>%
     mutate(mI = factor(mN, levels = levels(mN),
                        labels = paste("italic(mu[I]) ==", levels(mN))),
-           iI = factor(iN, levels = levels(iN),
-                       labels = paste("italic(i[I]) ==", levels(iN))))
+           iI = factor(iI, levels = levels(iI),
+                       labels = paste("italic(i[I]) ==", levels(iI))))
 
 
 vain_dummy <- vain_df %>% 
@@ -760,7 +760,7 @@ nohv_fig4_caption <- paste("Time series of the top-down (\"TD\") and bottom-up (
 
 
 parlist <- par_estimates %>%
-    filter(V==1, H==1, R==1, iN == 10) %>%
+    filter(V==1, H==1, R==1, iI == 10) %>%
     as.list()
 V_gain <- function(V, D) {
     aDV <- parlist[["aDV"]]

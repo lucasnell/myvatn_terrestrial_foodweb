@@ -45,7 +45,7 @@ if (!dir.exists(dir)) dir.create(dir)
 
 
 middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
-                       other_pars = list(f = 3))
+                       other_pars = list(q = 3))
 
 
 upper_levels <- c("detritivore", "herbivore", "predator")
@@ -122,19 +122,19 @@ dev.off()
 
 
 other_sims <- map_dfr(c(8e-3, 8),
-                       function(f_) {
+                       function(q_) {
                            food_web(tmax = 100, s = 10, b = 20, w = 20,
-                                    other_pars = list(f = f_)) %>%
+                                    other_pars = list(q = q_)) %>%
                                filter(pool %in% c(upper_levels, "midge")) %>%
                                mutate(pool = droplevels(pool),
-                                      f = f_)
+                                      q = q_)
     }) %>%
-    mutate_at(vars(f), factor) %>%
+    mutate_at(vars(q), factor) %>%
     mutate(pool = factor(paste(pool), levels = c(upper_levels, "midge"))) %>%
-    group_by(pool, f) %>%
+    group_by(pool, q) %>%
     mutate(N = (N - N[1]) / N[1]) %>%
     ungroup() %>%
-    mutate(f = factor(f, levels = range(as.numeric(paste(f))),
+    mutate(q = factor(q, levels = range(as.numeric(paste(q))),
                       labels = paste(c("low", "high"), "exploitation")))
 
 max_N <- 1.46
@@ -159,28 +159,28 @@ trans_p2 <- other_sims %>%
     scale_x_continuous("Time (days)") +
     scale_color_manual(NULL, values = color_pal()) +
     geom_text(data = tibble(time =  rep(0, 2), N = rep(max_N, 2),
-                            f = factor(paste(c("low", "high"), "exploitation"),
+                            q = factor(paste(c("low", "high"), "exploitation"),
                                         levels = paste(c("low", "high"), "exploitation")),
                             labs = letters[1:2]),
         aes(label = labs), hjust = 0, vjust = 1, size = 12 / 2.835) +
     geom_text(data = tibble(time =  75,
                             N =     1.4,
-                            f = factor("high exploitation",
+                            q = factor("high exploitation",
                                         levels = paste(c("low", "high"), "exploitation"))),
         label = "predator", color = color_pal()[3], hjust = 1, vjust = 1,
         size = 10 / 2.835) +
     geom_text(data = tibble(pool = factor(upper_levels[upper_levels != "predator"]),
                             time =  c(92, 100),
                             N =     c(0.3, -0.1),
-                            f = factor(paste(rep("high", 2), "exploitation"),
+                            q = factor(paste(rep("high", 2), "exploitation"),
                                         levels = paste(c("low", "high"), "exploitation"))),
         aes(label = pool, color = pool), hjust = 1, size = 10 / 2.835) +
     geom_text(data = tibble(time = 20, N = -0.1,
-                            f = factor("high exploitation",
+                            q = factor("high exploitation",
                                        levels = paste(c("low", "high"), "exploitation"))),
               label = "pulse", size = 10 / 2.835, hjust = 0.5, vjust = 1,
               color = "black") +
-    facet_grid( ~ f) +
+    facet_grid( ~ q) +
     theme(legend.position = "none",
           strip.text.y = element_text(face = "plain", size = 11, angle = 270,
                                       margin = margin(l = 4)),
@@ -215,54 +215,54 @@ dev.off()
 
 
 parlist <- par_estimates %>%
-    filter(V==1, H==1, R==1, iN == 10) %>%
+    filter(V==1, H==1, X==1, iI == 10) %>%
     as.list()
 V_gain <- function(V, D) {
     aDV <- parlist[["aDV"]]
     hD <- parlist[["hD"]]
     (aDV*D*V/(1 + aDV*hD*D)) / V
 }
-V_loss <- function(V, R, H, M, f) {
-    aR <- parlist[["aR"]]
-    hVH <- parlist[["hVH"]]
+V_loss <- function(V, X, H, M, q) {
+    aX <- parlist[["aX"]]
+    hX <- parlist[["hX"]]
     hM <- parlist[["hM"]]
-    ((aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / V
+    ((aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M)) / V
 }
 H_gain <- function(P, H) {
     aPH <- parlist[["aPH"]]
     hP <- parlist[["hP"]]
     (aPH*P*H/(1 + aPH*hP*P)) / H
 }
-H_loss <- function(H, R, V, M, f) {
-    aR <- parlist[["aR"]]
-    hVH <- parlist[["hVH"]]
+H_loss <- function(H, X, V, M, q) {
+    aX <- parlist[["aX"]]
+    hX <- parlist[["hX"]]
     hM <- parlist[["hM"]]
-    ((aR*H*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M)) / H
+    ((aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M)) / H
 }
 
 
 
 
 other_sims2 <- map_dfr(c(8e-3, 8),
-                       function(f_) {
+                       function(q_) {
                            food_web(tmax = 100, s = 10, b = 20, w = 20,
-                                    other_pars = list(f = f_)) %>%
-                               mutate(f = f_)
+                                    other_pars = list(q = q_)) %>%
+                               mutate(q = q_)
                        }) %>%
     spread(pool, N) %>%
     mutate(Vg = V_gain(detritivore, detritus),
-           Vl = V_loss(detritivore, predator, herbivore, midge, f),
+           Vl = V_loss(detritivore, predator, herbivore, midge, q),
            Hg = H_gain(plant, herbivore),
-           Hl = H_loss(herbivore, predator, detritivore, midge, f)) %>%
+           Hl = H_loss(herbivore, predator, detritivore, midge, q)) %>%
     select(-soil:-midge) %>%
     gather("variable", "value", Vg:Hl) %>%
     mutate(pool = factor(ifelse(grepl("^V", variable), "detritivore", "herbivore")),
            type = factor(ifelse(grepl("l$", variable), "top-down", "bottom-up")),
-           f = factor(f, levels = range(as.numeric(paste(f))),
+           q = factor(q, levels = range(as.numeric(paste(q))),
                        labels = paste(c("low", "high"), "exploitation"))) %>%
     select(-variable) %>%
-    select(f, pool, type, everything()) %>%
-    group_by(f, pool, type) %>%
+    select(q, pool, type, everything()) %>%
+    group_by(q, pool, type) %>%
     mutate(value = value - value[1]) %>%
     ungroup()
 
@@ -281,7 +281,7 @@ trans_p3 <- ggplot(data = NULL) +
     geom_line(data = other_sims2 %>% filter(type == "top-down", pool == "detritivore"),
                   aes(time, value), size = 1, color = "gray60") +
     geom_text(data = tibble(time =  rep(0, 2), N = rep(max(other_sims2$value), 2),
-                            f = factor(paste(c("low", "high"), "exploitation"),
+                            q = factor(paste(c("low", "high"), "exploitation"),
                                         levels = paste(c("low", "high"), "exploitation")),
                             labs = letters[1:2]),
               aes(time, N, label = labs), hjust = 0, vjust = 1, size = 12 / 2.835) +
@@ -291,14 +291,14 @@ trans_p3 <- ggplot(data = NULL) +
     scale_color_manual(values = color_pal()[1:2]) +
     geom_text(data = tibble(time =  c(  38,   16,    35),
                             value = c(0.06, 0.034, 0.001),
-                            f = factor(paste(c("low","low","low"), "exploitation"),
-                                        levels = levels(other_sims2$f)),
+                            q = factor(paste(c("low","low","low"), "exploitation"),
+                                        levels = levels(other_sims2$q)),
                             lab = sprintf("italic(%s)",
                                           c("'BU'['detritivore']", "'BU'['herbivore']",
                                             "'TD'['both']"))),
               aes(time, value, label = lab), color = c(color_pal()[1:2], "gray60"),
               hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835, parse = TRUE) +
-    facet_grid(~ f) +
+    facet_grid(~ q) +
     theme(legend.position = "none",
           strip.text = element_text(face = "plain", size = 11,
                                     margin = margin(b = 4)),
@@ -325,8 +325,8 @@ impute <- function(time, value) {
 
 
 trans_p4 <- other_sims2 %>%
-    filter(type == "top-down", pool == "detritivore", f == "high exploitation") %>%
-    select(-pool, -f, -type) %>%
+    filter(type == "top-down", pool == "detritivore", q == "high exploitation") %>%
+    select(-pool, -q, -type) %>%
     {bind_rows(., tibble(time = seq(34.1, 34.9, 0.1), value = NA_real_))} %>%
     arrange(time) %>%
     mutate(value = impute(time, value)) %>%
