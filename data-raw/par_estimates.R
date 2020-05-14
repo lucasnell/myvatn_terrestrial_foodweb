@@ -38,7 +38,7 @@ par_estimates <- full_join(tibbles$full_pars,
 #'
 par_estimates <- par_estimates %>%
     mutate(aM = aM / aR) %>%
-    rename(f = aM)
+    rename(q = aM)
 
 
 sw <- function(x) starts_with(x, ignore.case = FALSE)
@@ -50,7 +50,36 @@ ew <- function(x) ends_with(x, ignore.case = FALSE)
 par_estimates <- par_estimates %>%
     mutate(hM = hVHM) %>%
     rename(hVH = hVHM) %>%
-    select(V, H, R, iN, sw("l"), sw("m"), f, sw("a"), sw("h"), everything())
+    # To adjust for new parameter names in manuscript:
+    rename(iI = iN,
+           aIP = aNP,
+           hI = hN,
+           X = R,
+           lX = lR,
+           mX = mR,
+           aX = aR,
+           hX = hVH,
+           muI = mN,
+           muD = mD,
+           muP = mP0,
+           muV = mV0,
+           muH = mH0,
+           muX = mR0,
+           muM = mM,
+           Ieq = Neq,
+           Xeq = Req) %>%
+    select(V, H, X,
+           iI,
+           lD, lP, lV, lH, lX, lM,
+           muI, muD, muP, muV, muH, muX, muM,
+           mP, mV, mH, mX,
+           q,
+           aIP, aDV, aPH, aX,
+           hI, hD, hP, hX, hM,
+           Ieq, Deq, Peq, Veq, Heq, Xeq)
+
+
+
 
 
 # usethis::use_data(par_estimates, overwrite = TRUE)

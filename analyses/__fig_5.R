@@ -28,17 +28,17 @@ pulse_df_fig6 <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
     filter(aDV == par_estimates$aDV[1],
            aPH == par_estimates$aPH[1],
            pool == "soil",
-           mM == median(mM),
-           f %in% range(f),
+           muM == median(muM),
+           q %in% range(q),
            hM %in% range(hM)) %>%
     mutate(area = w * b,
-           f = factor(f, levels = sort(unique(f)),
+           q = factor(q, levels = sort(unique(q)),
                       labels = sprintf("%s midge\nexploitation",
                                        c("low", "high"))),
            hM = factor(hM, levels = sort(unique(hM)),
                        labels = paste(c("low", "high"),
                                       "midge\nhandling time"))) %>%
-    select(area, f, mM, hM,
+    select(area, q, muM, hM,
            cum_pos_loss_V, cum_pos_loss_H,
            cum_neg_loss_V, cum_neg_loss_H,
            cum_gain_V, cum_gain_H) %>%
@@ -79,12 +79,12 @@ td_bu_avail_plot <- pulse_df_fig6 %>%
     geom_text(data = tibble(area =  0, value = max(pulse_df_fig6$value),
                             hM = pulse_df_fig6$hM %>% unique() %>%
                                 sort() %>% rep(each = 2),
-                            f = pulse_df_fig6$f %>% unique() %>%
+                            q = pulse_df_fig6$q %>% unique() %>%
                                 sort() %>% rep(2),
                             labs = letters[1:4]),
               aes(label = labs), hjust = 0, vjust = 1,
               size = 12 / 2.835) +
-    facet_grid(hM ~ f) +
+    facet_grid(hM ~ q) +
     scale_color_manual(NULL, values = c(color_pal()[1], "gray60"), guide = FALSE) +
     scale_linetype_manual(NULL, values = c(1, 1, 3:2),
                           breaks = c("BU total", "TD net",

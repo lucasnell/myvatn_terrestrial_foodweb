@@ -28,3 +28,5 @@ VignetteBuilder: knitr
 URL: https://github.com/lucasnell/myvatn_terrestrial_foodweb
 BugReports: https://github.com/lucasnell/myvatn_terrestrial_foodweb/issues
 Roxygen: list(markdown = TRUE)
+Depends: 
+    R (>= 2.10)

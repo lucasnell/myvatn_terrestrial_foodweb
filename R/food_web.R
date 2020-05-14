@@ -11,16 +11,15 @@ diff_eq <- function(t, y, pars) {
         with(as.list(pars),
              with(as.list(y),
                   {
-                      c(N = iN - aNP*N*P/(1 + aNP*hN*N) + (1 - lD)*mD*D - mN*N,
-                        D = (1 - lP)*(mP0 + mP*P)*P + (1 - lV)*(mV0 + mV*V)*V +
-                            (1 - lH)*(mH0 + mH*H)*H + (1 - lR)*(mR0 + mR*R)*R +
-                            (1 - lM)*mM*M - aDV*D*V/(1 + aDV*hD*D) - mD*D,
-                        P = aNP*N*P/(1 + aNP*hN*N) - aPH*P*H/(1 + aPH*hP*P) - (mP0 + mP*P)*P,
-                        V = aDV*D*V/(1 + aDV*hD*D) - (aR*V*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M) - (mV0 + mV*V)*V,
-                        H = aPH*P*H/(1 + aPH*hP*P) - (aR*H*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M) - (mH0 + mH*H)*H,
-                        R = (aR*V*R + aR*H*R + (aR * f)*M*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M) - (mR0 + mR*R)*R,
-                        M = iM - mM*M - ((aR * f)*M*R)/(1 + aR*hVH*(V + H) + (aR * f)*hM*M))
-
+                      c(I = iI - aIP*I*P/(1 + aIP*hI*I) + (1 - lD)*muD*D - muI*I,
+                        D = (1 - lP)*(muP + mP*P)*P + (1 - lV)*(muV + mV*V)*V +
+                            (1 - lH)*(muH + mH*H)*H + (1 - lX)*(muX + mX*X)*X +
+                            (1 - lM)*muM*M - aDV*D*V/(1 + aDV*hD*D) - muD*D,
+                        P = aIP*I*P/(1 + aIP*hI*I) - aPH*P*H/(1 + aPH*hP*P) - (muP + mP*P)*P,
+                        V = aDV*D*V/(1 + aDV*hD*D) - (aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muV + mV*V)*V,
+                        H = aPH*P*H/(1 + aPH*hP*P) - (aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muH + mH*H)*H,
+                        X = (aX*V*X + aX*H*X + (aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muX + mX*X)*X,
+                        M = iM - muM*M - ((aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M))
                   }))
 
     return(list(output))
@@ -78,25 +77,25 @@ food_web <- function(tmax, b, s, w, tstep = 1,
                      ep_obj = NULL,
                      other_pars = list()) {
 
-    .iN <- 10
-    if (!is.null(other_pars$iN)) .iN <- other_pars$iN
+    .iI <- 10
+    if (!is.null(other_pars$iI)) .iI <- other_pars$iI
 
     pars <- par_estimates %>%
-        filter(V == 1, R == 1, H == 1, iN == .iN) %>%
-        dplyr::select(-V, -R, -H)
+        filter(V == 1, X == 1, H == 1, iI == .iI) %>%
+        dplyr::select(-V, -X, -H)
     if (nrow(pars) == 0) {
-        iN_vals <- par_estimates %>%
-            filter(V == 1, R == 1, H == 1) %>%
-            .[["iN"]] %>%
+        iI_vals <- par_estimates %>%
+            filter(V == 1, X == 1, H == 1) %>%
+            .[["iI"]] %>%
             unique() %>%
             paste(collapse = ", ")
-        stop("\nYou're requesting an `iN` value that we don't have parameter values ",
-             "for. The possibilities are as follows: ", iN_vals)
+        stop("\nYou're requesting an `iI` value that we don't have parameter values ",
+             "for. The possibilities are as follows: ", iI_vals)
     }
     pars <- as.list(pars)
     pars$midges <- function(t_) {
-        f = ifelse(t_ > s & t_ <= (s + w), b, 0)
-        return(f)
+        i_M_t = ifelse(t_ > s & t_ <= (s + w), b, 0)
+        return(i_M_t)
     }
     if (length(other_pars) > 0) {
         if (!all(names(other_pars) %in% names(pars))) {
@@ -113,11 +112,11 @@ food_web <- function(tmax, b, s, w, tstep = 1,
         stopifnot(inherits(ep_obj, "equil_pools"))
         ep_vals <- ep_obj$vals %>%
             .[["eq"]] %>%
-            set_names(nm = paste0(c("N", "D", "P", "V", "H", "R"), "eq"))
+            set_names(nm = paste0(c("I", "D", "P", "V", "H", "X"), "eq"))
         for (p in names(ep_vals)) pars[[p]] <- ep_vals[[p]]
     }
 
-    pool_names <- c("N", "D", "P", "V", "H", "R", "M")
+    pool_names <- c("I", "D", "P", "V", "H", "X", "M")
     # Default values:
     init <- c(unlist(pars[paste0(pool_names[pool_names != "M"], "eq")]), M0 = 0)
     names(init) <- c(paste0(pool_names[pool_names != "M"], "0"), "M0")
@@ -144,12 +143,12 @@ food_web <- function(tmax, b, s, w, tstep = 1,
         as.data.frame() %>%  # <-- prevents "matrix as column is not supported" error
         as_tibble() %>%
         rename(
-            soil = N,
+            soil = I,
             detritus = D,
             plant = P,
             detritivore = V,
             herbivore = H,
-            predator = R,
+            predator = X,
             midge = M
         ) %>%
         gather('pool', 'N', -time) %>%

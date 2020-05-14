@@ -12,7 +12,7 @@ equil_pools(tmax = 1000, tstep = 1, ...)
 \item{tstep}{Step size in units of time. Defaults to \code{1}.}
 
 \item{...}{Other parameters to calculate equilibrium pool sizes for.
-All parameters in \code{\link{par_estimates}} other than \code{V}, \code{H}, and \code{R}, plus
+All parameters in \code{\link{par_estimates}} other than \code{V}, \code{H}, and \code{X}, plus
 those ending in \code{eq} are permitted.}
 }
 \description{
