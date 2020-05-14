@@ -44,9 +44,9 @@ Possible parameter names include all column names in \code{par_estimates}
 except the first three (see \code{?par_estimates} for a description of column names).}
 
 \item{midges_not_to}{Character specifying whether midges should NOT go to detritus
-or NOT to predators. If \code{NULL} or \code{NA}, midges go to both.
-Takes as input the following: \code{NULL}, \code{"X"}, \code{"predator"}, \code{"D"}, or \code{"detritus"}.
-Defaults to \code{NULL}.}
+or NOT to predators. If \code{"both"}, \code{NULL}, or \code{NA}, midges go to both.
+Takes as input the following: \code{"both"}, \code{NULL}, \code{NA}, \code{"X"}, \code{"predator"},
+\code{"D"}, or \code{"detritus"}. Defaults to \code{NULL}.}
 }
 \value{
 A data frame with the following columns: \code{time}, \code{pool}, \code{N}.
