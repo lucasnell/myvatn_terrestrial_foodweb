@@ -79,7 +79,7 @@ diff_eq__no_M_to_D <- function(t, y, pars) {
                         V = aDV*D*V/(1 + aDV*hD*D) - (aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muV + mV*V)*V,
                         H = aPH*P*H/(1 + aPH*hP*P) - (aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muH + mH*H)*H,
                         X = (aX*V*X + aX*H*X + (aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muX + mX*X)*X,
-                        M = iM - ((aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M))
+                        M = iM - muM*M - ((aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M))
                   }))
 
     return(list(output))
