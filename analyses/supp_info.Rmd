@@ -953,12 +953,12 @@ midges do not build up indefinitely.
 When midges only go to detritus, we changed the following:
 
 
-\begin{align}
+\begin{align*}
 \frac{dV}{dt} &= \frac{ a_D D V }{ 1 + a_D h_D D } - \frac{a_X V X }{ 1 + a_X h_X H + a_X h_X V {\color{red} \cancel{+ q a_X h_M M}} } - (\mu_V + m_V V) V \\
 \frac{dH}{dt} &= \frac{ a_P P H }{ 1 + a_P h_P P } - \frac{a_X H X }{ 1 + a_X h_X H + a_X h_X V + {\color{red} \cancel{q a_X h_M M}} } - (\mu_H + m_H H) H \\
 \frac{dX}{dt} &= \frac{ (a_X V + a_X H {\color{red} \cancel{+ q a_X M}}) X }{ 1 + a_X h_X H + a_X h_X V {\color{red} \cancel{+ q a_X h_M M}} } - (\mu_X + m_X X) X \\
 \frac{dM}{dt} &= i_{M(t)} {\color{red} \cancel{- \frac{q a_X M X }{ 1 + a_X h_X H + a_X h_X V + q a_X h_M M }}} - \mu_M M
-\end{align}
+\end{align*}
 
 
 
