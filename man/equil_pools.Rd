@@ -12,8 +12,8 @@ equil_pools(tmax = 1000, tstep = 1, midges_not_to = NULL, ...)
 \item{tstep}{Step size in units of time. Defaults to \code{1}.}
 
 \item{midges_not_to}{Character specifying whether midges should NOT go to detritus
-or NOT to predators. If \code{"both"}, \code{NULL}, or \code{NA}, midges go to both.
-Takes as input the following: \code{"both"}, \code{NULL}, \code{NA}, \code{"X"}, \code{"predator"},
+or NOT to predators. If \code{"none"}, \code{NULL}, or \code{NA}, midges go to both.
+Takes as input the following: \code{"none"}, \code{NULL}, \code{NA}, \code{"X"}, \code{"predator"},
 \code{"D"}, or \code{"detritus"}. Defaults to \code{NULL}.}
 
 \item{...}{Other parameters to calculate equilibrium pool sizes for.

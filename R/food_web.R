@@ -138,8 +138,8 @@ diff_eq__no_M_to_D <- function(t, y, pars) {
 #'     Possible parameter names include all column names in `par_estimates`
 #'     except the first three (see `?par_estimates` for a description of column names).
 #' @param midges_not_to Character specifying whether midges should NOT go to detritus
-#'     or NOT to predators. If `"both"`, `NULL`, or `NA`, midges go to both.
-#'     Takes as input the following: `"both"`, `NULL`, `NA`, `"X"`, `"predator"`,
+#'     or NOT to predators. If `"none"`, `NULL`, or `NA`, midges go to both.
+#'     Takes as input the following: `"none"`, `NULL`, `NA`, `"X"`, `"predator"`,
 #'     `"D"`, or `"detritus"`. Defaults to `NULL`.
 #'
 #'
@@ -177,7 +177,7 @@ food_web <- function(tmax, b, s, w, tstep = 1,
 
     if (!is.null(midges_not_to) && !is.na(midges_not_to)) {
         midges_not_to <- match.arg(midges_not_to,
-                                   c("both", "X", "predator", "D", "detritus"))
+                                   c("none", "X", "predator", "D", "detritus"))
     }
 
     pars <- par_estimates %>%

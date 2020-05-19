@@ -28,7 +28,7 @@ equil_pools <- function(tmax = 1000, tstep = 1,
 
     if (!is.null(midges_not_to) && !is.na(midges_not_to)) {
         midges_not_to <- match.arg(midges_not_to,
-                                   c("both", "X", "predator", "D", "detritus"))
+                                   c("none", "X", "predator", "D", "detritus"))
     }
 
     pars <- par_estimates %>%
