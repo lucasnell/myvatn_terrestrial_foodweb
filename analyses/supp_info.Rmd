@@ -75,10 +75,10 @@ V_gain <- function(V, D, aDV = parlist[["aDV"]]) {
     hD <- parlist[["hD"]]
     (aDV*D*V/(1 + aDV*hD*D)) / V
 }
-V_loss <- function(V, X, H, M, q, .no_M_to_X = FALSE) {
+
+V_loss <- function(V, X, H, M, q, hM = parlist[["hM"]], .no_M_to_X = FALSE) {
     aX <- parlist[["aX"]]
     hX <- parlist[["hX"]]
-    hM <- parlist[["hM"]]
     if (!.no_M_to_X) {
         Vl <- ((aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M)) / V
     } else {
@@ -86,14 +86,15 @@ V_loss <- function(V, X, H, M, q, .no_M_to_X = FALSE) {
     }
     return(Vl)
 }
+
 H_gain <- function(P, H, aPH = parlist[["aPH"]]) {
     hP <- parlist[["hP"]]
     (aPH*P*H/(1 + aPH*hP*P)) / H
 }
-H_loss <- function(H, X, V, M, q, .no_M_to_X = FALSE) {
+
+H_loss <- function(H, X, V, M, q, hM = parlist[["hM"]], .no_M_to_X = FALSE) {
     aX <- parlist[["aX"]]
     hX <- parlist[["hX"]]
-    hM <- parlist[["hM"]]
     if (!.no_M_to_X) {
         Hl <- ((aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M)) / H
     } else {
@@ -1264,7 +1265,7 @@ mtop_fig4_plot <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
     # rm(.midges_not_to, .ylims)
     
     
-    .title <- case_when(.midges_not_to == "none" ~ "Midges to none",
+    .title <- case_when(.midges_not_to == "none" ~ "Midges to both",
                         .midges_not_to == "D" ~ "Midges to predators only",
                         .midges_not_to == "X" ~ "Midges to detritus only",
                         TRUE ~ "ERROR")
@@ -1309,13 +1310,17 @@ mtop_fig4_plot <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
         mt_plot <- mt_plot +
             geom_text(data = tibble(time =  c(  38,    16,    25),
                                     value = c(0.06, 0.034, -0.02),
-                                    q = factor(paste(c("low","low","low"), "exploitation"),
+                                    q = factor(paste(c("low","low","low"),
+                                                     "exploitation"),
                                                levels = levels(mt_combo$q)),
                                     lab = sprintf("italic(%s)",
-                                                  c("'BU'['detritivore']", "'BU'['herbivore']",
+                                                  c("'BU'['detritivore']",
+                                                    "'BU'['herbivore']",
                                                     "'TD'['both']"))),
-                      aes(time, value, label = lab), color = c(color_pal()[1:2], "gray60"),
-                      hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835, parse = TRUE) +
+                      aes(time, value, label = lab), 
+                      color = c(color_pal()[1:2], "gray60"),
+                      hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835, 
+                      parse = TRUE) +
             theme(axis.title.y = element_text(margin = margin(0,0,r=4,l=10)))
         
     } else {
