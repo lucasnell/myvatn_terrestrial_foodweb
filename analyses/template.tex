@@ -165,7 +165,13 @@ $endif$
 $if(highlighting-macros)$
 $highlighting-macros$
 $endif$
-\usepackage[labelfont=bf]{caption}
+\usepackage{caption}
+\captionsetup{%
+   labelsep=newline,
+   justification=raggedright,
+   labelfont=bf,
+  singlelinecheck=off
+}
 $if(tables)$
     \usepackage{longtable,booktabs}
     $if(beamer)$

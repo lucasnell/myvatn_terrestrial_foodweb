@@ -408,17 +408,17 @@ This is running with no pulse, but with non-equilibrium starting values.
 
 ```{r start-not-at-equilibrium-caption}
 nae_caption <- paste("Time series of proportional changes in N content among all six",
-                     "pools with no midge pulse and when starting at random N contents.",
+                     "pools with no midge pulse and when starting N content",
+                     "($N_0$) was randomized.",
                      "We ran 20 repetitions, each with different random starting N",
-                     "for each pool, and sub-panels separate repetitions.",
+                     "for each pool",
+                     "[$N_0 \\sim \\text{Uniform}(0.5 \\: N_{eq}, \\; 1.5 \\: N_{eq})$].",
+                     "Sub-panels separate repetitions.",
                      "Lines indicate the N content at time $t$ relative to the ",
                      "equilibrium value [i.e. $(N_t - N_{eq}) / N_{eq}$].",
                      "Points indicate the starting N content relative to the ",
                      "equilibrium value [i.e. $(N_0 - N_{eq}) / N_{eq}$].",
-                     "The lower black bar represents the duration of the midge N pulse.",
-                     "Parameter values are as in Table 1, with",
-                     "predator exploitation $q = 3$, pulse duration $w = 0$, and",
-                     "pulse rate $b = 0$.")
+                     "Parameter values are as in Table 1.")
 ```
 
 
@@ -1370,6 +1370,230 @@ ggarrange(plots = mtop_fig4_plot_list, ncol = 1, labels = LETTERS[1:3],
           label.args = list(gp = gpar(fontsize = 14, fontface =  "bold"), 
                             vjust = 2, hjust = -4))
 ```
+
+
+
+
+
+
+
+##### Fig 5
+
+
+This is a version of figure 5 where midges only go to predators or only to detritus
+
+
+```{r M-to-one-pool-fig5-caption}
+mtop_fig5_caption <- paste("Cumulative midge effect on total bottom-up control",
+                           "(\"BU total\"), net top-down control (\"TD net\"),",
+                           "top-down intensification, and top-down alleviation",
+                           "as a function of total midge inputs.",
+                           "This is shown for when (A) midges only go to the detritus pool,",
+                           "(B) midges go to both detritus and predator pools, and",
+                           "(C) midges only go to the predator pool.",
+                           "The panels show different combinations of high and",
+                           "low predator exploitation and handling times on midges.",
+                           "Data are from detritivores; herbivores gave broadly",
+                           "similar responses to the cumulative midge effects (Fig. S2).",
+                           "Parameter values are as in Table 1, with",
+                           "low exploitation $q = 0.8$,", 
+                           "high exploitation $q = 8$,", 
+                           "low midge handling time $h_M = 1.3$,", 
+                           "high midge handling time $h_M = 5.3$,", 
+                           "pulse duration $w = 20$, and", 
+                           "pulse rate $b$ ranging from 0.1 to 23 to produce", 
+                           "different total midge inputs.")
+```
+
+
+
+```{r M-to-one-pool-fig5, fig.width=6, fig.height=9, fig.cap=mtop_fig5_caption}
+
+
+do_mtop_fig5 <- function(.midges_not_to) {
+    
+    # .midges_not_to = "none"
+    # rm(.midges_not_to)
+    
+    stopifnot(length(.midges_not_to) == 1 && .midges_not_to %in% c("X", "none", "D"))
+    
+    
+    .one_combo <- function(.q, .hM, .b) {
+        
+        # .q = 0.8; .hM = par_estimates$hM[1] * 0.5; .b = 0.1
+        # rm(.q, .hM, .b)
+        
+        fw <- food_web(tmax = 500, s = 10, b = .b, w = 20, 
+                       other_pars = list(hM = .hM, q = .q), 
+                       midges_not_to = .midges_not_to)
+        
+        fw <- fw %>%
+            spread(pool, N) %>%
+            mutate(Vg = V_gain(detritivore, detritus),
+                   Vl = V_loss(detritivore, predator, herbivore, midge, q = .q, hM = .hM,
+                               .no_M_to_X = (.midges_not_to == "X")),
+                   Hg = H_gain(plant, herbivore),
+                   Hl = H_loss(herbivore, predator, detritivore, midge, q = .q, hM = .hM,
+                               .no_M_to_X = (.midges_not_to == "X"))) %>%
+            summarize(cum_pos_loss_V = sum(Vl[Vl > Vl[1]] - Vl[1]),
+                      cum_pos_loss_H = sum(Hl[Hl > Hl[1]] - Hl[1]),
+                      cum_neg_loss_V = sum(Vl[Vl < Vl[1]] - Vl[1]),
+                      cum_neg_loss_H = sum(Hl[Hl < Hl[1]] - Hl[1]),
+                      cum_gain_V = sum(Vg[Vg > Vg[1]] - Vg[1]),
+                      cum_gain_H = sum(Hg[Hg > Hg[1]] - Hg[1])) %>%
+            mutate(area = 20 * .b,
+                   q = .q,
+                   hM = .hM) %>%
+            select(area, q, hM, everything()) %>%
+            mutate(cum_loss_V = cum_pos_loss_V + cum_neg_loss_V,
+                   cum_loss_H = cum_pos_loss_H + cum_neg_loss_H,
+                   # Changing to magnitudes
+                   cum_neg_loss_V = abs(cum_neg_loss_V),
+                   cum_neg_loss_H = abs(cum_neg_loss_H)) %>%
+            gather("variable", "value", cum_pos_loss_V:cum_loss_H) %>%
+            mutate(pool = factor(ifelse(grepl("V$", variable), 
+                                        "detritivore", "herbivore")),
+                   direction = factor(ifelse(grepl("loss", variable), 
+                                             "top-down", "bottom-up")),
+                   type = case_when(grepl("^cum_pos_loss", variable) ~ 
+                                        "TD intensification",
+                                    grepl("^cum_neg_loss", variable) ~ 
+                                        "TD alleviation",
+                                    grepl("^cum_loss_", variable) ~ "TD net",
+                                    grepl("^cum_gain_", variable) ~ "BU total",
+                                    TRUE ~ NA_character_) %>% 
+                       factor(levels = c("BU total", "TD net", 
+                                         "TD intensification", "TD alleviation"))) %>%
+            select(-variable) %>%
+            mutate(id = interaction(direction, type))
+        
+        if (sum(is.na(fw$type)) > 0) stop("Error in processing `type` column.")
+        
+        return(fw)
+        
+    }
+    
+
+    out <- crossing(.q = c(0.8, 8), 
+             .hM = par_estimates$hM[1] * c(0.5, 2),
+             .b = seq(0.1, 23, length.out = 21)) %>% 
+        pmap_dfr(.one_combo) %>%
+        mutate(q = factor(q, levels = sort(unique(q)),
+                          labels = sprintf("%s midge\nexploitation",
+                                           c("low", "high"))),
+               hM = factor(hM, levels = sort(unique(hM)),
+                           labels = paste(c("low", "high"),
+                                          "midge\nhandling time"))) %>%
+        mutate(not_to = .midges_not_to)
+    
+    return(out)
+}
+
+# Takes ~24 sec using 3 threads
+mtop_fig5_df <- mclapply(c("X", "none", "D"), do_mtop_fig5, 
+                         mc.cores = min(3, parallel::detectCores())) %>%
+    bind_rows()
+
+
+mtop_fig5_plot <- function(.midges_not_to, .ylims = c(-0.688, 4.305), .pool = "detritivore") {
+    
+    fig5_labs <- list(bquote(italic('BU'['total'])),
+                      bquote(italic('TD'['net'])),
+                      bquote(italic('TD'['intensification'])),
+                      bquote(italic('TD'['alleviation'])))
+    
+    # .midges_not_to = "D"; .ylims = c(-0.688, 4.305)
+    # rm(.midges_not_to, .ylims)
+    
+    
+    .title <- case_when(.midges_not_to == "none" ~ "Midges to both",
+                        .midges_not_to == "D" ~ "Midges to predators only",
+                        .midges_not_to == "X" ~ "Midges to detritus only",
+                        TRUE ~ "ERROR")
+    
+    mt_combo <- mtop_fig5_df %>%
+        filter(not_to == .midges_not_to) %>% 
+        select(-not_to)
+    
+    mt_plot <- mt_combo %>%
+        filter(pool == .pool) %>%
+        ggplot(aes(area, value)) +
+        geom_hline(yintercept = 0, color = "gray80") +
+        geom_line(aes(color = direction, linetype = type, group = id), size = 1) +
+        ggtitle(.title) +
+        facet_grid(hM ~ q) +
+        scale_color_manual(NULL, values = c(color_pal()[1], "gray60"), guide = FALSE) +
+        scale_linetype_manual(NULL, values = c(1, 1, 3:2),
+                              breaks = c("BU total", "TD net",
+                                         "TD intensification", "TD alleviation"),
+                              labels = fig5_labs) +
+        guides(linetype = guide_legend(keywidth = 2, nrow = 2, keyheight = 0.6,
+                                       override.aes = list(color = c(color_pal()[1],
+                                                                     rep("gray60", 3))),
+                                       byrow = TRUE)) +
+        xlab(expression("Total midge input (" * g ~ N ~ m^{-2} * ")")) +
+        scale_y_continuous("Total midge effect", limits = .ylims, breaks = c(0, 2, 4)) +
+        theme(strip.background = element_blank(),
+              legend.background = element_blank(),
+              legend.position = "top",
+              legend.direction = "horizontal",
+              legend.justification = "center",
+              legend.box = "vertical",
+              legend.title = element_text(size = 11, margin = margin(0,0,0,b=-4)),
+              legend.text = element_text(size = 10),
+              strip.text.y = element_text(vjust = 1),
+              plot.title = element_text(size = 12, hjust = 0.5, face = "bold", 
+                                        margin = margin(0,0,0,0))) +
+        NULL
+        
+    
+
+    if (.midges_not_to == "none") {
+        
+        mt_plot <- mt_plot +
+            theme(axis.title.y = element_text(margin = margin(0,0,0,r=12)))
+        
+    } else {
+        
+        mt_plot <- mt_plot +
+            theme(axis.title.y = element_blank())
+        
+    }
+    
+    if (.midges_not_to != "D") {
+        mt_plot <- mt_plot + 
+            theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+    } else {
+        mt_plot <- mt_plot +
+            theme(axis.title.x = element_text(margin = margin(0,0,0,t=4)))
+    }
+    
+    return(mt_plot)
+    
+}
+
+
+
+mtop_fig5_plot_list <- tibble(.midges_not_to = c("X", "none", "D")) %>%  
+    pmap(mtop_fig5_plot)
+
+legend <- get_legend(
+  # create some space below the legend
+  mtop_fig5_plot_list[[1]] + theme(legend.box.margin = margin(0, 0, 0, b = 12))
+)
+
+# Remove legends from plots:
+mtop_fig5_plot_list <- map(mtop_fig5_plot_list, ~ .x + theme(legend.position = "none"))
+
+mtop_fig5_plot <- plot_grid(plotlist = mtop_fig5_plot_list, ncol = 1, 
+                            labels = LETTERS[1:3], 
+                            label_size = 14, label_fontface = "bold", 
+                            label_x = 0.05, label_y = 0.9, align = "v")
+
+plot_grid(legend, mtop_fig5_plot, ncol = 1, rel_heights = c(0.1, 1))
+
+```
+
 
 
 
