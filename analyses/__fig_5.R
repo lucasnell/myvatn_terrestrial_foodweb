@@ -22,7 +22,7 @@ if (!dir.exists(dir)) dir.create(dir)
 
 
 
-pulse_df_fig6 <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
+pulse_df_fig5 <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
                                  "sim_combinations.csv.gz"),
                           col_types = cols(pool = "f", .default = "d")) %>%
     filter(aDV == par_estimates$aDV[1],
@@ -64,22 +64,22 @@ pulse_df_fig6 <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
 
 
 
-fig6_labs <- list(bquote(italic('BU'['total'])),
+fig5_labs <- list(bquote(italic('BU'['total'])),
                   bquote(italic('TD'['net'])),
                   bquote(italic('TD'['intensification'])),
                   bquote(italic('TD'['alleviation'])))
 
 
 
-td_bu_avail_plot <- pulse_df_fig6 %>%
+td_bu_avail_plot <- pulse_df_fig5 %>%
     filter(pool == "detritivore") %>%
     ggplot(aes(area, value)) +
     geom_hline(yintercept = 0, color = "gray80") +
     geom_line(aes(color = direction, linetype = type, group = id), size = 1) +
-    geom_text(data = tibble(area =  0, value = max(pulse_df_fig6$value),
-                            hM = pulse_df_fig6$hM %>% unique() %>%
+    geom_text(data = tibble(area =  0, value = max(pulse_df_fig5$value),
+                            hM = pulse_df_fig5$hM %>% unique() %>%
                                 sort() %>% rep(each = 2),
-                            q = pulse_df_fig6$q %>% unique() %>%
+                            q = pulse_df_fig5$q %>% unique() %>%
                                 sort() %>% rep(2),
                             labs = letters[1:4]),
               aes(label = labs), hjust = 0, vjust = 1,
@@ -89,7 +89,7 @@ td_bu_avail_plot <- pulse_df_fig6 %>%
     scale_linetype_manual(NULL, values = c(1, 1, 3:2),
                           breaks = c("BU total", "TD net",
                                      "TD intensification", "TD alleviation"),
-                          labels = fig6_labs) +
+                          labels = fig5_labs) +
     guides(linetype = guide_legend(keywidth = 2, nrow = 2, keyheight = 0.6,
                                    override.aes = list(color = c(color_pal()[1],
                                                                  rep("gray60", 3))),
