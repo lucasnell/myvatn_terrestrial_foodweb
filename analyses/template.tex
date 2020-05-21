@@ -404,32 +404,32 @@ $if(title)$
     $endif$
 $endif$
 
-% $for(include-before)$
-%     $include-before$
-% $endfor$
-%
-%
-% $if(toc)$
-%     $if(beamer)$
-%         \begin{frame}
-%         \tableofcontents[hideallsubsections]
-%         \end{frame}
-%     $else$
-%     {
-%         $if(colorlinks)$
-%             \hypersetup{linkcolor=$if(toccolor)$$toccolor$$else$$endif$}
-%         $endif$
-%         \setcounter{tocdepth}{$toc-depth$}
-%         \tableofcontents
-%     }
-%     $endif$
-% $endif$
-% $if(lot)$
-%     \listoftables
-% $endif$
-% $if(lof)$
-%     \listoffigures
-% $endif$
+$for(include-before)$
+    $include-before$
+$endfor$
+
+
+$if(toc)$
+    $if(beamer)$
+        \begin{frame}
+        \tableofcontents[hideallsubsections]
+        \end{frame}
+    $else$
+    {
+        $if(colorlinks)$
+            \hypersetup{linkcolor=$if(toccolor)$$toccolor$$else$$endif$}
+        $endif$
+        \setcounter{tocdepth}{$toc-depth$}
+        \tableofcontents
+    }
+    $endif$
+$endif$
+$if(lot)$
+    \listoftables
+$endif$
+$if(lof)$
+    \listoffigures
+$endif$
 
 \raggedright
 

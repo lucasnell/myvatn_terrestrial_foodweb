@@ -14,6 +14,7 @@ graphics: true
 colorlinks: true
 supplemental: true
 mathspec: true
+lof: true
 output:
     bookdown::pdf_document2:
         fig_caption: yes
@@ -21,6 +22,8 @@ output:
         latex_engine: xelatex
         number_sections: false
         dev: cairo_pdf
+        toc: true
+        toc_depth: 1
 author:
     - name: Matthew A. McCary
       nums: "1,*,§"
@@ -67,6 +70,13 @@ if (!isTRUE(getOption('knitr.in.progress')) && file.exists(".Rprofile")) {
   source(".Rprofile")
 }
 
+# Clean captions
+cc <- function(.x) {
+    .x <- gsub("\n", "", .x)
+    .x <- gsub("\\s+", " ", .x)
+    return(.x)
+}
+
 parlist <- par_estimates %>%
         filter(V==1, H==1, X==1, iI == 10) %>%
         as.list()
@@ -107,8 +117,9 @@ H_loss <- function(H, X, V, M, q, hM = parlist[["hM"]], .no_M_to_X = FALSE) {
 
 
 
-## Appendix S1
+\clearpage 
 
+# Appendix S1: Supplementary Figures
 
 
 
@@ -143,18 +154,22 @@ supp_sims1 <- crossing(.aDV = c(par_estimates$aDV[1], par_estimates$aPH[1]),
 
 
 ```{r figure-s1-caption}
-s1_caption <- paste("Time series of the bottom-up",
-                    "effects on detritivore and herbivore pools with (a,b) low and",
-                    "(c,d) high herbivore uptake rates, and with (a,c) low and",
-                    "(b,d) high detritivore uptake rates.",
-                    "Parameter values are as in Table 1, with low $a_D = 0.012$,",
-                    "low $a_P = 0.012$, high $a_D = 0.032$, high $a_P = 0.032$,",
-                    "$w = 20$, $b = 20$, and $q = 3$.")
+s1_caption <- "Time series of the bottom-up
+               effects on detritivore and herbivore pools with (a,b) low and
+               (c,d) high herbivore uptake rates ($a_P$), and with (a,c) low and
+               (b,d) high detritivore uptake rates ($a_D$).
+               Parameter values are as in Table 1, with low $a_D = 0.012$,
+               low $a_P = 0.012$, high $a_D = 0.032$, high $a_P = 0.032$,
+               $w = 20$, $b = 20$, and $q = 3$." %>% 
+    cc()
+s1_caption_short <- "Effects of varying herbivore and detritivore uptake rates on
+                     bottom-up effects" %>% 
+    cc()
 ```
 
 
 
-```{r figure-s1, fig.width=5, fig.height=4, fig.cap=s1_caption}
+```{r figure-s1, fig.width=5, fig.height=4, fig.cap=s1_caption, fig.scap=s1_caption_short}
 
 trans_p3 <- ggplot(data = NULL) +
     geom_hline(yintercept = 0, color = "gray70") +
@@ -196,149 +211,20 @@ trans_p3
 
 
 
-
-
-
-
-
-
-
-
-```{r figure-s2-caption}
-s2_caption <- paste("Cumulative midge effect on total bottom-up control",
-                    "(\"$BU_{total}$\"), total top-down control (\"$TD_{net}$\"),",
-                    "top-down intensification, and",
-                    "top-down alleviation as a function of total midge inputs.",
-                    "Data are from herbivores.",
-                    "Parameter values are as in Table 1, with",
-                    "low $q = 0.8$,",
-                    "high $q = 8$, low $h_M = 1.3$, high $h_M = 5.3$, $w = 20$, and",
-                    "$b$ ranging from 0.1 to 23 to produce different total midge inputs.")
-```
-
-
-```{r figure-s2, fig.width=5, fig.height=5, fig.cap=s2_caption}
-
-full_pulse_df <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
-                                 "sim_combinations.csv.gz"),
-                         col_types = cols(pool = "f", .default = "d"))
-
-pulse_df <- full_pulse_df %>%
-    filter(muM == par_estimates$muM[1],
-           hM == par_estimates$hM[1],
-           aDV == par_estimates$aDV[1],
-           aPH == par_estimates$aPH[1]) %>%
-    select(-muM, -hM, -aDV, -aPH)
-
-
-pulse_df_s2 <- full_pulse_df %>%
-    filter(aDV == par_estimates$aDV[1],
-           aPH == par_estimates$aPH[1],
-           pool == "soil",
-           muM == median(muM),
-           q %in% range(q),
-           hM %in% range(hM)) %>%
-    mutate(area = w * b,
-           q = factor(q, levels = sort(unique(q)),
-                      labels = sprintf("%s midge\nexploitation",
-                                       c("low", "high"))),
-           hM = factor(hM, levels = sort(unique(hM)),
-                       labels = paste(c("low", "high"),
-                                      "midge\nhandling time"))) %>%
-    select(area, q, muM, hM,
-           cum_pos_loss_H,
-           cum_neg_loss_H,
-           cum_gain_H) %>%
-    mutate(cum_loss_H = cum_pos_loss_H + cum_neg_loss_H,
-           # Changing to magnitudes
-           cum_neg_loss_H = abs(cum_neg_loss_H)) %>%
-    gather("variable", "value", cum_pos_loss_H:cum_loss_H) %>%
-    mutate(direction = factor(ifelse(grepl("loss", variable), "top-down", "bottom-up")),
-           type = factor(case_when(
-               grepl("^cum_pos_loss", variable) ~ "TD intensification",
-               grepl("^cum_neg_loss", variable) ~ "TD alleviation",
-               grepl("^cum_loss_", variable) ~ "TD net",
-               TRUE ~ "BU total"
-           ), levels = c("BU total", "TD net",
-                         "TD intensification", "TD alleviation"))) %>%
-    select(-variable) %>%
-    mutate(id = interaction(direction, type)) %>%
-    filter(area < 500) %>%
-    identity()
-
-
-
-
-s2_labs <- list(bquote(italic('BU'['total'])),
-                  bquote(italic('TD'['net'])),
-                  bquote(italic('TD'['intensification'])),
-                  bquote(italic('TD'['alleviation'])))
-
-
-
-plot_s2 <- pulse_df_s2 %>%
-    ggplot(aes(area, value)) +
-    geom_hline(yintercept = 0, color = "gray80") +
-    geom_line(aes(color = direction, linetype = type, group = id), size = 1) +
-    geom_text(data = tibble(area =  0, value = max(pulse_df_s2$value),
-                            hM = pulse_df_s2$hM %>% unique() %>%
-                                sort() %>% rep(each = 2),
-                            q = pulse_df_s2$q %>% unique() %>%
-                                sort() %>% rep(2),
-                            labs = letters[1:4]),
-              aes(label = labs), hjust = 0, vjust = 1,
-              size = 12 / 2.835) +
-    facet_grid(hM ~ q) +
-    scale_color_manual(NULL, values = c(color_pal()[2], "gray50"), guide = FALSE) +
-    scale_linetype_manual(NULL, values = c(1, 1, 3:2),
-                          breaks = c("BU total", "TD net",
-                                     "TD intensification", "TD alleviation"),
-                          labels = s2_labs) +
-    guides(linetype = guide_legend(keywidth = 2, nrow = 2, keyheight = 0.6,
-                                   override.aes = list(color = c(color_pal()[2],
-                                                                 rep("gray50", 3))),
-                                   byrow = TRUE)) +
-    xlab(expression("Total midge input (" * g ~ N ~ m^{-2} * ")")) +
-    scale_y_continuous("Total midge effect") + #, limits = c(0, 4.3)) +
-    theme(strip.background = element_blank(),
-          legend.background = element_blank(),
-          legend.position = "top",
-          legend.direction = "horizontal",
-          legend.justification = "center",
-          legend.box = "vertical",
-          legend.title = element_text(size = 11, margin = margin(0,0,0,b=-4)),
-          legend.text = element_text(size = 10, family = "CMU Serif"),
-          strip.text.y = element_text(vjust = 1)) +
-    NULL
-
-
-plot_s2
-
-```
-
-
-
-\clearpage
-
-
-## New figures
-
-
-### Absolute N
-
-This is figure 2 but with absolute N values, not relative to $N_0$.
-
 ```{r fig2-with-absolutes-caption}
-fig2_abs_caption <- paste("Time series of N content among all six pools.",
-                    "Lines indicate the N content at time $t$.",
-                    "The lower black bar represents the duration of the midge N pulse.",
-                    "Parameter values are as in Table 1, with predator exploitation",
-                    "$q = 3$, pulse duration $w = 20$, and pulse rate $b = 50$.")
+fig2_abs_caption <- "Time series of N content among all six pools.
+                     Lines indicate the N content at time $t$.
+                     The lower black bar represents the duration of the midge N pulse.
+                     Parameter values are as in Table 1, with
+                     predator exploitation $q = 3$,
+                     pulse duration $w = 20$, and pulse rate $b = 50$." %>% 
+    cc()
+fig2_abs_caption_short <- "Time series of absolute N content in response to a midge pulse"
 ```
 
 
 
-```{r fig2-with-absolutes, fig.width=6, fig.height=5, fig.cap=fig2_abs_caption}
+```{r fig2-with-absolutes, fig.width=6, fig.height=5, fig.cap=fig2_abs_caption, fig.scap=fig2_abs_caption_short}
 
 
 middle_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
@@ -402,28 +288,28 @@ trans_pS1
 \clearpage
 
 
-### Return to equilibrium
 
-This is running with no pulse, but with non-equilibrium starting values.
 
 ```{r start-not-at-equilibrium-caption}
-nae_caption <- paste("Time series of proportional changes in N content among all six",
-                     "pools with no midge pulse and when starting N content",
-                     "($N_0$) was randomized.",
-                     "We ran 20 repetitions, each with different random starting N",
-                     "for each pool",
-                     "[$N_0 \\sim \\text{Uniform}(0.5 \\: N_{eq}, \\; 1.5 \\: N_{eq})$].",
-                     "Sub-panels separate repetitions.",
-                     "Lines indicate the N content at time $t$ relative to the ",
-                     "equilibrium value [i.e. $(N_t - N_{eq}) / N_{eq}$].",
-                     "Points indicate the starting N content relative to the ",
-                     "equilibrium value [i.e. $(N_0 - N_{eq}) / N_{eq}$].",
-                     "Parameter values are as in Table 1.")
+nae_caption <- "Time series of proportional changes in N content among all six
+                pools with no midge pulse and when starting N content
+                ($N_0$) was randomized.
+                We ran 20 repetitions, each with different random starting N
+                for each pool
+                [$N_0 \\sim \\text{Uniform}(0.5 \\: N_{eq}, \\; 1.5 \\: N_{eq})$].
+                Sub-panels separate repetitions.
+                Lines indicate the N content at time $t$ relative to the 
+                equilibrium value [i.e. $(N_t - N_{eq}) / N_{eq}$].
+                Points indicate the starting N content relative to the 
+                equilibrium value [i.e. $(N_0 - N_{eq}) / N_{eq}$].
+                Parameter values are as in Table 1." %>% 
+    cc()
+nae_caption_short <- "Time series for the return to equilibrium N content"
 ```
 
 
 
-```{r start-not-at-equilibrium, fig.width=6, fig.height=6.75, fig.cap=nae_caption}
+```{r start-not-at-equilibrium, fig.width=6, fig.height=6.75, fig.cap=nae_caption, fig.scap=nae_caption_short}
 
 
 not_at_eq <- function(.r) {
@@ -483,30 +369,33 @@ nae_p
 
 \clearpage
 
-### Varying nutrient input and loss
 
 
-This varies $i_I$ and $\mu_I$, the inorganic nutrient input rate and density-independent
-loss of soil nutrients, respectively.
+
 
 
 ```{r vary-iI-muI-timeseries-caption}
-vain_ts_caption <- paste("Time series of proportional changes in N content among all six",
-                     "pools with varying values of $i_I$ and $\\mu_I$,",
-                     "the inorganic nutrient input rate and density-independent",
-                     "loss of soil nutrients, respectively.",
-                     "Sub-panel labels indicate the values of each parameter, and",
-                     "middle values are the defaults used in the main text.",
-                     "Lines indicate the N content at time $t$ relative to the ",
-                     "starting value [i.e. $(N_t - N_{0}) / N_{0}$].",
-                     "Parameter values are as in Table 1, with",
-                     "predator exploitation $q = 3$, pulse duration $w = 0$, and",
-                     "pulse rate $b = 0$.")
+vain_ts_caption <- "Time series of proportional changes in N content among all six
+                    pools with varying values of $i_I$ and $\\mu_I$,
+                    the inorganic nutrient input rate and density-independent
+                    loss of soil nutrients, respectively.
+                    Sub-panel labels indicate the values of each parameter, and
+                    middle values are the defaults used in the main text.
+                    Lines indicate the N content at time $t$ relative to the 
+                    starting value [i.e. $(N_t - N_{0}) / N_{0}$].
+                    Parameter values are as in Table 1, with
+                    predator exploitation $q = 3$, pulse duration $w = 0$, and
+                    pulse rate $b = 0$." %>% 
+    cc()
+vain_ts_caption_short <- "Time series of N content in response a midge pulse, while
+                          varying the inorganic nutrient input rate and 
+                          density-independent loss of soil nutrients" %>% 
+    cc()
 ```
 
 
 
-```{r vary-iI-muI-timeseries, fig.width=6, fig.height=5.5, fig.cap=vain_ts_caption}
+```{r vary-iI-muI-timeseries, fig.width=6, fig.height=5.5, fig.cap=vain_ts_caption, fig.scap=vain_ts_caption_short}
 
 
 vary_iI_muI <- function(.iI, .muI) {
@@ -567,16 +456,20 @@ vain_p
 
 
 ```{r vary-iI-muI-equil-caption}
-vain_equil_caption <- paste("Equilibrium N pool size for all six", 
-                            "pools versus the the inorganic nutrient input rate ($i_I$).",
-                            "Line type indicates the density-independent loss of soil",
-                            "nutrients ($\\mu_I$).",
-                            "Parameter values are as in Table 1.")
+vain_equil_caption <- "Equilibrium N pool size for all six
+                       pools versus the inorganic nutrient input rate ($i_I$).
+                       Line type indicates the density-independent loss of soil
+                       nutrients ($\\mu_I$).
+                       Parameter values are as in Table 1." %>% 
+    cc()
+vain_equil_caption_short <- "Effects of the inorganic nutrient input rate and 
+                             density-independent loss of soil
+                             nutrients on equilibrium N pool sizes"
 ```
 
 
 
-```{r vary-iI-muI-equil, fig.width=6, fig.height=4.5, fig.cap=vain_equil_caption}
+```{r vary-iI-muI-equil, fig.width=6, fig.height=4.5, fig.cap=vain_equil_caption, fig.scap=vain_equil_caption_short}
 
 vary_iI_muI_equil <- function(.) {
     Z <- equil_pools(iI = .$iI[1], muI = .$muI[1])
@@ -620,37 +513,39 @@ vain_equil_p
 
 
 
-### No detritivores and no herbivores
-
-These are simulations with no herbivores or no detritivores
-
-##### Fig 3
-
-This is a version of figure 3 with no herbivores or detritivores
-
 
 ```{r no-H-V-fig3-caption}
-nohv_fig3_caption <- paste("Time series of proportional changes in N content for detritivore",
-                      "and herbivore pools with low and high predator exploitation of",
-                      "midges (indicated by the left y-axis).",
-                      "This is shown for when (a) no detritivores are present,",
-                      "(b) both are present, and",
-                      "(c) no herbivores are present.",
-                      "The blue shaded regions represent the proportional change in",
-                      "N for predators, which is indicated by the right y-axis.",
-                      "Different y-axis scales are used to aid visualization of",
-                      "the transient dynamics of the herbivores and detritivores,",
-                      "which had a weaker response to the pulse than predators for",
-                      "the selected parameter values.",
-                      "The lower black bar represents the duration of the midge N pulse.",
-                      "Parameter values are as in Table 1, with low exploitation",
-                      "$q = 8 \\times 10^{-3}$, high exploitation $q = 8$,",
-                      "pulse duration $w = 20$, and pulse rate $b = 20$.")
+nohv_fig3_caption <- "Time series of proportional changes in N content for
+                      detritivore and herbivore pools with low and high
+                      predator exploitation of
+                      midges (indicated by the left y-axis).
+                      This is shown for when (a) no detritivores are present,
+                      (b) both are present, and
+                      (c) no herbivores are present.
+                      (a,c) When either detritivores or herbivores were absent,
+                      we solved for the other equilibrium pool sizes
+                      before running the simulations.
+                      The blue shaded regions represent the proportional change in
+                      N for predators, which is indicated by the right y-axis.
+                      Different y-axis scales are used to aid visualization of
+                      the transient dynamics of the herbivores and detritivores,
+                      which had a weaker response to the pulse than predators for
+                      the selected parameter values.
+                      The lower black bar represents the duration of the midge N pulse.
+                      Parameter values are as in Table 1, with low exploitation
+                      $q = 8 \\times 10^{-3}$, high exploitation $q = 8$,
+                      pulse duration $w = 20$, and pulse rate $b = 20$." %>% 
+    cc()
+
+nohv_fig3_caption_short <- "Time series of N content in response to a midge pulse, with
+                            varying midge exploitation and with herbivores or 
+                            detritivores removed" %>% 
+    cc()
 ```
 
 
 
-```{r no-H-V-fig3, fig.width=6, fig.height=6.5, fig.cap=nohv_fig3_caption}
+```{r no-H-V-fig3, fig.width=6, fig.height=6.5, fig.cap=nohv_fig3_caption, fig.scap=nohv_fig3_caption_short}
 
 
 
@@ -823,30 +718,33 @@ ggarrange(plots = nohv_fig3_plot_list, ncol = 1, labels = sprintf("(%s)", letter
 
 
 
-##### Fig 4
-
-
-This is a version of figure 4 with no herbivores or detritivores
-
 
 ```{r no-H-V-fig4-caption}
-nohv_fig4_caption <- paste("Time series of the top-down (\"TD\") and bottom-up (\"BU\")",
-                           "effects on detritivore and herbivore pools with low and",
-                           "high predator exploitation of midges.",
-                           "This is shown for when (a) no detritivores are present,",
-                           "(b) both are present, and",
-                           "(c) no herbivores are present.",
-                           "The gray line indicates the top-down effects on both",
-                           "detritivore and herbivore pools, as they are identical",
-                           "in the model.",
-                           "Parameter values are as in Table 1, with low exploitation",
-                           "$q = 8 \\times 10^{-3}$, high exploitation $q = 8$,",
-                           "pulse duration $w = 20$, and pulse rate $b = 20$.")
+nohv_fig4_caption <- "Time series of the top-down (\"TD\") and bottom-up (\"BU\")
+                      effects on detritivore and herbivore pools with low and
+                      high predator exploitation of midges.
+                      This is shown for when (a) no detritivores are present,
+                      (b) both are present, and
+                      (c) no herbivores are present.
+                      (a,c) When either detritivores or herbivores were absent,
+                      we solved for the other equilibrium pool sizes
+                      before running the simulations.
+                      The gray line indicates the top-down effects on both
+                      detritivore and herbivore pools, as they are identical
+                      in the model.
+                      Parameter values are as in Table 1, with low exploitation
+                      $q = 8 \\times 10^{-3}$, high exploitation $q = 8$,
+                      pulse duration $w = 20$, and pulse rate $b = 20$." %>% 
+    cc()
+nohv_fig4_caption_short <- "Time series of top-down and bottom-up effects, with
+                            varying midge exploitation and with herbivores or 
+                            detritivores removed" %>% 
+    cc()
 ```
 
 
 
-```{r no-H-V-fig4, fig.width=6, fig.height=6.5, fig.cap=nohv_fig4_caption}
+```{r no-H-V-fig4, fig.width=6, fig.height=6.5, fig.cap=nohv_fig4_caption, fig.scap=nohv_fig4_caption_short}
 
 
 
@@ -935,12 +833,13 @@ nohv_fig4_plot <- function(.H, .V, .ylims = c(-0.037, 0.144)) {
         theme(legend.position = "none",
               strip.text = element_text(face = "plain", size = 11,
                                         margin = margin(b = 4)),
-              panel.spacing.x = unit(2.5, "lines"),
+              panel.spacing.x = unit(1.5, "lines"),
+              plot.margin = margin(0,t=12,b=12,r=4),
               strip.background = element_blank(),
               axis.text = element_text(size = 10, color = "black"),
               axis.title = element_text(size = 12),
               plot.title = element_text(size = 12, hjust = 0.5, face = "plain", 
-                                        margin = margin(0,0,0,b=10)))
+                                        margin = margin(0,0,0,b=6)))
     
 
     if (.H == 1 && .V == 1) {
@@ -985,7 +884,7 @@ nohv_fig4_plot_list <- crossing(.H = 0L:1L, .V = 0L:1L) %>%
 
 ggarrange(plots = nohv_fig4_plot_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]),
           label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"), 
-                            vjust = 2, hjust = -1.5))
+                            vjust = 2, hjust = -2))
 ```
 
 
@@ -994,71 +893,42 @@ ggarrange(plots = nohv_fig4_plot_list, ncol = 1, labels = sprintf("(%s)", letter
 
 
 
-### Midges just to detritivores or herbivores
-
-These are simulations where midges only go to predators or only to detritus.
-
-
-When midges only go to predators, we changed the following:
-
-
-$$
-\frac{dD}{dt} = {\color{red} \cancel{(1 - l) \mu_M M} } + (1 - l) \sum_{j \in \{ P,V,H,X \}}{ (\mu_j + m_j j) j } - 
-    \frac{ a_D D V }{1 + a_D h_D D} - \mu_D D
-$$
-
-
-$\frac{dM}{dt}$ remains the same (i.e. it retains the $- \mu_M M$ term) so that 
-midges do not build up indefinitely.
 
 
 
-When midges only go to detritus, we changed the following:
-
-
-\begin{align*}
-\frac{dV}{dt} &= \frac{ a_D D V }{ 1 + a_D h_D D } - \frac{a_X V X }{ 1 + a_X h_X H + a_X h_X V {\color{red} \cancel{+ q a_X h_M M}} } - (\mu_V + m_V V) V \\
-\frac{dH}{dt} &= \frac{ a_P P H }{ 1 + a_P h_P P } - \frac{a_X H X }{ 1 + a_X h_X H + a_X h_X V + {\color{red} \cancel{q a_X h_M M}} } - (\mu_H + m_H H) H \\
-\frac{dX}{dt} &= \frac{ (a_X V + a_X H {\color{red} \cancel{+ q a_X M}}) X }{ 1 + a_X h_X H + a_X h_X V {\color{red} \cancel{+ q a_X h_M M}} } - (\mu_X + m_X X) X \\
-\frac{dM}{dt} &= i_{M(t)} {\color{red} \cancel{- \frac{q a_X M X }{ 1 + a_X h_X H + a_X h_X V + q a_X h_M M }}} - \mu_M M
-\end{align*}
-
-
-
-
-
-
-
-##### Fig 5
-
-
-This is a version of figure 5 where midges only go to predators or only to detritus
 
 
 ```{r M-to-one-pool-fig5-caption}
-mtop_fig5_caption <- paste("Cumulative midge effect on total bottom-up control",
-                           "(\"BU total\") for detritivores,",
-                           "net top-down control (\"TD net\"),",
-                           "top-down intensification, and top-down alleviation",
-                           "as a function of total midge inputs.",
-                           "This is shown for when (a) midges only go to the detritus pool,",
-                           "(b) midges go to both detritus and predator pools, and",
-                           "(c) midges only go to the predator pool.",
-                           "The panels show different combinations of high and",
-                           "low predator exploitation and handling times on midges.",
-                           "Parameter values are as in Table 1, with",
-                           "low exploitation $q = 0.8$,", 
-                           "high exploitation $q = 8$,", 
-                           "low midge handling time $h_M = 1.3$,", 
-                           "high midge handling time $h_M = 5.3$,", 
-                           "pulse duration $w = 20$, and", 
-                           "pulse rate $b$ ranging from 0.1 to 23 to produce", 
-                           "different total midge inputs.")
+mtop_fig5_caption <- "Cumulative midge effect on
+                      total bottom-up control on detritivores (${}^V BU_{total}$)
+                      total bottom-up control on herbivores (${}^H BU_{total}$),
+                      net top-down control ($TD_{net}$),
+                      top-down intensification, and top-down alleviation
+                      as a function of total midge inputs.
+                      This is shown for when (a) midges only go to the detritus pool,
+                      (b) midges go to both detritus and predator pools, and
+                      (c) midges only go to the predator pool.
+                      The panels show different combinations of high and
+                      low predator exploitation and handling times on midges.
+                      Parameter values are as in Table 1, with
+                      low exploitation $q = 0.8$,
+                      high exploitation $q = 8$,
+                      low midge handling time $h_M = 1.3$,
+                      high midge handling time $h_M = 5.3$,
+                      pulse duration $w = 20$, and
+                      pulse rate $b$ ranging from 0.1 to 23 to produce
+                      different total midge inputs." %>% 
+    cc()
+
+mtop_fig5_caption_short <- "Total effect of midges on bottom-up and top-down control, 
+                            with varying midge exploitation and handling time, 
+                            and with midges going only to detritus or to predators" %>% 
+    cc()
 ```
 
 
 
-```{r M-to-one-pool-fig5, fig.width=6.5, fig.height=7.5, fig.cap=mtop_fig5_caption}
+```{r M-to-one-pool-fig5, fig.width=6.5, fig.height=7.5, fig.cap=mtop_fig5_caption, fig.scap=mtop_fig5_caption_short}
 
 
 do_mtop_fig5 <- function(.midges_not_to) {
@@ -1115,8 +985,7 @@ do_mtop_fig5 <- function(.midges_not_to) {
                                     TRUE ~ NA_character_) %>% 
                        factor(levels = c("BU total", "TD net", 
                                          "TD intensification", "TD alleviation"))) %>%
-            select(-variable) %>%
-            mutate(id = interaction(direction, type))
+            select(-variable)
         
         if (sum(is.na(fw$type)) > 0) stop("Error in processing `type` column.")
         
@@ -1146,16 +1015,25 @@ mtop_fig5_df <- mclapply(c("X", "none", "D"), do_mtop_fig5,
     bind_rows()
 
 
+
+
 mtop_fig5_plot <- function(.midges_not_to, 
-                           .ylims = c(-0.688, 4.305), 
-                           .pool = "detritivore") {
+                           .ylims = c(-0.688, 4.305)) {
     
-    fig5_labs <- list(bquote(italic('BU'['total'])),
+    fig5_labs <- list(bquote(italic({}^'V' * 'BU'['total'])),
+                      bquote(italic({}^'H' * 'BU'['total'])),
                       bquote(italic('TD'['net'])),
                       bquote(italic('TD'['intensification'])),
                       bquote(italic('TD'['alleviation'])))
+    fig5_lvls <- c("detritivore BU total", 
+                   "herbivore BU total", 
+                   "TD net", 
+                   "TD intensification", 
+                   "TD alleviation")
     
-    # .midges_not_to = "D"; .ylims = c(-0.688, 4.305); .pool = "detritivore"
+    .colors <- c(color_pal()[1:2], "gray60", "gray30", "gray60")
+    
+    # .midges_not_to = "D"; .ylims = c(-0.688, 4.305)
     # rm(.midges_not_to, .ylims, .pool)
     
     
@@ -1166,23 +1044,26 @@ mtop_fig5_plot <- function(.midges_not_to,
     
     mt_combo <- mtop_fig5_df %>%
         filter(not_to == .midges_not_to) %>% 
-        select(-not_to)
+        select(-not_to) %>%
+        mutate(id = ifelse(grepl("^TD", type), paste(type), 
+                           sprintf("%s %s", paste(pool), paste(type))),
+               id = factor(id, levels = fig5_lvls)) %>% 
+        group_by(id, area, q, hM) %>% 
+        summarize(value = value[1]) %>% 
+        ungroup()
     
-    mt_plot <- mt_combo %>%
-        filter(pool == .pool) %>%
+    mt_plot <- mt_combo %>% 
         ggplot(aes(area, value)) +
         geom_hline(yintercept = 0, color = "gray80") +
-        geom_line(aes(color = direction, linetype = type, group = id), size = 0.75) +
+        geom_line(aes(color = id, linetype = id), size = 0.75) +
         ggtitle(.title) +
         facet_grid(hM ~ q) +
-        scale_color_manual(NULL, values = c(color_pal()[1], "gray60"), guide = FALSE) +
-        scale_linetype_manual(NULL, values = c(1, 1, 3:2),
-                              breaks = c("BU total", "TD net",
-                                         "TD intensification", "TD alleviation"),
+        scale_color_manual(NULL, values = .colors, guide = FALSE) +
+        scale_linetype_manual(NULL, values = c(1, 1, 1, 3:2),
+                              breaks = fig5_lvls,
                               labels = fig5_labs) +
         guides(linetype = guide_legend(keywidth = 2, ncol = 1, keyheight = 0.6,
-                                       override.aes = list(color = c(color_pal()[1],
-                                                                     rep("gray60", 3))),
+                                       override.aes = list(color = .colors, size = 1),
                                        byrow = TRUE)) +
         xlab(expression("Total midge input (" * g ~ N ~ m^{-2} * ")")) +
         scale_y_continuous("Total midge effect", limits = .ylims, breaks = c(0, 2, 4)) +
@@ -1192,10 +1073,10 @@ mtop_fig5_plot <- function(.midges_not_to,
               legend.justification = "left",
               legend.box = "vertical",
               legend.title = element_text(size = 11, margin = margin(0,0,0,b=-4)),
-              legend.text = element_text(size = 10),
+              legend.text = element_text(size = 10, family = "CMU Serif"),
               strip.background = element_blank(),
-              strip.text.y = element_text(vjust = 0.5, hjust = 0, size = 11, angle = 0),
-              strip.text.x = element_text(size = 11),
+              strip.text.y = element_text(vjust = 0.5, hjust = 0, size = 9, angle = 0),
+              strip.text.x = element_text(size = 9),
               panel.spacing.x = unit(1.5, "lines"),
               plot.margin = margin(0,t=12,b=12,r=4),
               plot.title = element_text(size = 12, hjust = 0.5, face = "plain", 
@@ -1234,17 +1115,44 @@ mtop_fig5_plot <- function(.midges_not_to,
 mtop_fig5_plot_list <- tibble(.midges_not_to = c("X", "none", "D")) %>%  
     pmap(mtop_fig5_plot)
 
-
 ggarrange(plots = mtop_fig5_plot_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]),
           label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"), 
                             vjust = 2, hjust = -1))
+
 ```
 
 
 
+\clearpage
+
+# Appendix S2: Supplementary Methods
+
+
+## Simulating midges only going to predators or only to detritus
+
+
+When midges only go to predators, we changed the following:
+
+
+$$
+\frac{dD}{dt} = {\color{red} \cancel{(1 - l) \mu_M M} } + (1 - l) \sum_{j \in \{ P,V,H,X \}}{ (\mu_j + m_j j) j } - 
+    \frac{ a_D D V }{1 + a_D h_D D} - \mu_D D
+$$
+
+
+$\frac{dM}{dt}$ remains the same (i.e. it retains the $- \mu_M M$ term) so that 
+midges do not build up indefinitely.
 
 
 
+When midges only go to detritus, we changed the following:
 
+
+\begin{align*}
+\frac{dV}{dt} &= \frac{ a_D D V }{ 1 + a_D h_D D } - \frac{a_X V X }{ 1 + a_X h_X H + a_X h_X V {\color{red} \cancel{+ q a_X h_M M}} } - (\mu_V + m_V V) V \\
+\frac{dH}{dt} &= \frac{ a_P P H }{ 1 + a_P h_P P } - \frac{a_X H X }{ 1 + a_X h_X H + a_X h_X V + {\color{red} \cancel{q a_X h_M M}} } - (\mu_H + m_H H) H \\
+\frac{dX}{dt} &= \frac{ (a_X V + a_X H {\color{red} \cancel{+ q a_X M}}) X }{ 1 + a_X h_X H + a_X h_X V {\color{red} \cancel{+ q a_X h_M M}} } - (\mu_X + m_X X) X \\
+\frac{dM}{dt} &= i_{M(t)} {\color{red} \cancel{- \frac{q a_X M X }{ 1 + a_X h_X H + a_X h_X V + q a_X h_M M }}} - \mu_M M
+\end{align*}
 
 
