@@ -20,6 +20,32 @@ if (!dir.exists(dir)) dir.create(dir)
 
 
 
+fig5_caption <- paste("Cumulative midge effect on total bottom-up control",
+                      "(\"BU total\"), net top-down control (\"TD net\"),",
+                      "top-down intensification, and top-down alleviation",
+                      "as a function of total midge inputs.",
+                      "The panels show different combinations of high and",
+                      "low predator exploitation and handling times on midges.",
+                      "Data are from detritivores; herbivores gave broadly",
+                      "similar responses to the cumulative midge effects (Fig. S2).",
+                      "Parameter values are as in Table 1, with",
+                      "low exploitation $q = 0.8$,",
+                      "high exploitation $q = 8$,",
+                      "low midge handling time $h_M = 1.3$,",
+                      "high midge handling time $h_M = 5.3$,",
+                      "pulse duration $w = 20$, and",
+                      "pulse rate $b$ ranging from 0.1 to 23 to produce",
+                      "different total midge inputs.")
+
+
+
+# ================================================================================*
+# ================================================================================*
+
+# Gather data ----
+
+# ================================================================================*
+# ================================================================================*
 
 
 pulse_df_fig5 <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
@@ -62,6 +88,16 @@ pulse_df_fig5 <- read_csv(paste0("~/Box Sync/Iceland Food Web Model/Results/",
     filter(area < 500) %>%
     identity()
 
+
+
+
+# ================================================================================*
+# ================================================================================*
+
+# Make and write figure ----
+
+# ================================================================================*
+# ================================================================================*
 
 
 fig5_labs <- list(bquote(italic('BU'['total'])),
@@ -114,3 +150,22 @@ td_bu_avail_plot
 dev.off()
 
 
+
+
+
+
+# ================================================================================*
+# ================================================================================*
+
+# Write caption ----
+
+# ================================================================================*
+# ================================================================================*
+
+
+
+cf <- file(paste0(dir, "captions.txt"), "a")
+
+writeLines(paste0("Figure 5. ", fig5_caption, "\n"), cf)
+
+close(cf)

@@ -104,7 +104,7 @@ fig2_p <- fig2_sim %>%
     geom_text(data = tibble(time =  rep(0, 2),
                             N = rep(max_N, 2),
                             level = factor(paste(c("Upper", "Lower"), "trophic levels")),
-                            labs = letters[1:2]),
+                            labs = sprintf("(%s)", letters[1:2])),
               aes(label = labs), hjust = 0, vjust = 1, size = 12 / 2.835)
 # fig2_p
 
@@ -130,9 +130,10 @@ dev.off()
 fig3_caption <- paste("Time series of proportional changes in N content for",
                       "detritivore and herbivore pools (indicated by the left",
                       "y-axis), with low and high predator exploitation of midges.",
-                      "This is shown for when (A) midges only go to the detritus",
-                      "pool, (B) midges go to both detritus and predator pools, and",
-                      "(C) midges only go to the predator pool.",
+                      "This is shown for when",
+                      "(a) midges only go to the detritus pool,",
+                      "(b) midges go to both detritus and predator pools, and",
+                      "(c) midges only go to the predator pool.",
                       "The blue shaded regions represent the proportional change in",
                       "N for predators, which is indicated by the right y-axis.",
                       "Different y-axis scales are used to aid visualization of",
@@ -192,7 +193,7 @@ fig3_panel <- function(.midges_not_to,
 
     stopifnot(length(.midges_not_to) == 1 && .midges_not_to %in% c("none", "D", "X"))
 
-    .title <- case_when(.midges_not_to == "none" ~ "Midges to both",
+    .title <- case_when(.midges_not_to == "none" ~ "Midges to detritus and predators",
                         .midges_not_to == "D" ~ "Midges to predators only",
                         .midges_not_to == "X" ~ "Midges to detritus only",
                         TRUE ~ "ERROR")
@@ -227,7 +228,7 @@ fig3_panel <- function(.midges_not_to,
               panel.spacing.y = unit(0, "lines"),
               panel.spacing.x = unit(1.5, "lines"),
               plot.margin = margin(0,0,t=12,b=12),
-              plot.title = element_text(size = 12, hjust = 0.5, face = "bold",
+              plot.title = element_text(size = 12, hjust = 0.5, face = "plain",
                                         margin = margin(0,0,0,b = 10))) +
         scale_y_continuous("Proportional change in N", limits = .ylims,
                            breaks = c(0, 0.5, 1),
@@ -242,21 +243,27 @@ fig3_panel <- function(.midges_not_to,
             geom_text(data = tibble(time =  65,
                                     N_rel =     1.2,
                                     q = factor("high exploitation",
-                                               levels = paste(c("low", "high"), "exploitation"))),
+                                               levels = paste(c("low", "high"),
+                                                              "exploitation"))),
                       label = "predator", color = color_pal()[3], hjust = 1, vjust = 1,
                       size = 10 / 2.835) +
-            geom_text(data = tibble(pool = factor(upper_levels[upper_levels != "predator"]),
+            geom_text(data = tibble(pool = factor(c("detritivore", "herbivore")),
                                     time =  c(92, 100),
-                                    N_rel =     c(0.3, -0.1),
+                                    N_rel =     c(0.35, -0.15),
                                     q = factor(paste(rep("high", 2), "exploitation"),
-                                               levels = paste(c("low", "high"), "exploitation"))),
+                                               levels = paste(c("low", "high"),
+                                                              "exploitation"))),
                       aes(label = pool, color = pool), hjust = 1, size = 10 / 2.835) +
             geom_text(data = tibble(time = 20, N_rel = -0.2,
                                     q = factor("high exploitation",
-                                               levels = paste(c("low", "high"), "exploitation"))),
+                                               levels = paste(c("low", "high"),
+                                                              "exploitation"))),
                       label = "pulse", size = 10 / 2.835, hjust = 0.5, vjust = 1,
                       color = "black") +
-            theme(axis.title.y = element_text(margin = margin(0,0,r=4,l=10)))
+            theme(axis.title.y.left = element_text(margin = margin(0,0,0,r=12),
+                                                   size = 11),
+                  axis.title.y.right = element_text(margin = margin(0,0,0,l=12),
+                                                    size = 11))
     } else {
 
         mt_plot <- mt_plot +
@@ -269,7 +276,7 @@ fig3_panel <- function(.midges_not_to,
             theme(axis.title.x = element_blank(), axis.text.x = element_blank())
     } else {
         mt_plot <- mt_plot +
-            theme(axis.title.x = element_text(margin = margin(0,0,0,t=4)))
+            theme(axis.title.x = element_text(margin = margin(0,0,0,t=4), size = 11))
     }
 
     return(mt_plot)
@@ -278,17 +285,14 @@ fig3_panel <- function(.midges_not_to,
 
 
 
-fig3_panel("none")
-
-
 fig3_panel_list <- tibble(.midges_not_to = c("X", "none", "D")) %>%
     pmap(fig3_panel)
 
 
 cairo_pdf(file = paste0(dir, "3-N_midge_attack.pdf"), width = 6, height = 6.5)
-ggarrange(plots = fig3_panel_list, ncol = 1, labels = LETTERS[1:3],
-          label.args = list(gp = gpar(fontsize = 14, fontface =  "bold"),
-                            vjust = 2, hjust = -4))
+ggarrange(plots = fig3_panel_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]),
+          label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"),
+                            vjust = 2, hjust = -1.5))
 dev.off()
 
 
@@ -308,9 +312,9 @@ fig4_caption <- paste("Time series of the top-down (\"TD\") and bottom-up (\"BU\
                       "effects on detritivore and herbivore pools with low and",
                       "high predator exploitation of midges.",
                       "This is shown for when",
-                      "(A) midges only go to the detritus pool,",
-                      "(B) midges go to both detritus and predator pools, and",
-                      "(C) midges only go to the predator pool.",
+                      "(a) midges only go to the detritus pool,",
+                      "(b) midges go to both detritus and predator pools, and",
+                      "(c) midges only go to the predator pool.",
                       "The gray line indicates the top-down effects on both",
                       "detritivore and herbivore pools, as they are identical",
                       "in the model.",
@@ -318,6 +322,44 @@ fig4_caption <- paste("Time series of the top-down (\"TD\") and bottom-up (\"BU\
                       "$q = 8 \\times 10^{-3}$, high exploitation $q = 8$,",
                       "pulse duration $w = 20$, and pulse rate $b = 20$.")
 
+
+
+
+parlist <- par_estimates %>%
+    filter(V==1, H==1, X==1, iI == 10) %>%
+    as.list()
+
+V_gain <- function(V, D, aDV = parlist[["aDV"]]) {
+    hD <- parlist[["hD"]]
+    (aDV*D*V/(1 + aDV*hD*D)) / V
+}
+
+V_loss <- function(V, X, H, M, q, hM = parlist[["hM"]], .no_M_to_X = FALSE) {
+    aX <- parlist[["aX"]]
+    hX <- parlist[["hX"]]
+    if (!.no_M_to_X) {
+        Vl <- ((aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M)) / V
+    } else {
+        Vl <- ((aX*V*X)/(1 + aX*hX*(V + H))) / V
+    }
+    return(Vl)
+}
+
+H_gain <- function(P, H, aPH = parlist[["aPH"]]) {
+    hP <- parlist[["hP"]]
+    (aPH*P*H/(1 + aPH*hP*P)) / H
+}
+
+H_loss <- function(H, X, V, M, q, hM = parlist[["hM"]], .no_M_to_X = FALSE) {
+    aX <- parlist[["aX"]]
+    hX <- parlist[["hX"]]
+    if (!.no_M_to_X) {
+        Hl <- ((aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M)) / H
+    } else {
+        Hl <- (aX*H*X)/(1 + aX*hX*(V + H)) / H
+    }
+    return(Hl)
+}
 
 
 
@@ -369,7 +411,7 @@ fig4_panel <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
     stopifnot(length(.midges_not_to) == 1 && .midges_not_to %in% c("none", "D", "X"))
 
 
-    .title <- case_when(.midges_not_to == "none" ~ "Midges to both",
+    .title <- case_when(.midges_not_to == "none" ~ "Midges to detritus and predators",
                         .midges_not_to == "D" ~ "Midges to predators only",
                         .midges_not_to == "X" ~ "Midges to detritus only",
                         TRUE ~ "ERROR")
@@ -399,14 +441,14 @@ fig4_panel <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
                            limits = .ylims, breaks = c(0, 0.05, 0.1)) +
         facet_grid(~ q) +
         theme(legend.position = "none",
-              strip.text = element_text(face = "plain", size = 11,
+              strip.text = element_text(face = "plain", size = 10,
                                         margin = margin(b = 4)),
-              panel.spacing.x = unit(2.5, "lines"),
+              panel.spacing.x = unit(1.5, "lines"),
               strip.background = element_blank(),
               axis.text = element_text(size = 10, color = "black"),
-              axis.title = element_text(size = 12),
-              plot.title = element_text(size = 12, hjust = 0.5, face = "bold",
-                                        margin = margin(0,0,0,0)))
+              plot.margin = margin(0,t=12,b=12,r=4),
+              plot.title = element_text(size = 12, hjust = 0.5, face = "plain",
+                                        margin = margin(0,0,0,b = 10)))
 
 
     if (.midges_not_to == "none") {
@@ -425,7 +467,8 @@ fig4_panel <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
                       color = c(color_pal()[1:2], "gray60"),
                       hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835,
                       parse = TRUE) +
-            theme(axis.title.y = element_text(margin = margin(0,0,r=4,l=10)))
+            theme(axis.title.y = element_text(margin = margin(0,0,0,r=12),
+                                              size = 11))
 
     } else {
 
@@ -457,7 +500,8 @@ fig4_panel <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
                                                levels = levels(mt_combo$q))),
                       aes(time, value, label = lab, hjust = hj),
                       parse = TRUE, vjust = 0.5) +
-            theme(axis.title.x = element_text(margin = margin(0,0,0,t=4)))
+            theme(axis.title.x = element_text(margin = margin(0,0,0,t=4),
+                                              size = 11))
     }
 
     return(mt_plot)
@@ -471,9 +515,9 @@ fig4_panel_list <- tibble(.midges_not_to = c("X", "none", "D")) %>%
 
 
 cairo_pdf(file = paste0(dir, "4-up_down_attack_rates.pdf"), width = 6, height = 6.5)
-ggarrange(plots = fig4_panel_list, ncol = 1, labels = LETTERS[1:3],
-          label.args = list(gp = gpar(fontsize = 14, fontface =  "bold"),
-                            vjust = 2, hjust = -4))
+ggarrange(plots = fig4_panel_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]),
+          label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"),
+                            vjust = 2, hjust = -1.5))
 dev.off()
 
 
@@ -482,4 +526,13 @@ dev.off()
 
 
 
+# ================================================================================*
+# ================================================================================*
 
+# Write captions ----
+
+# ================================================================================*
+# ================================================================================*
+
+writeLines(sprintf("Figure %i. %s\n", 2:4, c(fig2_caption, fig3_caption, fig4_caption)),
+           paste0(dir, "captions.txt"))
