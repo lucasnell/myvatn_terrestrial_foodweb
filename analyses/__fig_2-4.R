@@ -25,6 +25,13 @@ suppressPackageStartupMessages({
 })
 
 
+# This sets plotting device on LAN computer:
+if (Sys.getenv("RSTUDIO") == "1" && file.exists(".Rprofile")) {
+    source(".Rprofile")
+}
+
+
+
 
 
 
@@ -55,16 +62,12 @@ fig2_caption <- paste("Time series of proportional changes in N content among",
                       "$q = 3$, pulse duration $w = 20$, and pulse rate $b = 50$.")
 
 
-
-
-fig2_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
-                     other_pars = list(q = 3))
-
-
 upper_levels <- c("detritivore", "herbivore", "predator")
 
 
-fig2_p <- fig2_sim %>%
+
+fig2_sim <- food_web(tmax = 100, s = 10, b = 50, w = 20,
+                     other_pars = list(q = 3)) %>%
     filter(pool != "midge") %>%
     mutate(pool = droplevels(pool),
            level = ifelse(pool %in% upper_levels, 0, 1) %>%
@@ -72,20 +75,25 @@ fig2_p <- fig2_sim %>%
                       labels = paste(c("Upper", "Lower"), "trophic levels"))) %>%
     group_by(pool) %>%
     mutate(N = (N - N[1]) / (N[1])) %>%
-    ungroup() %>%
-    {max_N <<- max(.$N); .} %>%
+    ungroup()
+
+
+
+fig2_p <- fig2_sim %>%
     ggplot(aes(time, N)) +
     geom_hline(yintercept = 0, color = "gray70") +
     geom_segment(data = tibble(time = 10, time2 = 10+20, N = -0.25),
                  aes(xend = time2, yend = N), size = 1.5) +
     geom_line(aes(color = pool), size = 1) +
-    scale_y_continuous("Proportional change in N", breaks = c(0, 2, 4),
-                       limits = c(-0.5, max_N)) +
+    scale_y_continuous("Proportional change in N", breaks = c(0, 2, 4)) +
     scale_x_continuous("Time (days)") +
     facet_wrap(~ level, nrow = 2) +
     scale_color_manual(values = color_pal()[c(4:6, 1:3)]) +
     theme(legend.position = "none",
-          panel.spacing = unit(1.5, "lines")) +
+          panel.spacing = unit(1.5, "lines"),
+          axis.title.y = element_text(margin = margin(0,0,0,r=12)),
+          axis.title.x = element_text(margin = margin(0,0,0,t=12)),
+          strip.text = element_text(size = 12, margin = margin(0,0,0,b=10))) +
     geom_text(data = tibble(
         pool = sort(unique(fig2_sim$pool[fig2_sim$pool != "midge"])),
         time =  c( 43,  15,  30,
@@ -101,12 +109,14 @@ fig2_p <- fig2_sim %>%
                                                           "trophic levels"))),
               label = "pulse", size = 10 / 2.835, hjust = 0.5, vjust = 1,
               color = "black") +
-    geom_text(data = tibble(time =  rep(0, 2),
-                            N = rep(max_N, 2),
+    geom_text(data = tibble(time =  rep(-5, 2),
+                            N = rep(5, 2),
                             level = factor(paste(c("Upper", "Lower"), "trophic levels")),
                             labs = sprintf("(%s)", letters[1:2])),
-              aes(label = labs), hjust = 0, vjust = 1, size = 12 / 2.835)
-# fig2_p
+              aes(label = labs), hjust = 1, vjust = 0, size = 14 / 2.835) +
+    coord_cartesian(ylim = c(-0.5, max(fig2_sim$N)),
+                    xlim = c(0, 100),
+                    clip = "off")
 
 
 cairo_pdf(file = paste0(dir, "2-N_timeseries.pdf"), width = 5, height = 5)
@@ -517,7 +527,7 @@ fig4_panel_list <- tibble(.midges_not_to = c("X", "none", "D")) %>%
 cairo_pdf(file = paste0(dir, "4-up_down_attack_rates.pdf"), width = 6, height = 6.5)
 ggarrange(plots = fig4_panel_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]),
           label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"),
-                            vjust = 2, hjust = -1.5))
+                            vjust = 2, hjust = -1.75))
 dev.off()
 
 
