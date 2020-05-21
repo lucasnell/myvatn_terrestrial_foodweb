@@ -633,9 +633,9 @@ This is a version of figure 3 with no herbivores or detritivores
 nohv_fig3_caption <- paste("Time series of proportional changes in N content for detritivore",
                       "and herbivore pools with low and high predator exploitation of",
                       "midges (indicated by the left y-axis).",
-                      "This is shown for when (A) no detritivores are present,",
-                      "(B) both are present, and",
-                      "(C) no herbivores are present.",
+                      "This is shown for when (a) no detritivores are present,",
+                      "(b) both are present, and",
+                      "(c) no herbivores are present.",
                       "The blue shaded regions represent the proportional change in",
                       "N for predators, which is indicated by the right y-axis.",
                       "Different y-axis scales are used to aid visualization of",
@@ -711,7 +711,7 @@ nohv_fig3_plot <- function(.H, .V,
     
     .title <- case_when(.H == 0 & .V == 1 ~ "No herbivores",
                         .H == 1 & .V == 0 ~ "No detritivores",
-                        .H == 1 & .V == 1 ~ "Both present",
+                        .H == 1 & .V == 1 ~ "Herbivores and detritivores present",
                         TRUE ~ "ERROR")
     
     hv_combo <- nohv_fig3_df %>% 
@@ -742,12 +742,12 @@ nohv_fig3_plot <- function(.H, .V,
               panel.spacing.y = unit(0, "lines"),
               panel.spacing.x = unit(1.5, "lines"),
               plot.margin = margin(0,0,t=12,b=12),
-              plot.title = element_text(size = 12, hjust = 0.5, face = "bold", 
+              plot.title = element_text(size = 12, hjust = 0.5, face = "plain", 
                                         margin = margin(0,0,0,b = 10))) +
         scale_y_continuous("Proportional change in N", limits = .ylims,
                            breaks = c(0, 0.5, 1),
                            sec.axis = sec_axis(~ . * .mult,
-                                               name = paste0("Proportional change in N\n",
+                                               name = paste("Proportional change in N",
                                                              "(predator)"),
                                                breaks = c(0, 10, 20))) +
         NULL
@@ -769,7 +769,10 @@ nohv_fig3_plot <- function(.H, .V,
                                                               "exploitation"))),
                       label = "pulse", size = 10 / 2.835, hjust = 0.5, vjust = 1,
                       color = "black") +
-            theme(axis.title.y = element_text(margin = margin(0,0,r=4,l=10)))
+            theme(axis.title.y.left = element_text(margin = margin(0,0,0,r=12),
+                                                   size = 11),
+                  axis.title.y.right = element_text(margin = margin(0,0,0,l=12),
+                                                    size = 11))
     } else {
         
         hv_plot <- hv_plot +
@@ -811,9 +814,9 @@ nohv_fig3_plot_list <- crossing(.H = 0L:1L, .V = 0L:1L) %>%
     pmap(nohv_fig3_plot)
 
 
-ggarrange(plots = nohv_fig3_plot_list, ncol = 1, labels = LETTERS[1:3], 
-          label.args = list(gp = gpar(fontsize = 14, fontface =  "bold"), 
-                            vjust = 2, hjust = -4))
+ggarrange(plots = nohv_fig3_plot_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]), 
+          label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"),
+                            vjust = 2, hjust = -1.5))
 ```
 
 
@@ -830,9 +833,9 @@ This is a version of figure 4 with no herbivores or detritivores
 nohv_fig4_caption <- paste("Time series of the top-down (\"TD\") and bottom-up (\"BU\")",
                            "effects on detritivore and herbivore pools with low and",
                            "high predator exploitation of midges.",
-                           "This is shown for when (A) no detritivores are present,",
-                           "(B) both are present, and",
-                           "(C) no herbivores are present.",
+                           "This is shown for when (a) no detritivores are present,",
+                           "(b) both are present, and",
+                           "(c) no herbivores are present.",
                            "The gray line indicates the top-down effects on both",
                            "detritivore and herbivore pools, as they are identical",
                            "in the model.",
@@ -904,7 +907,7 @@ nohv_fig4_plot <- function(.H, .V, .ylims = c(-0.037, 0.144)) {
     
     .title <- case_when(.H == 0 & .V == 1 ~ "No herbivores",
                         .H == 1 & .V == 0 ~ "No detritivores",
-                        .H == 1 & .V == 1 ~ "Both present",
+                        .H == 1 & .V == 1 ~ "Herbivores and detritivores present",
                         TRUE ~ "ERROR")
     .td_pool <- ifelse(.V == 0, "herbivore", "detritivore")
     
@@ -936,8 +939,8 @@ nohv_fig4_plot <- function(.H, .V, .ylims = c(-0.037, 0.144)) {
               strip.background = element_blank(),
               axis.text = element_text(size = 10, color = "black"),
               axis.title = element_text(size = 12),
-              plot.title = element_text(size = 12, hjust = 0.5, face = "bold", 
-                                        margin = margin(0,0,0,0)))
+              plot.title = element_text(size = 12, hjust = 0.5, face = "plain", 
+                                        margin = margin(0,0,0,b=10)))
     
 
     if (.H == 1 && .V == 1) {
@@ -980,9 +983,9 @@ nohv_fig4_plot_list <- crossing(.H = 0L:1L, .V = 0L:1L) %>%
     pmap(nohv_fig4_plot)
 
 
-ggarrange(plots = nohv_fig4_plot_list, ncol = 1, labels = LETTERS[1:3], 
-          label.args = list(gp = gpar(fontsize = 14, fontface =  "bold"), 
-                            vjust = 2, hjust = -4))
+ggarrange(plots = nohv_fig4_plot_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]),
+          label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"), 
+                            vjust = 2, hjust = -1.5))
 ```
 
 
@@ -1034,16 +1037,15 @@ This is a version of figure 5 where midges only go to predators or only to detri
 
 ```{r M-to-one-pool-fig5-caption}
 mtop_fig5_caption <- paste("Cumulative midge effect on total bottom-up control",
-                           "(\"BU total\"), net top-down control (\"TD net\"),",
+                           "(\"BU total\") for detritivores,",
+                           "net top-down control (\"TD net\"),",
                            "top-down intensification, and top-down alleviation",
                            "as a function of total midge inputs.",
-                           "This is shown for when (A) midges only go to the detritus pool,",
-                           "(B) midges go to both detritus and predator pools, and",
-                           "(C) midges only go to the predator pool.",
+                           "This is shown for when (a) midges only go to the detritus pool,",
+                           "(b) midges go to both detritus and predator pools, and",
+                           "(c) midges only go to the predator pool.",
                            "The panels show different combinations of high and",
                            "low predator exploitation and handling times on midges.",
-                           "Data are from detritivores; herbivores gave broadly",
-                           "similar responses to the cumulative midge effects (Fig. S2).",
                            "Parameter values are as in Table 1, with",
                            "low exploitation $q = 0.8$,", 
                            "high exploitation $q = 8$,", 
@@ -1056,7 +1058,7 @@ mtop_fig5_caption <- paste("Cumulative midge effect on total bottom-up control",
 
 
 
-```{r M-to-one-pool-fig5, fig.width=6, fig.height=9, fig.cap=mtop_fig5_caption}
+```{r M-to-one-pool-fig5, fig.width=6.5, fig.height=7.5, fig.cap=mtop_fig5_caption}
 
 
 do_mtop_fig5 <- function(.midges_not_to) {
@@ -1144,18 +1146,20 @@ mtop_fig5_df <- mclapply(c("X", "none", "D"), do_mtop_fig5,
     bind_rows()
 
 
-mtop_fig5_plot <- function(.midges_not_to, .ylims = c(-0.688, 4.305), .pool = "detritivore") {
+mtop_fig5_plot <- function(.midges_not_to, 
+                           .ylims = c(-0.688, 4.305), 
+                           .pool = "detritivore") {
     
     fig5_labs <- list(bquote(italic('BU'['total'])),
                       bquote(italic('TD'['net'])),
                       bquote(italic('TD'['intensification'])),
                       bquote(italic('TD'['alleviation'])))
     
-    # .midges_not_to = "D"; .ylims = c(-0.688, 4.305)
-    # rm(.midges_not_to, .ylims)
+    # .midges_not_to = "D"; .ylims = c(-0.688, 4.305); .pool = "detritivore"
+    # rm(.midges_not_to, .ylims, .pool)
     
     
-    .title <- case_when(.midges_not_to == "none" ~ "Midges to both",
+    .title <- case_when(.midges_not_to == "none" ~ "Midges to detritus and predators",
                         .midges_not_to == "D" ~ "Midges to predators only",
                         .midges_not_to == "X" ~ "Midges to detritus only",
                         TRUE ~ "ERROR")
@@ -1168,7 +1172,7 @@ mtop_fig5_plot <- function(.midges_not_to, .ylims = c(-0.688, 4.305), .pool = "d
         filter(pool == .pool) %>%
         ggplot(aes(area, value)) +
         geom_hline(yintercept = 0, color = "gray80") +
-        geom_line(aes(color = direction, linetype = type, group = id), size = 1) +
+        geom_line(aes(color = direction, linetype = type, group = id), size = 0.75) +
         ggtitle(.title) +
         facet_grid(hM ~ q) +
         scale_color_manual(NULL, values = c(color_pal()[1], "gray60"), guide = FALSE) +
@@ -1176,23 +1180,26 @@ mtop_fig5_plot <- function(.midges_not_to, .ylims = c(-0.688, 4.305), .pool = "d
                               breaks = c("BU total", "TD net",
                                          "TD intensification", "TD alleviation"),
                               labels = fig5_labs) +
-        guides(linetype = guide_legend(keywidth = 2, nrow = 2, keyheight = 0.6,
+        guides(linetype = guide_legend(keywidth = 2, ncol = 1, keyheight = 0.6,
                                        override.aes = list(color = c(color_pal()[1],
                                                                      rep("gray60", 3))),
                                        byrow = TRUE)) +
         xlab(expression("Total midge input (" * g ~ N ~ m^{-2} * ")")) +
         scale_y_continuous("Total midge effect", limits = .ylims, breaks = c(0, 2, 4)) +
-        theme(strip.background = element_blank(),
-              legend.background = element_blank(),
-              legend.position = "top",
-              legend.direction = "horizontal",
-              legend.justification = "center",
+        theme(legend.background = element_blank(),
+              legend.position = "right",
+              legend.direction = "vertical",
+              legend.justification = "left",
               legend.box = "vertical",
               legend.title = element_text(size = 11, margin = margin(0,0,0,b=-4)),
               legend.text = element_text(size = 10),
-              strip.text.y = element_text(vjust = 1),
-              plot.title = element_text(size = 12, hjust = 0.5, face = "bold", 
-                                        margin = margin(0,0,0,0))) +
+              strip.background = element_blank(),
+              strip.text.y = element_text(vjust = 0.5, hjust = 0, size = 11, angle = 0),
+              strip.text.x = element_text(size = 11),
+              panel.spacing.x = unit(1.5, "lines"),
+              plot.margin = margin(0,t=12,b=12,r=4),
+              plot.title = element_text(size = 12, hjust = 0.5, face = "plain", 
+                                        margin = margin(0,0,0,b=6))) +
         NULL
         
     
@@ -1200,12 +1207,13 @@ mtop_fig5_plot <- function(.midges_not_to, .ylims = c(-0.688, 4.305), .pool = "d
     if (.midges_not_to == "none") {
         
         mt_plot <- mt_plot +
-            theme(axis.title.y = element_text(margin = margin(0,0,0,r=12)))
+            theme(axis.title.y = element_text(margin = margin(0,0,0,r=12), size = 12))
         
     } else {
         
         mt_plot <- mt_plot +
-            theme(axis.title.y = element_blank())
+            theme(axis.title.y = element_blank(),
+                  legend.position = "none")
         
     }
     
@@ -1214,7 +1222,7 @@ mtop_fig5_plot <- function(.midges_not_to, .ylims = c(-0.688, 4.305), .pool = "d
             theme(axis.title.x = element_blank(), axis.text.x = element_blank())
     } else {
         mt_plot <- mt_plot +
-            theme(axis.title.x = element_text(margin = margin(0,0,0,t=4)))
+            theme(axis.title.x = element_text(margin = margin(0,0,0,t=4), size = 12))
     }
     
     return(mt_plot)
@@ -1226,21 +1234,10 @@ mtop_fig5_plot <- function(.midges_not_to, .ylims = c(-0.688, 4.305), .pool = "d
 mtop_fig5_plot_list <- tibble(.midges_not_to = c("X", "none", "D")) %>%  
     pmap(mtop_fig5_plot)
 
-legend <- get_legend(
-  # create some space below the legend
-  mtop_fig5_plot_list[[1]] + theme(legend.box.margin = margin(0, 0, 0, b = 12))
-)
 
-# Remove legends from plots:
-mtop_fig5_plot_list <- map(mtop_fig5_plot_list, ~ .x + theme(legend.position = "none"))
-
-mtop_fig5_plot <- plot_grid(plotlist = mtop_fig5_plot_list, ncol = 1, 
-                            labels = LETTERS[1:3], 
-                            label_size = 14, label_fontface = "bold", 
-                            label_x = 0.05, label_y = 0.9, align = "v")
-
-plot_grid(legend, mtop_fig5_plot, ncol = 1, rel_heights = c(0.1, 1))
-
+ggarrange(plots = mtop_fig5_plot_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]),
+          label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"), 
+                            vjust = 2, hjust = -1))
 ```
 
 
