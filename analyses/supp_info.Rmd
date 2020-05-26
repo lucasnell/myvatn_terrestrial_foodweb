@@ -11,6 +11,7 @@ fontsize: 12pt
 geometry: margin=1in,letterpaper
 documentclass: article
 graphics: true
+tables: true
 colorlinks: true
 supplemental: true
 mathspec: true
@@ -1126,6 +1127,131 @@ ggarrange(plots = mtop_fig5_plot_list, ncol = 1, labels = sprintf("(%s)", letter
 \clearpage
 
 # Appendix S2: Supplementary Methods
+
+
+## Stability analysis
+
+To determine the stability of the equilibrium state (using values from Table 1),
+we used the `deriv` function in R to numerically compute the Jacobian matrix:
+
+\begin{align*}
+\begin{pmatrix}
+    \frac{\partial I}{\partial I} & \frac{\partial I}{\partial D} & 
+        \frac{\partial I}{\partial P} & \frac{\partial I}{\partial V} &
+        \frac{\partial I}{\partial H} & \frac{\partial I}{\partial X} \\[1.5ex]
+    \frac{\partial D}{\partial I} & \frac{\partial D}{\partial D} & 
+        \frac{\partial D}{\partial P} & \frac{\partial D}{\partial V} &
+        \frac{\partial D}{\partial H} & \frac{\partial D}{\partial X} \\[1.5ex]
+    \frac{\partial P}{\partial I} & \frac{\partial P}{\partial D} & 
+        \frac{\partial P}{\partial P} & \frac{\partial P}{\partial V} &
+        \frac{\partial P}{\partial H} & \frac{\partial P}{\partial X} \\[1.5ex]
+    \frac{\partial V}{\partial I} & \frac{\partial V}{\partial D} & 
+        \frac{\partial V}{\partial P} & \frac{\partial V}{\partial V} &
+        \frac{\partial V}{\partial H} & \frac{\partial V}{\partial X} \\[1.5ex]
+    \frac{\partial H}{\partial I} & \frac{\partial H}{\partial D} & 
+        \frac{\partial H}{\partial P} & \frac{\partial H}{\partial V} &
+        \frac{\partial H}{\partial H} & \frac{\partial H}{\partial X} \\[1.5ex]
+    \frac{\partial X}{\partial I} & \frac{\partial X}{\partial D} & 
+        \frac{\partial X}{\partial P} & \frac{\partial X}{\partial V} &
+        \frac{\partial X}{\partial H} & \frac{\partial X}{\partial X}
+\end{pmatrix}
+\text{.}
+\end{align*}
+
+
+
+
+```{r stability-analysis}
+
+pars <- par_estimates %>%
+    filter(V == 1, X == 1, H == 1, iI == 10) %>%
+    mutate(M = 0) %>% 
+    dplyr::select(-V, -X, -H) %>% 
+    rename_at(vars(ends_with("eq")), function(x) gsub("eq", "", x)) %>% 
+    as.list()
+
+
+##### Define functions for derivatives
+
+deriv_exprs <- list(I = ~iI - aIP*I*P/(1 + aIP*hI*I) + (1 - lD)*muD*D - muI*I,
+                    D = ~(1 - lP)*(muP + mP*P)*P + (1 - lV)*(muV + mV*V)*V + 
+                        (1 - lH)*(muH + mH*H)*H + (1 - lX)*(muX + mX*X)*X + 
+                        (1 - lM)*muM*M - aDV*D*V/(1 + aDV*hD*D) - muD*D,
+                    P = ~aIP*I*P/(1 + aIP*hI*I) - aPH*P*H/(1 + aPH*hP*P) - (muP + mP*P)*P,
+                    V = ~aDV*D*V/(1 + aDV*hD*D) - 
+                        (aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) -
+                        (muV + mV*V)*V,
+                    H = ~aPH*P*H/(1 + aPH*hP*P) - 
+                        (aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) -
+                        (muH + mH*H)*H,
+                    X = ~(aX*V*X + aX*H*X + 
+                              (aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) -
+                        (muX + mX*X)*X)
+
+derivs <- map(deriv_exprs, 
+              ~ deriv(.x,
+                      c("I", "D", "P", "V", "H", "X"),
+                      function(I, D, P, V, H, X, M,
+                               iI, lD, lP, lV, lH, lX, lM,
+                               muI, muD, muP, muV, muH, muX, muM, 
+                               mP, mV, mH, mX, q,  
+                               aIP, aDV, aPH, aX, hI, hD, hP, hX, hM){}))
+
+
+##### Gradients at equilibrium
+
+eq_gradients <- map(derivs, ~ do.call(.x, pars) %>% 
+                        attributes() %>% 
+                        .[["gradient"]])
+
+
+##### Define jacobian
+
+jac <- do.call(rbind, eq_gradients)
+rownames(jac) <- colnames(jac)
+
+
+
+
+##### Eigenvalues
+
+eigen_analysis <- eigen(jac)
+eigen_values <- eigen_analysis$values
+leading_eigen <- max(Re(eigen_values))
+
+# leading_eigen # leading eigenvalue is negative, so equilibrium is stable
+# eigen_values # imaginary eigenvalues implies some kind of cyclic approach to equilibrium
+# (but this gets complicated)
+
+```
+
+
+We then computed the eigenvalues from this matrix to assess stability, where
+negative values indicate stability.
+The eigenvalues from the Jacobian are below:
+
+\vspace*{1ex}
+
+```{r stability-analysis-table}
+
+tibble(eigenvalue = sprintf("$%s$", paste(round(eigen_values, 4)))) %>% 
+    knitr::kable(format = "latex", booktabs = TRUE, escape = FALSE) %>% 
+    gsub(pattern = "\\\\addlinespace\\n", replacement = "")
+
+```
+
+
+\vspace*{2ex}
+
+All of the eigenvalues of the Jacobian are negative, indicating that the
+equilibrium is locally stable (in the sense that the system returns to equilibrium in
+response to small perturbations near the equilibrium). 
+There is one complex conjugate pair of eigenvalues, reflecting some kind of 
+oscillatory behavior in the approach to equilibrium (which we see in the simulations
+in Fig. \ref{fig:start-not-at-equilibrium}).
+But these oscillations dampen out pretty quickly.
+
+
 
 
 ## Simulating midges only going to predators or only to detritus
