@@ -1,42 +1,39 @@
-# Mývatn terrestrial foodweb
 
-Matthew A. McCary, Joseph S. Phillips, Tanjona Ramiadantsoa, Lucas A. Nell, 
+Code for the following paper:
+
+Transient top-down and bottom-up effects of resources pulsed to multiple trophic levels
+-------
+
+Matthew A. McCary, Joseph S. Phillips, Tanjona Ramiadantsoa, Lucas A. Nell,
 Amanda R. McCormick, and Jamieson C. Botsch
 
 
 
+We've organized much of the code into an R package, `mtf`.
+Inside the `R` folder, you'll find...
+
+- `data.R`: a description of the default-parameter estimates present in the `mtf::par_estimates` object
+- `equil_pools.R`: The `equil_pools` function that re-estimates equilibrium pool sizes, for use when you adjust parameter values that affect the equilibria
+- `food_web.R`: The `food_web` function (and required inner functions) that simulates the food web through time, given a set of parameter values
+- `zzz.R`: The miscellaneous functions `.onLoad` and `color_pal` that set the `ggplot2` theme and create the color palette for figures, respectively
+
+Obviously `man` contains the documentation for the package, and
+`data` contains the data files (the only data object in `mtf` is `par_estimates`).
+
+The folder `data-raw` contains the pre-processed data for the parameter estimates, plus
+the code to clean it for the package.
+The script `data-raw/par_estimates.R` cleans the data.
+The folder `data-raw/parameters` contains the following pre-processed data files:
+
+- `full_pars.csv`: The "final" parameter values that are solved using the specified equilibrium pool sizes and the initially specified parameter values
+- `structure_eqs.csv`: The equilibrium pool sizes for different model configurations, based on `full_pars.csv`
+- `iN_eqs.csv` The equilibrium pool sizes for different values of the nutrient input rate i_I (with all other values based on `full_pars.csv`)
 
 
+The `analysis` folder contains the files that use the `mtf` package to produce the
+figures and supplemental information file.
 
-## Original description of model:
-
-This is a nutrient-balance model which was much more dynamically stable than a hybrid 
-nutrient/population model that I tried first. There is mass balance, with nutrients 
-"leaking" from the system through leaching and entering the system through external 
-inputs and midges that enter the detritus pool.
-
-Note that this is an example in which a nutrient balance model is inherently more 
-dyanmically stable than a population-level model. This topic (relative stability of 
-mass-balance vs. population models) is something Joe and I talked about looking into 
-a long time ago.
-
-
-The model tracks the change of 6 components of a food web through time.
-At time t, the total nitrogen pool is denoted by N(t),
-the total amount of detritus is denoted by D(t),
-the abundance of detritivores by V(t), plants by P(t), herbivores by H(t),
-and the predators by P(t).
-
-We assume that at each time step, except for the detritus,
-each component has specific mortality rate denoted by mX where X indicate
-with component it is. For instance, mD denotes the per unit mortality rate
-of the detritivores. A consumed unit of a component X is converted into a
-consumer component Y at a rate aXY. For instance, one unit of nutrient is
-converted into aND unit of detritus.
-
-Finally, we assume that consumptions by plants and predators follow a
-Holling type II functional response with an attack rate of bP and bR, respectively.
-At each time step, we add nitrogen and midges denoted by G and M, respectively.
-A fraction f of the midge goes to the detritivores whereas the remaining fraction (1-f)
-goes to the plant. Under these assumptions, the "abundances" at time t +1 are...
-[it then gets into the code]
+- `fig_2-4.R`: Creates figures 2, 3, and 4
+- `fig_5.R`: Creates figure 5
+- `supp_info.Rmd` Creates the supplemental information
+- `template.tex`: LaTeX template that helps generate the supplemental information PDF
