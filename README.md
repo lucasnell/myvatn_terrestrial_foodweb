@@ -4,16 +4,21 @@ Code for the following paper:
 Transient top-down and bottom-up effects of resources pulsed to multiple trophic levels
 -------
 
+by 
+
 Matthew A. McCary, Joseph S. Phillips, Tanjona Ramiadantsoa, Lucas A. Nell,
 Amanda R. McCormick, and Jamieson C. Botsch
 
+
+
+## File organization:
 
 
 We've organized much of the code into an R package, `mtf`.
 Inside the `R` folder, you'll find...
 
 - `data.R`: a description of the default-parameter estimates present in the `mtf::par_estimates` object
-- `equil_pools.R`: The `equil_pools` function that re-estimates equilibrium pool sizes, for use when you adjust parameter values that affect the equilibria
+- `equil_pools.R`: The `equil_pools` function that re-estimates equilibrium pool sizes, for use when you adjust parameter values that affect equilibria
 - `food_web.R`: The `food_web` function (and required inner functions) that simulates the food web through time, given a set of parameter values
 - `zzz.R`: The miscellaneous functions `.onLoad` and `color_pal` that set the `ggplot2` theme and create the color palette for figures, respectively
 
