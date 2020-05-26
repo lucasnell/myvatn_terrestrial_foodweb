@@ -1,29 +1,3 @@
-fI <- function(I, P, D, pars) {
-    pars$M <- 0
-    with(pars, iI - aIP*I*P/(1 + aIP*hI*I) + (1 - lD)*muD*D - muI*I)
-}
-fD <- function(D, P, V, H, X, pars) {
-    pars$M <- 0
-    with(pars, (1 - lP)*(muP + mP*P)*P + (1 - lV)*(muV + mV*V)*V + (1 - lH)*(muH + mH*H)*H + (1 - lX)*(muX + mX*X)*X + (1 - lM)*muM*M - aDV*D*V/(1 + aDV*hD*D) - muD*D)
-}
-fP <- function(P, I, H, pars) {
-    pars$M <- 0
-    with(pars, aIP*I*P/(1 + aIP*hI*I) - aPH*P*H/(1 + aPH*hP*P) - (muP + mP*P)*P)
-}
-fV <- function(V, D, X, H, pars) {
-    pars$M <- 0
-    with(pars, aDV*D*V/(1 + aDV*hD*D) - (aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muV + mV*V)*V)
-}
-fH <- function(H, P, X, V, pars) {
-    pars$M <- 0
-    with(pars, aPH*P*H/(1 + aPH*hP*P) - (aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muH + mH*H)*H)
-}
-fX <- function(X, V, H, pars) {
-    pars$M <- 0
-    with(pars, (aX*V*X + aX*H*X + (aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) - (muX + mX*X)*X)
-}
-
-
 
 #' Differential equations for food web.
 #'
