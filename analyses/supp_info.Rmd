@@ -1129,12 +1129,16 @@ ggarrange(plots = mtop_fig5_plot_list, ncol = 1, labels = sprintf("(%s)", letter
 # Appendix S2: Supplementary Methods
 
 
+
+
 ## Stability analysis
 
-To determine the stability of the equilibrium state (using values from Table 1),
-we used the `deriv` function in R to numerically compute the Jacobian matrix:
+To determine the stability of the equilibrium state, we used the `deriv` function in 
+R to numerically compute the Jacobian matrix, evaluated at the baseline parameter set
+(i.e., using values from Table 1):
 
 \begin{align*}
+\left.
 \begin{pmatrix}
     \frac{\partial I}{\partial I} & \frac{\partial I}{\partial D} & 
         \frac{\partial I}{\partial P} & \frac{\partial I}{\partial V} &
@@ -1155,10 +1159,22 @@ we used the `deriv` function in R to numerically compute the Jacobian matrix:
         \frac{\partial X}{\partial P} & \frac{\partial X}{\partial V} &
         \frac{\partial X}{\partial H} & \frac{\partial X}{\partial X}
 \end{pmatrix}
+\right\rvert_{I = \hat{I},
+              D = \hat{D},
+              % P = \hat{P},
+              % V = \hat{V},
+              % H = \hat{H},
+              \ldots,
+              X = \hat{X}}
 \text{.}
 \end{align*}
 
+\noindent where $\hat{Z}$ is the equilibrium size for pool $Z$.
 
+
+The Jacobian at equilibrium was
+
+\vspace*{1ex}
 
 
 ```{r stability-analysis}
@@ -1210,20 +1226,15 @@ eq_gradients <- map(derivs, ~ do.call(.x, pars) %>%
 jac <- do.call(rbind, eq_gradients)
 rownames(jac) <- colnames(jac)
 
-
-
-
-##### Eigenvalues
-
-eigen_analysis <- eigen(jac)
-eigen_values <- eigen_analysis$values
-leading_eigen <- max(Re(eigen_values))
-
-# leading_eigen # leading eigenvalue is negative, so equilibrium is stable
-# eigen_values # imaginary eigenvalues implies some kind of cyclic approach to equilibrium
-# (but this gets complicated)
+# For printing:
+jac_chr <- matrix(sprintf("$%.04f$", jac), 6, 6)
+rownames(jac_chr) <- colnames(jac_chr) <- sprintf("$%s$", colnames(jac))
+knitr::kable(jac_chr, "latex", booktabs = TRUE, escape = FALSE, align = 'r') %>% 
+    gsub(pattern = "\\\\addlinespace\\n", replacement = "")
 
 ```
+
+\vspace*{2ex}
 
 
 We then computed the eigenvalues from this matrix to assess stability, where
@@ -1232,7 +1243,15 @@ The eigenvalues from the Jacobian are below:
 
 \vspace*{1ex}
 
-```{r stability-analysis-table}
+```{r stability-analysis-eigen-table}
+
+eigen_analysis <- eigen(jac)
+eigen_values <- eigen_analysis$values
+leading_eigen <- max(Re(eigen_values))
+
+# leading_eigen # leading eigenvalue is negative, so equilibrium is stable
+# eigen_values # imaginary eigenvalues implies some kind of cyclic approach to equilibrium
+# (but this gets complicated)
 
 tibble(eigenvalue = sprintf("$%s$", paste(round(eigen_values, 4)))) %>% 
     knitr::kable(format = "latex", booktabs = TRUE, escape = FALSE) %>% 
