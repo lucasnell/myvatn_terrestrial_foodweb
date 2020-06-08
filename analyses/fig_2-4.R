@@ -139,7 +139,7 @@ dev.off()
 
 fig3_caption <- paste("Time series of proportional changes in N content for",
                       "detritivore and herbivore pools (indicated by the left",
-                      "y-axis), with low and high predator exploitation of midges.",
+                      "y-axis).",
                       "This is shown for when",
                       "(a) midges only go to the detritus pool,",
                       "(b) midges go to both detritus and predator pools, and",
@@ -152,8 +152,8 @@ fig3_caption <- paste("Time series of proportional changes in N content for",
                       "the selected parameter values.",
                       "The lower black bar represents the duration of the midge",
                       "N pulse.",
-                      "Parameter values are as in Table 1, with low exploitation",
-                      "$q = 8 \\times 10^{-3}$, high exploitation $q = 8$,",
+                      "Parameter values are as in Table 1, with",
+                      "predator exploitation $q = 3$,",
                       "pulse duration $w = 20$, and pulse rate $b = 20$.")
 
 
@@ -161,21 +161,16 @@ fig3_caption <- paste("Time series of proportional changes in N content for",
 
 do_sim_fig3 <- function(.midges_not_to) {
 
-    # .midges_not_to = "both"
+    # .midges_not_to = "none"
     # rm(.midges_not_to)
 
     stopifnot(length(.midges_not_to) == 1 && .midges_not_to %in% c("none", "D", "X"))
 
-    sim <- map_dfr(c(8e-3, 8),
-                   function(q_) {
-                       food_web(tmax = 100, s = 10, b = 20, w = 20,
-                                other_pars = list(q = q_),
-                                midges_not_to = .midges_not_to) %>%
-                           filter(pool %in% c(upper_levels, "midge")) %>%
-                           mutate(pool = droplevels(pool),
-                                  q = q_)
-                   }) %>%
-        mutate_at(vars(q), factor) %>%
+    sim <- food_web(tmax = 100, s = 10, b = 20, w = 20,
+                                other_pars = list(q = 3),
+                    midges_not_to = .midges_not_to) %>%
+        filter(pool %in% c(upper_levels, "midge")) %>%
+        mutate(pool = droplevels(pool)) %>%
         mutate(pool = factor(paste(pool), levels = c(upper_levels, "midge")),
                not_to = .midges_not_to)
 
@@ -185,18 +180,16 @@ do_sim_fig3 <- function(.midges_not_to) {
 
 fig3_df <- tibble(.midges_not_to = c("X", "none", "D")) %>%
     pmap_dfr(do_sim_fig3) %>%
-    group_by(not_to, pool, q) %>%
+    group_by(not_to, pool) %>%
     mutate(N_rel = (N - N[1]) / N[1]) %>%
     mutate(N_rel = ifelse(is.nan(N_rel), 0, N_rel)) %>%
-    ungroup() %>%
-    mutate(q = factor(q, levels = range(as.numeric(paste(q))),
-                      labels = paste(c("low", "high"), "exploitation")))
+    ungroup()
 
 
 
 fig3_panel <- function(.midges_not_to,
                        .mult = 3.5,
-                       .ylims = c(-0.3, 1.25)) {
+                       .ylims = c(-0.303, 1.25)) {
 
     # .midges_not_to = "X"; .mult = 3.5; .ylims = c(-0.3, 1.25)
     # rm(.midges_not_to)
@@ -228,7 +221,6 @@ fig3_panel <- function(.midges_not_to,
         geom_line(aes(color = pool), size = 0.75) +
         scale_x_continuous("Time (days)") +
         scale_color_manual(NULL, values = color_pal()) +
-        facet_grid( ~ q) +
         ggtitle(.title) +
         theme(legend.position = "none",
               strip.text.y = element_text(face = "plain", size = 10, angle = 270,
@@ -241,33 +233,24 @@ fig3_panel <- function(.midges_not_to,
               plot.title = element_text(size = 12, hjust = 0.5, face = "plain",
                                         margin = margin(0,0,0,b = 10))) +
         scale_y_continuous("Proportional change in N", limits = .ylims,
-                           breaks = c(0, 0.5, 1),
                            sec.axis = sec_axis(~ . * .mult,
                                                breaks = c(0, 2, 4),
-                                               name = "Proportional change in N (predator)")) +
+                                               name = "Proportional change in N (predator)"),
+                           breaks = c(0, 0.5, 1)) +
         NULL
 
     if (.midges_not_to == "none") {
 
         mt_plot <- mt_plot +
             geom_text(data = tibble(time =  65,
-                                    N_rel =     1.2,
-                                    q = factor("high exploitation",
-                                               levels = paste(c("low", "high"),
-                                                              "exploitation"))),
+                                    N_rel =     1.2),
                       label = "predator", color = color_pal()[3], hjust = 1, vjust = 1,
                       size = 10 / 2.835) +
             geom_text(data = tibble(pool = factor(c("detritivore", "herbivore")),
                                     time =  c(92, 100),
-                                    N_rel =     c(0.35, -0.15),
-                                    q = factor(paste(rep("high", 2), "exploitation"),
-                                               levels = paste(c("low", "high"),
-                                                              "exploitation"))),
+                                    N_rel =     c(0.35, -0.15)),
                       aes(label = pool, color = pool), hjust = 1, size = 10 / 2.835) +
-            geom_text(data = tibble(time = 20, N_rel = -0.2,
-                                    q = factor("high exploitation",
-                                               levels = paste(c("low", "high"),
-                                                              "exploitation"))),
+            geom_text(data = tibble(time = 20, N_rel = -0.2),
                       label = "pulse", size = 10 / 2.835, hjust = 0.5, vjust = 1,
                       color = "black") +
             theme(axis.title.y.left = element_text(margin = margin(0,0,0,r=12),
@@ -296,10 +279,11 @@ fig3_panel <- function(.midges_not_to,
 
 
 fig3_panel_list <- tibble(.midges_not_to = c("X", "none", "D")) %>%
-    pmap(fig3_panel)
+    pmap(fig3_panel) %>%
+    map(~ .x + theme(axis.line.y.left = element_line(size = 1)))
 
 
-cairo_pdf(file = paste0(dir, "3-N_midge_attack.pdf"), width = 6, height = 6.5)
+cairo_pdf(file = paste0(dir, "3-N_midge_attack.pdf"), width = 3.5, height = 6.5)
 ggarrange(plots = fig3_panel_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]),
           label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"),
                             vjust = 2, hjust = -1.5))
@@ -319,8 +303,7 @@ dev.off()
 
 
 fig4_caption <- paste("Time series of the top-down (\"TD\") and bottom-up (\"BU\")",
-                      "effects on detritivore and herbivore pools with low and",
-                      "high predator exploitation of midges.",
+                      "effects on detritivore and herbivore pools.",
                       "This is shown for when",
                       "(a) midges only go to the detritus pool,",
                       "(b) midges go to both detritus and predator pools, and",
@@ -328,8 +311,8 @@ fig4_caption <- paste("Time series of the top-down (\"TD\") and bottom-up (\"BU\
                       "The gray line indicates the top-down effects on both",
                       "detritivore and herbivore pools, as they are identical",
                       "in the model.",
-                      "Parameter values are as in Table 1, with low exploitation",
-                      "$q = 8 \\times 10^{-3}$, high exploitation $q = 8$,",
+                      "Parameter values are as in Table 1, with",
+                      "predator exploitation $q = 3$,",
                       "pulse duration $w = 20$, and pulse rate $b = 20$.")
 
 
@@ -379,29 +362,25 @@ do_sim_fig4 <- function(.midges_not_to) {
 
     stopifnot(length(.midges_not_to) == 1 && .midges_not_to %in% c("X", "none", "D"))
 
-    sim <- map_dfr(c(8e-3, 8),
-                   function(q_) {
-                       food_web(tmax = 100, s = 10, b = 20, w = 20,
-                                other_pars = list(q = q_),
-                                midges_not_to = .midges_not_to) %>%
-                           mutate(q = q_)
-                   }) %>%
+    q_ <- 3
+
+    sim <- food_web(tmax = 100, s = 10, b = 20, w = 20,
+                    other_pars = list(q = 3),
+                    midges_not_to = .midges_not_to) %>%
         spread(pool, N) %>%
         mutate(Vg = V_gain(detritivore, detritus),
-               Vl = V_loss(detritivore, predator, herbivore, midge, q,
+               Vl = V_loss(detritivore, predator, herbivore, midge, q_,
                            .no_M_to_X = (.midges_not_to == "X")),
                Hg = H_gain(plant, herbivore),
-               Hl = H_loss(herbivore, predator, detritivore, midge, q,
+               Hl = H_loss(herbivore, predator, detritivore, midge, q_,
                            .no_M_to_X = (.midges_not_to == "X"))) %>%
         select(-soil:-midge) %>%
         gather("variable", "value", Vg:Hl) %>%
         mutate(pool = factor(ifelse(grepl("^V", variable), "detritivore", "herbivore")),
-               type = factor(ifelse(grepl("l$", variable), "top-down", "bottom-up")),
-               q = factor(q, levels = range(as.numeric(paste(q))),
-                          labels = paste(c("low", "high"), "exploitation"))) %>%
+               type = factor(ifelse(grepl("l$", variable), "top-down", "bottom-up"))) %>%
         select(-variable) %>%
-        select(q, pool, type, everything()) %>%
-        group_by(q, pool, type) %>%
+        select(pool, type, everything()) %>%
+        group_by(pool, type) %>%
         mutate(value = value - value[1]) %>%
         ungroup() %>%
         mutate(not_to = .midges_not_to)
@@ -449,7 +428,6 @@ fig4_panel <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
         scale_color_manual(values = color_pal()[1:2]) +
         scale_y_continuous(expression("Effect on pool (" * day^{-1} * ")" ),
                            limits = .ylims, breaks = c(0, 0.05, 0.1)) +
-        facet_grid(~ q) +
         theme(legend.position = "none",
               strip.text = element_text(face = "plain", size = 10,
                                         margin = margin(b = 4)),
@@ -461,14 +439,11 @@ fig4_panel <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
                                         margin = margin(0,0,0,b = 10)))
 
 
-    if (.midges_not_to == "none") {
+    if (.midges_not_to == "X") {
 
         mt_plot <- mt_plot +
             geom_text(data = tibble(time =  c(  38,    16,    25),
                                     value = c(0.06, 0.034, -0.02),
-                                    q = factor(paste(c("low","low","low"),
-                                                     "exploitation"),
-                                               levels = levels(mt_combo$q)),
                                     lab = sprintf("italic(%s)",
                                                   c("'BU'['detritivore']",
                                                     "'BU'['herbivore']",
@@ -476,7 +451,13 @@ fig4_panel <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
                       aes(time, value, label = lab),
                       color = c(color_pal()[1:2], "gray60"),
                       hjust = 0, vjust = 0, lineheight = 0.75, size = 10 / 2.835,
-                      parse = TRUE) +
+                      parse = TRUE)
+
+    }
+
+    if (.midges_not_to == "none") {
+
+        mt_plot <- mt_plot +
             theme(axis.title.y = element_text(margin = margin(0,0,0,r=12),
                                               size = 11))
 
@@ -495,19 +476,14 @@ fig4_panel <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
             geom_segment(data = tibble(x = c(50, 37) + 8,
                                        xend = c(40, 22),
                                        y = c(0.05, -0.03) + c(0, 0.002),
-                                       yend = y + c(-0.02, 0.01),
-                                       # curve = 1,
-                                       q = factor(paste(c("high","high"), "exploitation"),
-                                                  levels = levels(mt_combo$q))),
+                                       yend = y + c(-0.02, 0.01)),
                          aes(x, y, xend = xend, yend = yend),
                          # curvature = 1,
                          arrow = arrow(length = unit(0.3, "lines"))) +
             geom_text(data = tibble(lab = c("TD[intensification]", "TD[alleviation]"),
                                     time = c(50, 37) + 10,
                                     value = c(0.05, -0.03),
-                                    hj = c(0, 0),
-                                    q = factor(paste(c("high","high"), "exploitation"),
-                                               levels = levels(mt_combo$q))),
+                                    hj = c(0, 0)),
                       aes(time, value, label = lab, hjust = hj),
                       parse = TRUE, vjust = 0.5) +
             theme(axis.title.x = element_text(margin = margin(0,0,0,t=4),
@@ -521,10 +497,12 @@ fig4_panel <- function(.midges_not_to, .ylims = c(-0.037, 0.1)) {
 
 
 fig4_panel_list <- tibble(.midges_not_to = c("X", "none", "D")) %>%
-    pmap(fig4_panel)
+    pmap(fig4_panel) %>%
+    map(~ .x + theme(axis.line.y.left = element_line(size = 1)))
 
 
-cairo_pdf(file = paste0(dir, "4-up_down_attack_rates.pdf"), width = 6, height = 6.5)
+
+cairo_pdf(file = paste0(dir, "4-up_down_attack_rates.pdf"), width = 3.5, height = 6.5)
 ggarrange(plots = fig4_panel_list, ncol = 1, labels = sprintf("(%s)", letters[1:3]),
           label.args = list(gp = gpar(fontsize = 14, fontface =  "plain"),
                             vjust = 2, hjust = -1.75))
