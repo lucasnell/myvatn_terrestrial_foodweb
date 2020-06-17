@@ -1,0 +1,306 @@
+---
+title: 'Supporting Information'
+subtitle: "``Transient top-down and bottom-up effects of resources pulsed to multiple trophic levels'' \\vspace*{6pt} \\linebreak \\emph{Ecology}"
+date: ""
+editor_options: 
+  chunk_output_type: console
+header-includes:
+    - \usepackage{placeins}
+    - \usepackage{cancel}
+fontsize: 12pt
+geometry: margin=1in,letterpaper
+documentclass: article
+graphics: true
+tables: true
+colorlinks: true
+supplemental: true
+mathspec: true
+output:
+    bookdown::pdf_document2:
+        fig_caption: yes
+        template: template.tex
+        latex_engine: xelatex
+        number_sections: false
+        dev: cairo_pdf
+        toc: false
+author:
+    - name: Matthew A. McCary
+      nums: "1,*,§"
+    - name: Joseph S. Phillips
+      nums: "2,†,§"
+    - name: Tanjona Ramiadantsoa
+      nums: "2"
+    - name: Lucas A. Nell
+      nums: "2"
+    - name: Amanda R. McCormick
+      nums: "2"
+    - name: Jamieson C. Botsch
+      nums: "2"
+affil:
+    - name: "Department of Entomology, University of Wisconsin, Madison, WI 53706, USA"
+      num: "1"
+    - name: "Department of Integrative Biology, University of Wisconsin, Madison, WI 53706, USA"
+      num: "2"
+    - name: "Corresponding author.  Email: matt.mccary@gmail.com. Present address: School of Forestry and Environmental Studies, Yale University, New Haven, CT"
+      num: "*"
+    - name: "Present address: Department of Aquaculture and Fish Biology, Hólar University, Skagafjörður, Iceland"
+      num: "†"
+    - name: "Co-first authors"
+      num: "§"
+---
+
+
+
+
+# Appendix S1: Supplementary Methods.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      fig.align = "center")
+knitr::opts_knit$set(root.dir = normalizePath(".."))
+
+# load packages
+suppressPackageStartupMessages({
+    library(mtf)
+    library(tidyverse)
+    library(grid)
+    library(parallel)
+    library(cowplot)
+    library(egg)
+})
+
+# This sets plotting device on LAN computer:
+if (!isTRUE(getOption('knitr.in.progress')) && file.exists(".Rprofile")) {
+  source(".Rprofile")
+}
+
+# Clean captions
+cc <- function(.x) {
+    .x <- gsub("\n", "", .x)
+    .x <- gsub("\\s+", " ", .x)
+    return(.x)
+}
+
+parlist <- par_estimates %>%
+        filter(V==1, H==1, X==1, iI == 10) %>%
+        as.list()
+
+V_gain <- function(V, D, aDV = parlist[["aDV"]]) {
+    hD <- parlist[["hD"]]
+    (aDV*D*V/(1 + aDV*hD*D)) / V
+}
+
+V_loss <- function(V, X, H, M, q, hM = parlist[["hM"]], .no_M_to_X = FALSE) {
+    aX <- parlist[["aX"]]
+    hX <- parlist[["hX"]]
+    if (!.no_M_to_X) {
+        Vl <- ((aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M)) / V
+    } else {
+        Vl <- ((aX*V*X)/(1 + aX*hX*(V + H))) / V
+    }
+    return(Vl)
+}
+
+H_gain <- function(P, H, aPH = parlist[["aPH"]]) {
+    hP <- parlist[["hP"]]
+    (aPH*P*H/(1 + aPH*hP*P)) / H
+}
+
+H_loss <- function(H, X, V, M, q, hM = parlist[["hM"]], .no_M_to_X = FALSE) {
+    aX <- parlist[["aX"]]
+    hX <- parlist[["hX"]]
+    if (!.no_M_to_X) {
+        Hl <- ((aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M)) / H
+    } else {
+        Hl <- (aX*H*X)/(1 + aX*hX*(V + H)) / H
+    }
+    return(Hl)
+}
+
+upper_levels <- c("detritivore", "herbivore", "predator")
+
+
+```
+
+
+
+## Section S1: Stability analysis
+
+To determine the stability of the equilibrium state, we used the `deriv` function in 
+R to numerically compute the Jacobian matrix, evaluated at the baseline parameter set
+(i.e., using values from Table 1):
+
+\begin{align*}
+\left.
+\begin{pmatrix}
+    \frac{\partial F_I}{\partial I} & \frac{\partial F_I}{\partial D} & 
+        \frac{\partial F_I}{\partial P} & \frac{\partial F_I}{\partial V} &
+        \frac{\partial F_I}{\partial H} & \frac{\partial F_I}{\partial X} \\[1.5ex]
+    \frac{\partial F_D}{\partial I} & \frac{\partial F_D}{\partial D} & 
+        \frac{\partial F_D}{\partial P} & \frac{\partial F_D}{\partial V} &
+        \frac{\partial F_D}{\partial H} & \frac{\partial F_D}{\partial X} \\[1.5ex]
+    \frac{\partial F_P}{\partial I} & \frac{\partial F_P}{\partial D} & 
+        \frac{\partial F_P}{\partial P} & \frac{\partial F_P}{\partial V} &
+        \frac{\partial F_P}{\partial H} & \frac{\partial F_P}{\partial X} \\[1.5ex]
+    \frac{\partial F_V}{\partial I} & \frac{\partial F_V}{\partial D} & 
+        \frac{\partial F_V}{\partial P} & \frac{\partial F_V}{\partial V} &
+        \frac{\partial F_V}{\partial H} & \frac{\partial F_V}{\partial X} \\[1.5ex]
+    \frac{\partial F_H}{\partial I} & \frac{\partial F_H}{\partial D} & 
+        \frac{\partial F_H}{\partial P} & \frac{\partial F_H}{\partial V} &
+        \frac{\partial F_H}{\partial H} & \frac{\partial F_H}{\partial X} \\[1.5ex]
+    \frac{\partial F_X}{\partial I} & \frac{\partial F_X}{\partial D} & 
+        \frac{\partial F_X}{\partial P} & \frac{\partial F_X}{\partial V} &
+        \frac{\partial F_X}{\partial H} & \frac{\partial F_X}{\partial X}
+\end{pmatrix}
+\right\rvert_{I = \hat{I},
+              D = \hat{D},
+              % P = \hat{P},
+              % V = \hat{V},
+              % H = \hat{H},
+              \ldots,
+              X = \hat{X}}
+\text{.}
+\end{align*}
+
+\noindent where, for pool $Z$, $\frac{dZ}{dt} = F_Z(I, D, P, V, H, X)$ and 
+$\hat{Z}$ is the equilibrium size.
+Note that because this is nonlinear system, the Jacobian gives the linearization 
+about the equilibrium.
+
+The Jacobian at equilibrium was
+
+\vspace*{1ex}
+
+
+```{r stability-analysis}
+
+pars <- par_estimates %>%
+    filter(V == 1, X == 1, H == 1, iI == 10) %>%
+    mutate(M = 0) %>% 
+    dplyr::select(-V, -X, -H) %>% 
+    rename_at(vars(ends_with("eq")), function(x) gsub("eq", "", x)) %>% 
+    as.list()
+
+
+##### Define functions for derivatives
+
+deriv_exprs <- list(I = ~iI - aIP*I*P/(1 + aIP*hI*I) + (1 - lD)*muD*D - muI*I,
+                    D = ~(1 - lP)*(muP + mP*P)*P + (1 - lV)*(muV + mV*V)*V + 
+                        (1 - lH)*(muH + mH*H)*H + (1 - lX)*(muX + mX*X)*X + 
+                        (1 - lM)*muM*M - aDV*D*V/(1 + aDV*hD*D) - muD*D,
+                    P = ~aIP*I*P/(1 + aIP*hI*I) - aPH*P*H/(1 + aPH*hP*P) - (muP + mP*P)*P,
+                    V = ~aDV*D*V/(1 + aDV*hD*D) - 
+                        (aX*V*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) -
+                        (muV + mV*V)*V,
+                    H = ~aPH*P*H/(1 + aPH*hP*P) - 
+                        (aX*H*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) -
+                        (muH + mH*H)*H,
+                    X = ~(aX*V*X + aX*H*X + 
+                              (aX * q)*M*X)/(1 + aX*hX*(V + H) + (aX * q)*hM*M) -
+                        (muX + mX*X)*X)
+
+derivs <- map(deriv_exprs, 
+              ~ deriv(.x,
+                      c("I", "D", "P", "V", "H", "X"),
+                      function(I, D, P, V, H, X, M,
+                               iI, lD, lP, lV, lH, lX, lM,
+                               muI, muD, muP, muV, muH, muX, muM, 
+                               mP, mV, mH, mX, q,  
+                               aIP, aDV, aPH, aX, hI, hD, hP, hX, hM){}))
+
+
+##### Gradients at equilibrium
+
+eq_gradients <- map(derivs, ~ do.call(.x, pars) %>% 
+                        attributes() %>% 
+                        .[["gradient"]])
+
+
+##### Define jacobian
+
+jac <- do.call(rbind, eq_gradients)
+rownames(jac) <- colnames(jac)
+
+# For printing:
+jac_chr <- matrix(sprintf("$%.04f$", jac), 6, 6)
+rownames(jac_chr) <- colnames(jac_chr) <- sprintf("$%s$", colnames(jac))
+knitr::kable(jac_chr, "latex", booktabs = TRUE, escape = FALSE, align = 'r') %>% 
+    gsub(pattern = "\\\\addlinespace\\n", replacement = "")
+
+```
+
+\vspace*{2ex}
+
+
+We then computed the eigenvalues from this matrix to assess stability, where
+negative values indicate stability.
+The eigenvalues from the Jacobian are below:
+
+\vspace*{1ex}
+
+```{r stability-analysis-eigen-table}
+
+eigen_analysis <- eigen(jac)
+eigen_values <- eigen_analysis$values
+leading_eigen <- max(Re(eigen_values))
+
+# leading_eigen # leading eigenvalue is negative, so equilibrium is stable
+# eigen_values # imaginary eigenvalues implies some kind of cyclic approach to equilibrium
+# (but this gets complicated)
+
+tibble(eigenvalue = sprintf("$%s$", paste(round(eigen_values, 4)))) %>% 
+    knitr::kable(format = "latex", booktabs = TRUE, escape = FALSE) %>% 
+    gsub(pattern = "\\\\addlinespace\\n", replacement = "")
+
+```
+
+
+\vspace*{2ex}
+
+All of the eigenvalues of the Jacobian are negative, indicating that the
+equilibrium is locally stable (in the sense that the system returns to equilibrium in
+response to small perturbations near the equilibrium). 
+There is one complex conjugate pair of eigenvalues, reflecting some kind of 
+oscillatory or overcompensatory behavior in the approach to equilibrium (Hastings 2013),
+which we see in the simulations in Fig. S1.
+But these oscillations dampen out pretty quickly.
+
+
+
+
+## Section S2: Simulating midges only going to predators or only to detritus
+
+
+When midges only go to predators, we changed the following:
+
+
+$$
+\frac{dD}{dt} = {\color{red} \cancel{(1 - l) \mu_M M} } + (1 - l) \sum_{j \in \{ P,V,H,X \}}{ (\mu_j + m_j j) j } - 
+    \frac{ a_D D V }{1 + a_D h_D D} - \mu_D D
+$$
+
+
+$\frac{dM}{dt}$ remains the same (i.e., it retains the $- \mu_M M$ term) so that 
+midges do not build up indefinitely.
+
+
+
+When midges only go to detritus, we changed the following:
+
+
+\begin{align*}
+\frac{dV}{dt} &= \frac{ a_D D V }{ 1 + a_D h_D D } - \frac{a_X V X }{ 1 + a_X h_X H + a_X h_X V {\color{red} \cancel{+ q a_X h_M M}} } - (\mu_V + m_V V) V \\
+\frac{dH}{dt} &= \frac{ a_P P H }{ 1 + a_P h_P P } - \frac{a_X H X }{ 1 + a_X h_X H + a_X h_X V {\color{red} \cancel{+ q a_X h_M M}} } - (\mu_H + m_H H) H \\
+\frac{dX}{dt} &= \frac{ (a_X V + a_X H {\color{red} \cancel{+ q a_X M}}) X }{ 1 + a_X h_X H + a_X h_X V {\color{red} \cancel{+ q a_X h_M M}} } - (\mu_X + m_X X) X \\
+\frac{dM}{dt} &= i_{M(t)} {\color{red} \cancel{- \frac{q a_X M X }{ 1 + a_X h_X H + a_X h_X V + q a_X h_M M }}} - \mu_M M
+\end{align*}
+
+
+
+
+
+## Reference
+
+Hastings, A. 2013. Population biology: concepts and models. Springer Science & Business
+Media, New York, New York, USA.
+
