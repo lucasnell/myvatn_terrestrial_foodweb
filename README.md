@@ -40,5 +40,6 @@ figures and supplemental information file.
 
 - `fig_2-4.R`: Creates figures 2, 3, and 4
 - `fig_5.R`: Creates figure 5
-- `supp_info.Rmd` Creates the supplemental information
+- `AppendixS1.Rmd` Creates Appendix S1
+- `AppendixS2.Rmd` Creates Appendix S2
 - `template.tex`: LaTeX template that helps generate the supplemental information PDF
